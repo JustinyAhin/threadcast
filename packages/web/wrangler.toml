@@ -12,3 +12,9 @@ directory = ".svelte-kit/cloudflare"
 [[r2_buckets]]
 binding = "THREADS_BUCKET"
 bucket_name = "threadcast-threads"
+
+[[d1_databases]]
+binding = "AUTH_DB"
+database_name = "threadcast-auth"
+database_id = "a451c8cc-8326-4f40-a414-9a83c2b6fba7"
+migrations_dir = "drizzle"
