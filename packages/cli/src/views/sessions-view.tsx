@@ -1,5 +1,6 @@
-import { For, Show, onMount } from "solid-js";
+import { For, Show, onMount, createEffect } from "solid-js";
 import { useKeyboard } from "@opentui/solid";
+import type { ScrollBoxRenderable } from "@opentui/core";
 import { useApp } from "../context/app-context.js";
 import { SessionItem } from "../components/session-item.js";
 import { colors } from "../theme.js";
@@ -10,9 +11,34 @@ type SessionsViewProps = {
 
 const SessionsView = (props: SessionsViewProps) => {
   const [state, actions] = useApp();
+  let scrollboxRef!: ScrollBoxRenderable;
+
   onMount(() => {
     if (state.sessions.length === 0) {
       actions.loadSessions();
+    }
+  });
+
+  createEffect(() => {
+    const index = state.selectedIndex;
+    if (!scrollboxRef) return;
+
+    const innerBox = scrollboxRef.content.getChildren()[0];
+    if (!innerBox) return;
+
+    const items = innerBox.getChildren();
+    const selected = items[index];
+    if (!selected) return;
+
+    const itemTop = selected.y;
+    const itemBottom = itemTop + selected.height;
+    const scrollTop = scrollboxRef.scrollTop;
+    const viewportHeight = scrollboxRef.viewport.height;
+
+    if (itemBottom > scrollTop + viewportHeight) {
+      scrollboxRef.scrollTo(itemBottom - viewportHeight);
+    } else if (itemTop < scrollTop) {
+      scrollboxRef.scrollTo(itemTop);
     }
   });
 
@@ -134,7 +160,7 @@ const SessionsView = (props: SessionsViewProps) => {
           </Show>
         </box>
 
-        <scrollbox scrollY flexGrow={1} width="100%">
+        <scrollbox ref={scrollboxRef} scrollY flexGrow={1} width="100%">
           <box flexDirection="column" width="100%">
             <Show when={state.sessionsLoading}>
               <box paddingX={1} paddingY={1}>
