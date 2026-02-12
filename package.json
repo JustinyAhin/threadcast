@@ -11,8 +11,10 @@
     },
     "scripts": {
         "build": "bun run --filter '*' build",
+        "build:cli": "bun run --filter @threadcast/cli build",
+        "build:web": "bun run --filter @threadcast/web build",
         "dev:web": "bun run --filter @threadcast/web dev",
-        "cli": "bun run packages/cli/src/index.ts",
+        "cli": "cd packages/cli && bun run src/index.tsx",
         "typecheck": "bun run --filter '*' typecheck"
     }
 }

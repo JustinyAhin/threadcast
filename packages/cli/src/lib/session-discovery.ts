@@ -67,9 +67,6 @@ const countMessages = async (filePath: string): Promise<number> => {
   return count;
 };
 
-/**
- * Scan all Claude Code project directories for session files.
- */
 const discoverSessions = async (): Promise<SessionSummary[]> => {
   const sessions: SessionSummary[] = [];
 
@@ -98,13 +95,11 @@ const discoverSessions = async (): Promise<SessionSummary[]> => {
       const fileStat = await stat(filePath).catch(() => null);
       if (!fileStat) continue;
 
-      // Read first user message for preview
       const firstMessage = await getFirstUserMessage(filePath);
       const messageCount = await countMessages(filePath);
 
       if (messageCount === 0) continue;
 
-      // Decode project path from directory name
       const decodedProjectPath = projectDir.replace(/-/g, "/");
 
       sessions.push({
@@ -120,7 +115,6 @@ const discoverSessions = async (): Promise<SessionSummary[]> => {
     }
   }
 
-  // Sort by last modified, newest first
   sessions.sort(
     (a, b) =>
       new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime()
@@ -129,9 +123,6 @@ const discoverSessions = async (): Promise<SessionSummary[]> => {
   return sessions;
 };
 
-/**
- * Find a session by ID across all project directories.
- */
 const findSession = async (
   sessionId: string
 ): Promise<SessionSummary | null> => {

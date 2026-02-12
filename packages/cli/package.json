@@ -5,19 +5,18 @@
   "bin": {
     "threadcast": "bin/threadcast.js"
   },
-  "main": "src/index.ts",
+  "main": "src/index.tsx",
   "scripts": {
-    "build": "bun build src/index.ts --outfile bin/threadcast.js --target node",
-    "dev": "bun run src/index.ts",
+    "build": "bun build src/index.tsx --outfile bin/threadcast.js --target node",
+    "dev": "bun run src/index.tsx",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@threadcast/shared": "workspace:*",
-    "chalk": "^5.4.0",
-    "commander": "^13.0.0",
-    "@inquirer/prompts": "^7.0.0",
-    "open": "^10.0.0",
-    "ora": "^8.0.0"
+    "@opentui/core": "latest",
+    "@opentui/solid": "latest",
+    "solid-js": "^1.9.0",
+    "open": "^10.0.0"
   },
   "devDependencies": {
     "@types/node": "catalog:",
