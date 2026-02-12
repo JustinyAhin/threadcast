@@ -1,7 +1,6 @@
 import { listUserThreads } from '$lib/server/r2';
-import type { PageServerLoad } from './$types';
 
-const load: PageServerLoad = async ({ params, platform, locals }) => {
+export const load = async ({ params, platform, locals }) => {
 	const bucket = platform!.env.THREADS_BUCKET;
 	const allThreads = await listUserThreads({ bucket, username: params.username });
 
@@ -12,5 +11,3 @@ const load: PageServerLoad = async ({ params, platform, locals }) => {
 
 	return { threads, username: params.username };
 };
-
-export { load };

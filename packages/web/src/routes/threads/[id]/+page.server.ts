@@ -1,8 +1,7 @@
-import { error } from '@sveltejs/kit';
 import { getThread, getThreadMeta } from '$lib/server/r2';
-import type { PageServerLoad } from './$types';
+import { error } from '@sveltejs/kit';
 
-const load: PageServerLoad = async ({ params, platform, locals }) => {
+export const load = async ({ params, platform, locals }) => {
 	const bucket = platform!.env.THREADS_BUCKET;
 	const meta = await getThreadMeta({ bucket, id: params.id });
 
@@ -23,5 +22,3 @@ const load: PageServerLoad = async ({ params, platform, locals }) => {
 
 	return { thread, id: params.id };
 };
-
-export { load };
