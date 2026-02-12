@@ -4,7 +4,7 @@
 	import AssistantMessage from './assistant-message.svelte';
 	import ThreadSidebar from './thread-sidebar.svelte';
 	import ChatNav from './chat-nav.svelte';
-	import { useIntersectionObserver } from 'runed';
+	import { useIntersectionObserver, activeElement } from 'runed';
 
 	let { thread }: { thread: ThreadData } = $props();
 
@@ -98,11 +98,12 @@
 	};
 
 	const onKeydown = (e: KeyboardEvent) => {
-		if (e.key === '/' && document.activeElement !== inputEl) {
+		const inputFocused = activeElement.current === inputEl;
+		if (e.key === '/' && !inputFocused) {
 			e.preventDefault();
 			inputEl?.focus();
 		}
-		if (e.key === 'Escape' && document.activeElement === inputEl) {
+		if (e.key === 'Escape' && inputFocused) {
 			if (query) {
 				query = '';
 				activeTurnIndex = -1;
@@ -110,7 +111,7 @@
 				inputEl?.blur();
 			}
 		}
-		if (e.key === 'Enter' && document.activeElement === inputEl) {
+		if (e.key === 'Enter' && inputFocused) {
 			e.preventDefault();
 			goToMatch(e.shiftKey ? 'prev' : 'next');
 		}

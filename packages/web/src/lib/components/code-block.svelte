@@ -1,23 +1,18 @@
 <script lang="ts">
 	import { highlightCode } from '$lib/highlighter';
+	import { resource } from 'runed';
 
 	let { code, lang, maxHeight }: { code: string; lang?: string; maxHeight?: string } = $props();
 
-	let highlightedHtml = $state('');
-
-	$effect(() => {
-		const currentCode = code;
-		const currentLang = lang;
-		highlightCode({ code: currentCode, lang: currentLang }).then((html) => {
-			highlightedHtml = html;
-		});
-	});
+	const highlighted = resource([() => code, () => lang], async ([code, lang]) =>
+		highlightCode({ code, lang })
+	);
 </script>
 
-{#if highlightedHtml}
+{#if highlighted.current}
 	<div class="code-block overflow-auto rounded" style:max-height={maxHeight}>
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-		{@html highlightedHtml}
+		{@html highlighted.current}
 	</div>
 {:else}
 	<pre
