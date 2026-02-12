@@ -8,6 +8,8 @@
 	let container: HTMLDivElement;
 
 	$effect(() => {
+		if (!container) return;
+
 		const lang = getFiletypeFromFileName(fileName);
 
 		const oldFile: FileContents = { name: fileName, contents: oldCode, lang };
@@ -24,7 +26,7 @@
 			overflow: 'scroll'
 		} as const);
 
-		instance.render({ oldFile, newFile, fileDiff, fileContainer: container });
+		instance.render({ oldFile, newFile, fileDiff, containerWrapper: container });
 
 		return () => {
 			instance.cleanUp();
