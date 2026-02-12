@@ -1,10 +1,12 @@
 {
-  "name": "threadcast-monorepo",
-  "private": true,
-  "workspaces": ["packages/*"],
-  "scripts": {
-    "build": "bun run --filter '*' build",
-    "dev:web": "bun run --filter @threadcast/web dev",
-    "typecheck": "bun run --filter '*' typecheck"
-  }
+    "name": "threadcast-monorepo",
+    "private": true,
+    "workspaces": [
+        "packages/*"
+    ],
+    "scripts": {
+        "build": "bun run --filter '*' build",
+        "dev:web": "bun run --filter @threadcast/web dev",
+        "typecheck": "bun run --filter '*' typecheck"
+    }
 }
