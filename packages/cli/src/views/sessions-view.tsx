@@ -35,6 +35,16 @@ const SessionsView = () => {
         actions.setFilter(state.filterText.slice(0, -1));
         return;
       }
+      if (key.name === "down") {
+        setFiltering(false);
+        actions.selectSession(state.selectedIndex + 1);
+        return;
+      }
+      if (key.name === "up") {
+        setFiltering(false);
+        actions.selectSession(state.selectedIndex - 1);
+        return;
+      }
       if (key.name === "space" || (key.name.length === 1 && !key.ctrl && !key.meta)) {
         actions.setFilter(state.filterText + (key.name === "space" ? " " : key.name));
         return;
