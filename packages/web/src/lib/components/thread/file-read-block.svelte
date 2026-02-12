@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { ToolCall } from '@threadcast/shared';
+	import CodeBlock from '$lib/components/code-block.svelte';
+	import { guessLang } from '$lib/highlighter';
 
 	let { tool }: { tool: ToolCall } = $props();
 
@@ -24,9 +26,12 @@
 	</div>
 
 	{#if tool.result}
-		<pre
-			class="max-h-96 overflow-auto rounded bg-surface-1 p-3 font-mono text-xs"
-			class:text-error={tool.result.isError}
-			class:text-text-secondary={!tool.result.isError}>{tool.result.content}</pre>
+		{#if tool.result.isError}
+			<pre
+				class="max-h-96 overflow-auto rounded bg-surface-1 p-3 font-mono text-xs text-error">{tool
+					.result.content}</pre>
+		{:else}
+			<CodeBlock code={tool.result.content} lang={guessLang(filePath)} maxHeight="24rem" />
+		{/if}
 	{/if}
 </div>

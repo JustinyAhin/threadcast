@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ToolCall } from '@threadcast/shared';
+	import CodeBlock from '$lib/components/code-block.svelte';
 
 	let { tool }: { tool: ToolCall } = $props();
 
@@ -19,9 +20,12 @@
 	</div>
 
 	{#if tool.result}
-		<pre
-			class="max-h-64 overflow-auto rounded bg-surface-1 p-3 font-mono text-xs"
-			class:text-error={tool.result.isError}
-			class:text-text-secondary={!tool.result.isError}>{tool.result.content || '(no results)'}</pre>
+		{#if tool.result.isError}
+			<pre
+				class="max-h-64 overflow-auto rounded bg-surface-1 p-3 font-mono text-xs text-error">{tool
+					.result.content || '(no results)'}</pre>
+		{:else}
+			<CodeBlock code={tool.result.content || '(no results)'} maxHeight="16rem" />
+		{/if}
 	{/if}
 </div>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { ProcessedTurn } from '@threadcast/shared';
 	import { renderMarkdown } from '$lib/markdown';
+	import { highlightProse } from '$lib/actions/highlight-prose';
 
 	let { turn }: { turn: ProcessedTurn } = $props();
 
@@ -27,7 +28,7 @@
 					<span class="font-mono">{new Date(turn.timestamp).toLocaleTimeString()}</span>
 				{/if}
 			</div>
-			<div class="prose text-sm text-text">
+			<div class="prose text-sm text-text" use:highlightProse>
 				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 				{@html renderMarkdown(textContent)}
 			</div>

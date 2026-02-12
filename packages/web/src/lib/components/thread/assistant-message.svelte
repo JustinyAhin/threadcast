@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { ProcessedTurn } from '@threadcast/shared';
 	import { renderMarkdown } from '$lib/markdown';
+	import { highlightProse } from '$lib/actions/highlight-prose';
 	import ToolCallBlock from './tool-call-block.svelte';
 
 	let { turn }: { turn: ProcessedTurn } = $props();
@@ -36,7 +37,7 @@
 			<div class="space-y-4">
 				{#each turn.content as block, i (i)}
 					{#if block.type === 'text'}
-						<div class="prose text-sm text-text">
+						<div class="prose text-sm text-text" use:highlightProse>
 							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 							{@html renderMarkdown(block.text)}
 						</div>

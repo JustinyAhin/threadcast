@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ToolCall } from '@threadcast/shared';
+	import CodeBlock from '$lib/components/code-block.svelte';
 	import BashBlock from './bash-block.svelte';
 	import FileReadBlock from './file-read-block.svelte';
 	import EditBlock from './edit-block.svelte';
@@ -83,18 +84,16 @@
 				<!-- Generic tool display -->
 				<div class="space-y-2">
 					<div class="text-xs text-text-muted">Input</div>
-					<pre
-						class="overflow-x-auto rounded bg-surface-1 p-2 font-mono text-xs text-text-secondary">{JSON.stringify(
-							tool.input,
-							null,
-							2
-						)}</pre>
+					<CodeBlock code={JSON.stringify(tool.input, null, 2)} lang="json" />
 					{#if tool.result}
 						<div class="text-xs text-text-muted">Output</div>
-						<pre
-							class="max-h-96 overflow-auto rounded bg-surface-1 p-2 font-mono text-xs"
-							class:text-error={tool.result.isError}
-							class:text-text-secondary={!tool.result.isError}>{tool.result.content}</pre>
+						{#if tool.result.isError}
+							<pre
+								class="max-h-96 overflow-auto rounded bg-surface-1 p-2 font-mono text-xs text-error">{tool
+									.result.content}</pre>
+						{:else}
+							<CodeBlock code={tool.result.content} lang="json" maxHeight="24rem" />
+						{/if}
 					{/if}
 				</div>
 			{/if}
