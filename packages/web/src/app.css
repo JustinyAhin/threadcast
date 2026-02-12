@@ -1,3 +1,5 @@
+@import '@fontsource-variable/bricolage-grotesque';
+@import '@fontsource-variable/jetbrains-mono';
 @import 'tailwindcss';
 
 @theme {
@@ -18,8 +20,8 @@
 	--color-error: #ef4444;
 	--color-success: #22c55e;
 
-	--font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, monospace;
-	--font-sans: 'Bricolage Grotesque', system-ui, -apple-system, sans-serif;
+	--font-mono: 'JetBrains Mono Variable', 'Fira Code', 'SF Mono', Menlo, monospace;
+	--font-sans: 'Bricolage Grotesque Variable', system-ui, -apple-system, sans-serif;
 }
 
 html {
