@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ThreadData } from '@threadcast/shared';
+	import { timeAgo } from '$lib/utils/date';
 	import { SvelteSet } from 'svelte/reactivity';
 
 	let { thread }: { thread: ThreadData } = $props();
@@ -14,18 +15,6 @@
 		WebFetch: 'bg-cyan-500/15 text-cyan-400',
 		WebSearch: 'bg-cyan-500/15 text-cyan-400',
 		Task: 'bg-rose-500/15 text-rose-400'
-	};
-
-	const timeAgo = (dateStr: string): string => {
-		const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-		if (seconds < 60) return 'just now';
-		const minutes = Math.floor(seconds / 60);
-		if (minutes < 60) return `${minutes}m ago`;
-		const hours = Math.floor(minutes / 60);
-		if (hours < 24) return `${hours}h ago`;
-		const days = Math.floor(hours / 24);
-		if (days < 30) return `${days}d ago`;
-		return new Date(dateStr).toLocaleDateString();
 	};
 
 	const formatModel = (model: string): string => {
