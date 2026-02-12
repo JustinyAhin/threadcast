@@ -4,7 +4,8 @@
 	import AssistantMessage from './assistant-message.svelte';
 	import ThreadSidebar from './thread-sidebar.svelte';
 	import ChatNav from './chat-nav.svelte';
-	import { useIntersectionObserver, activeElement } from 'runed';
+	import { activeElement } from 'runed';
+	import { browser } from '$app/environment';
 
 	let { thread }: { thread: ThreadData } = $props();
 
@@ -18,18 +19,24 @@
 		turnEls.filter((_, i) => thread.turns[i]?.role === 'user').filter(Boolean) as HTMLElement[]
 	);
 
-	useIntersectionObserver(
-		() => userTurnEls,
-		(entries) => {
-			for (const entry of entries) {
-				if (entry.isIntersecting) {
-					const idx = turnEls.indexOf(entry.target as HTMLDivElement);
-					if (idx !== -1) activeUserTurnIndex = idx;
+	$effect(() => {
+		if (!browser) return;
+		const els = userTurnEls;
+		if (els.length === 0) return;
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) {
+						const idx = turnEls.indexOf(entry.target as HTMLDivElement);
+						if (idx !== -1) activeUserTurnIndex = idx;
+					}
 				}
-			}
-		},
-		{ rootMargin: '-20% 0px -60% 0px' }
-	);
+			},
+			{ rootMargin: '-20% 0px -60% 0px' }
+		);
+		for (const el of els) observer.observe(el);
+		return () => observer.disconnect();
+	});
 
 	const navigateToTurn = (turnIndex: number) => {
 		const el = turnEls[turnIndex];
