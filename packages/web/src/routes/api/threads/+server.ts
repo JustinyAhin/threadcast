@@ -1,4 +1,4 @@
-import { listRecentThreads, storeThread } from '$lib/server/r2';
+import { findThreadBySessionId, listRecentThreads, storeThread } from '$lib/server/r2';
 import { resolveUser } from '$lib/server/resolve-user';
 import { createId } from '@paralleldrive/cuid2';
 import { error, json } from '@sveltejs/kit';
@@ -16,16 +16,22 @@ export const POST = async (event) => {
 		error(401, { message: 'Authentication required' });
 	}
 
-	// Size check
-	const contentLength = event.request.headers.get('content-length');
-	if (contentLength && parseInt(contentLength) > MAX_THREAD_SIZE_BYTES) {
+	// Read body as text and check actual byte size
+	let text: string;
+	try {
+		text = await event.request.text();
+	} catch {
+		error(400, { message: 'Could not read request body' });
+	}
+
+	if (new TextEncoder().encode(text).byteLength > MAX_THREAD_SIZE_BYTES) {
 		error(413, { message: 'Thread data exceeds 10 MB limit' });
 	}
 
 	// Parse and validate
 	let body: unknown;
 	try {
-		body = await event.request.json();
+		body = JSON.parse(text);
 	} catch {
 		error(400, { message: 'Invalid JSON body' });
 	}
@@ -42,10 +48,19 @@ export const POST = async (event) => {
 		error(403, { message: 'Uploader does not match authenticated user' });
 	}
 
-	// Generate ID and store
-	const id = createId();
+	// Reuse existing ID on re-upload, otherwise generate new one
 	const bucket = event.platform!.env.THREADS_BUCKET;
+	const existingId = await findThreadBySessionId({
+		bucket,
+		username: user.login,
+		sessionId: threadData.metadata.sessionId
+	});
+	const id = existingId ?? createId();
+
 	await storeThread({ bucket, id, data: threadData });
 
-	return json({ id, url: `https://threadcast.dev/threads/${id}` }, { status: 201 });
+	return json(
+		{ id, url: `https://threadcast.dev/threads/${id}` },
+		{ status: existingId ? 200 : 201 }
+	);
 };
