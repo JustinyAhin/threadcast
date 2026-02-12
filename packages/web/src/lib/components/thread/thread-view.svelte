@@ -62,7 +62,7 @@
 
 		{#if thread.metadata.toolsUsed.length > 0}
 			<div class="mt-3 flex flex-wrap gap-1.5">
-				{#each thread.metadata.toolsUsed as tool}
+				{#each thread.metadata.toolsUsed as tool (tool)}
 					<span class="rounded-full bg-bg-tertiary px-2.5 py-0.5 text-xs text-text-muted">
 						{tool}
 					</span>
@@ -73,7 +73,7 @@
 
 	<!-- Conversation turns -->
 	<div class="space-y-6">
-		{#each thread.turns as turn}
+		{#each thread.turns as turn, i (i)}
 			{#if turn.role === 'user'}
 				<UserMessage {turn} />
 			{:else}

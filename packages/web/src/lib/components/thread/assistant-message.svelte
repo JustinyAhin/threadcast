@@ -27,10 +27,11 @@
 	</div>
 
 	<div class="space-y-4">
-		{#each turn.content as block}
+		{#each turn.content as block, i (i)}
 			{#if block.type === 'text'}
 				<div class="prose text-sm text-text">
-					{@html renderMarkdown(block.text)}
+					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				{@html renderMarkdown(block.text)}
 				</div>
 			{:else if block.type === 'tool_call'}
 				<ToolCallBlock tool={block.tool} />

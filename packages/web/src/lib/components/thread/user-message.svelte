@@ -21,6 +21,7 @@
 		{/if}
 	</div>
 	<div class="prose text-sm text-text">
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 		{@html renderMarkdown(textContent)}
 	</div>
 </div>
