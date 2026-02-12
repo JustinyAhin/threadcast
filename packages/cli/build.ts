@@ -2,8 +2,9 @@ import solidPlugin from "@opentui/solid/bun-plugin";
 import { mkdir, rm } from "node:fs/promises";
 import { arch, platform } from "node:os";
 
-const currentTarget = `bun-${platform()}-${arch()}`;
-const name = `threadcast-${platform()}-${arch()}`;
+const targetArch = process.env.TARGET_ARCH || arch();
+const currentTarget = `bun-${platform()}-${targetArch}`;
+const name = `threadcast-${platform()}-${targetArch}`;
 
 // Step 1: Bundle with solid plugin
 const bundle = await Bun.build({

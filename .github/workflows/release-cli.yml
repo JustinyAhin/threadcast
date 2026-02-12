@@ -15,7 +15,7 @@ jobs:
                     - os: macos-latest
                       arch: arm64
                       name: darwin-arm64
-                    - os: macos-13
+                    - os: macos-latest
                       arch: x64
                       name: darwin-x64
                     - os: ubuntu-latest
@@ -30,6 +30,8 @@ jobs:
             - uses: oven-sh/setup-bun@v2
             - run: bun install
             - run: bun run --filter @threadcast/cli build
+              env:
+                  TARGET_ARCH: ${{ matrix.arch }}
             - uses: actions/upload-artifact@v4
               with:
                   name: threadcast-${{ matrix.name }}
