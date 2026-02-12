@@ -35,8 +35,8 @@ const SessionsView = () => {
         actions.setFilter(state.filterText.slice(0, -1));
         return;
       }
-      if (key.name.length === 1 && !key.ctrl && !key.meta) {
-        actions.setFilter(state.filterText + key.name);
+      if (key.name === "space" || (key.name.length === 1 && !key.ctrl && !key.meta)) {
+        actions.setFilter(state.filterText + (key.name === "space" ? " " : key.name));
         return;
       }
       return;
