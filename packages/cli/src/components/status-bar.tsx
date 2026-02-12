@@ -19,9 +19,17 @@ const StatusBar = () => {
     }
   };
 
+  const searchLabel = () => {
+    if (!state.searching) return "";
+    return ` | searching: ${state.searchProgress}`;
+  };
+
   const hints = () => {
     switch (state.view) {
       case "sessions":
+        if (state.searchMode === "search") {
+          return "j/k:nav  Enter:open  Esc:clear  /:filter  q:quit";
+        }
         return "j/k:nav  Enter:open  /:filter  l:login  q:quit";
       case "preview":
         return "s:share  Esc:back  q:quit";
@@ -39,7 +47,7 @@ const StatusBar = () => {
       paddingX={1}
     >
       <text
-        content={`${authLabel()}${uploadLabel()}`}
+        content={`${authLabel()}${uploadLabel()}${searchLabel()}`}
         fg="#888888"
         flexGrow={1}
       />

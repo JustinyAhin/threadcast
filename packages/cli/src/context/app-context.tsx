@@ -1,12 +1,13 @@
 import { createContext, useContext, type ParentProps } from "solid-js";
 import { createStore, produce } from "solid-js/store";
-import type { AppState } from "../types.js";
+import type { AppState, SearchResult } from "../types.js";
 import type { AuthConfig, SessionSummary, ThreadData } from "@threadcast/shared";
 import { loadConfig, saveConfig, clearConfig } from "../auth/config.js";
 import { githubDeviceFlow } from "../auth/github-device-flow.js";
 import { discoverSessions, findSession } from "../lib/session-discovery.js";
 import { parseSession } from "../parser/index.js";
 import { uploadThread } from "../uploader/api-client.js";
+import { searchSessions } from "../lib/session-search.js";
 
 type AppActions = {
   loadSessions: () => Promise<void>;
@@ -14,11 +15,13 @@ type AppActions = {
   openPreview: () => Promise<void>;
   goBack: () => void;
   setFilter: (text: string) => void;
+  startSearch: () => Promise<void>;
+  cancelSearch: () => void;
   startLogin: () => Promise<void>;
   cancelLogin: () => void;
   startUpload: () => Promise<void>;
   logout: () => Promise<void>;
-  filteredSessions: () => SessionSummary[];
+  displayedSessions: () => SearchResult[];
 };
 
 type AppContextValue = [AppState, AppActions];
@@ -32,6 +35,10 @@ const initialState: AppState = {
   sessionsLoading: false,
   selectedIndex: 0,
   filterText: "",
+  searchMode: "filter",
+  searchResults: [],
+  searching: false,
+  searchProgress: "",
   previewData: null,
   previewLoading: false,
   uploadStatus: "idle",
@@ -44,7 +51,9 @@ const initialState: AppState = {
 const AppProvider = (props: ParentProps) => {
   const [state, setState] = createStore<AppState>({ ...initialState });
 
-  const filteredSessions = () => {
+  let searchAbort: AbortController | null = null;
+
+  const filteredSessions = (): SearchResult[] => {
     if (!state.filterText) return state.sessions;
     const lower = state.filterText.toLowerCase();
     return state.sessions.filter(
@@ -52,6 +61,19 @@ const AppProvider = (props: ParentProps) => {
         s.firstMessage.toLowerCase().includes(lower) ||
         s.projectPath.toLowerCase().includes(lower)
     );
+  };
+
+  const displayedSessions = (): SearchResult[] => {
+    if (state.searchMode === "search") {
+      // Merge: shallow matches first, then deep-only matches
+      const shallow = filteredSessions();
+      const shallowIds = new Set(shallow.map((s) => s.sessionId));
+      const deepOnly = state.searchResults.filter(
+        (s) => !shallowIds.has(s.sessionId)
+      );
+      return [...shallow, ...deepOnly];
+    }
+    return filteredSessions();
   };
 
   const actions: AppActions = {
@@ -74,12 +96,12 @@ const AppProvider = (props: ParentProps) => {
     },
 
     selectSession: (index: number) => {
-      const max = filteredSessions().length - 1;
+      const max = displayedSessions().length - 1;
       setState("selectedIndex", Math.max(0, Math.min(index, max)));
     },
 
     openPreview: async () => {
-      const session = filteredSessions()[state.selectedIndex];
+      const session = displayedSessions()[state.selectedIndex];
       if (!session) return;
 
       setState(
@@ -128,6 +150,79 @@ const AppProvider = (props: ParentProps) => {
       setState(
         produce((s) => {
           s.filterText = text;
+          s.selectedIndex = 0;
+          // Reset deep search when filter text changes
+          if (s.searchMode === "search") {
+            s.searchMode = "filter";
+            s.searchResults = [];
+            s.searching = false;
+            s.searchProgress = "";
+          }
+        })
+      );
+      if (searchAbort) {
+        searchAbort.abort();
+        searchAbort = null;
+      }
+    },
+
+    startSearch: async () => {
+      if (!state.filterText) return;
+
+      // Cancel any existing search
+      if (searchAbort) {
+        searchAbort.abort();
+      }
+      searchAbort = new AbortController();
+
+      setState(
+        produce((s) => {
+          s.searchMode = "search";
+          s.searchResults = [];
+          s.searching = true;
+          s.searchProgress = `0/${s.sessions.length} sessions`;
+          s.selectedIndex = 0;
+        })
+      );
+
+      try {
+        await searchSessions({
+          query: state.filterText,
+          sessions: state.sessions,
+          callbacks: {
+            onMatch: (session, snippet) => {
+              setState(
+                produce((s) => {
+                  s.searchResults = [...s.searchResults, { ...session, matchSnippet: snippet }];
+                })
+              );
+            },
+            onProgress: (scanned, total) => {
+              setState("searchProgress", `${scanned}/${total} sessions`);
+            },
+            signal: searchAbort!.signal,
+          },
+        });
+      } catch {
+        // Aborted or error
+      } finally {
+        setState("searching", false);
+        searchAbort = null;
+      }
+    },
+
+    cancelSearch: () => {
+      if (searchAbort) {
+        searchAbort.abort();
+        searchAbort = null;
+      }
+      setState(
+        produce((s) => {
+          s.searchMode = "filter";
+          s.searchResults = [];
+          s.searching = false;
+          s.searchProgress = "";
+          s.filterText = "";
           s.selectedIndex = 0;
         })
       );
@@ -223,7 +318,7 @@ const AppProvider = (props: ParentProps) => {
       setState("auth", null);
     },
 
-    filteredSessions,
+    displayedSessions,
   };
 
   return (

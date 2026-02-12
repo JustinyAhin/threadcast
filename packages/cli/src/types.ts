@@ -1,5 +1,9 @@
 import type { AuthConfig, SessionSummary, ThreadData } from "@threadcast/shared";
 
+type SearchResult = SessionSummary & {
+  matchSnippet?: string;
+};
+
 type AppState = {
   view: "sessions" | "preview" | "login";
   auth: AuthConfig | null;
@@ -7,6 +11,10 @@ type AppState = {
   sessionsLoading: boolean;
   selectedIndex: number;
   filterText: string;
+  searchMode: "filter" | "search";
+  searchResults: SearchResult[];
+  searching: boolean;
+  searchProgress: string;
   previewData: ThreadData | null;
   previewLoading: boolean;
   uploadStatus: "idle" | "uploading" | "success" | "error";
@@ -16,4 +24,4 @@ type AppState = {
   loginStatus: "idle" | "waiting" | "success" | "error";
 };
 
-export type { AppState };
+export type { AppState, SearchResult };

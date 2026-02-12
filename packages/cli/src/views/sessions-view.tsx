@@ -17,11 +17,18 @@ const SessionsView = () => {
     if (filtering()) {
       if (key.name === "escape") {
         setFiltering(false);
-        actions.setFilter("");
+        if (state.searchMode === "search") {
+          actions.cancelSearch();
+        } else {
+          actions.setFilter("");
+        }
         return;
       }
       if (key.name === "return") {
         setFiltering(false);
+        if (state.filterText) {
+          actions.startSearch();
+        }
         return;
       }
       if (key.name === "backspace") {
@@ -35,7 +42,13 @@ const SessionsView = () => {
       return;
     }
 
-    const sessions = actions.filteredSessions();
+    // Handle Esc when in search mode but not actively filtering
+    if (key.name === "escape" && state.searchMode === "search") {
+      actions.cancelSearch();
+      return;
+    }
+
+    const sessions = actions.displayedSessions();
 
     if (key.name === "j" || key.name === "down") {
       actions.selectSession(state.selectedIndex + 1);
@@ -61,14 +74,23 @@ const SessionsView = () => {
       <box flexDirection="row" paddingX={1} height={1}>
         <text fg="#00BFFF"><b>ThreadCast</b></text>
         <text
-          content={` — ${actions.filteredSessions().length} sessions`}
+          content={` — ${actions.displayedSessions().length} sessions`}
           fg="#888888"
         />
         <Show when={filtering()}>
           <text content={`  /${state.filterText}_`} fg="#FFAA00" />
         </Show>
-        <Show when={!filtering() && state.filterText}>
+        <Show when={!filtering() && state.filterText && state.searchMode === "filter"}>
           <text content={`  filter: ${state.filterText}`} fg="#FFAA00" />
+        </Show>
+        <Show when={!filtering() && state.searchMode === "search"}>
+          <text content={`  search: ${state.filterText}`} fg="#00FF88" />
+          <Show when={state.searching}>
+            <text content={`  (${state.searchProgress})`} fg="#888888" />
+          </Show>
+          <Show when={!state.searching}>
+            <text content={`  (${state.searchResults.length} matches)`} fg="#888888" />
+          </Show>
         </Show>
       </box>
 
@@ -79,14 +101,14 @@ const SessionsView = () => {
           </box>
         </Show>
 
-        <Show when={!state.sessionsLoading && actions.filteredSessions().length === 0}>
+        <Show when={!state.sessionsLoading && actions.displayedSessions().length === 0}>
           <box paddingX={1}>
             <text content="No sessions found." fg="#666666" />
           </box>
         </Show>
 
-        <Show when={!state.sessionsLoading && actions.filteredSessions().length > 0}>
-          <For each={actions.filteredSessions().slice(0, 30)}>
+        <Show when={!state.sessionsLoading && actions.displayedSessions().length > 0}>
+          <For each={actions.displayedSessions().slice(0, 30)}>
             {(session, i) => (
               <SessionItem
                 session={session}

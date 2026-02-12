@@ -1,8 +1,8 @@
-import type { SessionSummary } from "@threadcast/shared";
+import type { SearchResult } from "../types.js";
 import { timeAgo, formatBytes } from "../lib/format.js";
 
 type SessionItemProps = {
-  session: SessionSummary;
+  session: SearchResult;
   selected: boolean;
 };
 
@@ -14,43 +14,56 @@ const SessionItem = (props: SessionItemProps) => {
     return msg.length > 60 ? msg.slice(0, 60) + "..." : msg;
   };
 
+  const snippet = () => props.session.matchSnippet;
+
   return (
     <box
-      flexDirection="row"
+      flexDirection="column"
       width="100%"
       paddingX={1}
       backgroundColor={props.selected ? "#333333" : undefined}
     >
-      <text
-        content={props.session.sessionId.slice(0, 8)}
-        fg="#666666"
-        width={10}
-      />
-      <text
-        content={project()}
-        fg="#00BFFF"
-        width={16}
-      />
-      <text
-        content={preview()}
-        fg={props.selected ? "#FFFFFF" : "#CCCCCC"}
-        flexGrow={1}
-      />
-      <text
-        content={`${props.session.messageCount} msgs`}
-        fg="#666666"
-        width={10}
-      />
-      <text
-        content={timeAgo(date())}
-        fg="#666666"
-        width={10}
-      />
-      <text
-        content={formatBytes(props.session.sizeBytes)}
-        fg="#666666"
-        width={8}
-      />
+      <box flexDirection="row" width="100%">
+        <text
+          content={props.session.sessionId.slice(0, 8)}
+          fg="#666666"
+          width={10}
+        />
+        <text
+          content={project()}
+          fg="#00BFFF"
+          width={16}
+        />
+        <text
+          content={preview()}
+          fg={props.selected ? "#FFFFFF" : "#CCCCCC"}
+          flexGrow={1}
+        />
+        <text
+          content={`${props.session.messageCount} msgs`}
+          fg="#666666"
+          width={10}
+        />
+        <text
+          content={timeAgo(date())}
+          fg="#666666"
+          width={10}
+        />
+        <text
+          content={formatBytes(props.session.sizeBytes)}
+          fg="#666666"
+          width={8}
+        />
+      </box>
+      {snippet() && (
+        <box flexDirection="row" width="100%" paddingLeft={10}>
+          <text
+            content={snippet()!}
+            fg="#888888"
+            flexGrow={1}
+          />
+        </box>
+      )}
     </box>
   );
 };
