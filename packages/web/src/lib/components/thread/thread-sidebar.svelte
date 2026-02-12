@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { ThreadData } from '@threadcast/shared';
+	import { SvelteSet } from 'svelte/reactivity';
 
-	let { thread, threadId }: { thread: ThreadData; threadId: string } = $props();
+	let { thread }: { thread: ThreadData } = $props();
 
 	const TOOL_COLORS: Record<string, string> = {
 		Bash: 'bg-emerald-500/15 text-emerald-400',
@@ -36,7 +37,7 @@
 	};
 
 	const stats = $derived.by(() => {
-		const files = new Set<string>();
+		const files = new SvelteSet<string>();
 		let linesAdded = 0;
 		let linesRemoved = 0;
 		let promptCount = 0;

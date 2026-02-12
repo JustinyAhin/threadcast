@@ -11,7 +11,7 @@
 </script>
 
 <header class="border-b border-border px-6 py-4">
-	<div class="mx-auto flex max-w-4xl items-center justify-between">
+	<div class="mx-auto flex max-w-7xl items-center justify-between">
 		<a href="/" class="group flex items-center gap-2 text-lg font-semibold text-text">
 			<span class="text-accent transition-transform duration-200 group-hover:scale-110"
 				>&#9672;</span
@@ -27,15 +27,9 @@
 			>
 				Threads
 			</a>
-			<a
-				href="https://github.com/threadcast"
-				target="_blank"
-				rel="noopener noreferrer"
-				class="text-text-secondary transition-colors hover:text-text"
-			>
-				GitHub
-			</a>
+
 			<span class="text-border">|</span>
+
 			{#if $session.data}
 				<div class="flex items-center gap-3">
 					{#if $session.data.user.image}

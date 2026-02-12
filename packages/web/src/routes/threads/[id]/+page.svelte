@@ -19,4 +19,4 @@
 	<meta property="og:url" content="https://threadcast.dev/threads/{data.id}" />
 </svelte:head>
 
-<ThreadView thread={data.thread} threadId={data.id} />
+<ThreadView thread={data.thread} />
