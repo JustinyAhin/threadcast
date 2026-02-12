@@ -6,7 +6,7 @@
 
 	const signOut = async () => {
 		await authClient.signOut();
-		window.location.href = '/';
+		window.location.href = '/threads';
 	};
 </script>
 
@@ -20,8 +20,8 @@
 		</a>
 		<nav class="flex items-center gap-4 text-sm">
 			<a
-				href="/"
-				class="transition-colors {page.url.pathname === '/'
+				href="/threads"
+				class="transition-colors {page.url.pathname.startsWith('/threads')
 					? 'text-text'
 					: 'text-text-secondary hover:text-text'}"
 			>

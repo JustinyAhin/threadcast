@@ -12,7 +12,7 @@
 
 <div class="flex min-h-screen flex-col">
 	<Header />
-	<main class="flex-1 px-6 py-10">
+	<main class="flex-1">
 		{@render children()}
 	</main>
 	<footer class="border-t border-border px-6 py-6">

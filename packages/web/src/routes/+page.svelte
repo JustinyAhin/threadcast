@@ -1,301 +1,508 @@
 <script lang="ts">
-	import ThreadCard from '$lib/components/thread-card.svelte';
+	import { browser } from '$app/environment';
 
-	let { data } = $props();
+	let copied = $state(false);
+	let sections = $state<HTMLElement[]>([]);
 
-	let query = $state('');
-	let activeTools = $state<string[]>([]);
-	let activeProjects = $state<string[]>([]);
-	let dateFrom = $state('');
-	let dateTo = $state('');
-	let activeDatePreset = $state<string | null>(null);
-
-	const dateStr = (offsetDays: number) => {
-		const ms = Date.now() - offsetDays * 86_400_000;
-		const d = new Date(ms);
-		return d.toISOString().slice(0, 10);
+	const copyCommand = async () => {
+		await navigator.clipboard.writeText('bun install -g threadcast');
+		copied = true;
+		setTimeout(() => (copied = false), 2000);
 	};
 
-	const DATE_PRESETS = [
-		{ label: 'Today', offset: 0, range: true },
-		{ label: 'Yesterday', offset: 1, range: true },
-		{ label: '7d', offset: 7, range: false },
-		{ label: '30d', offset: 30, range: false },
-		{ label: '90d', offset: 90, range: false }
-	] as const;
+	const registerSection = (el: HTMLElement) => {
+		sections.push(el);
+	};
 
-	const applyPreset = (preset: (typeof DATE_PRESETS)[number]) => {
-		if (activeDatePreset === preset.label) {
-			dateFrom = '';
-			dateTo = '';
-			activeDatePreset = null;
-		} else {
-			dateFrom = dateStr(preset.offset);
-			dateTo = preset.range ? dateStr(preset.offset === 1 ? 1 : 0) : '';
-			activeDatePreset = preset.label;
+	$effect(() => {
+		if (!browser) return;
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) {
+						(entry.target as HTMLElement).classList.add('is-visible');
+						observer.unobserve(entry.target);
+					}
+				}
+			},
+			{ threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+		);
+
+		for (const el of sections) {
+			observer.observe(el);
 		}
-	};
 
-	const onDateInput = () => {
-		activeDatePreset = null;
-	};
-
-	const allTools = $derived([...new Set(data.threads.flatMap((t) => t.metadata.toolsUsed))].sort());
-	const allProjects = $derived(
-		[...new Set(data.threads.map((t) => t.metadata.projectName))].sort()
-	);
-
-	const toggleTool = (tool: string) => {
-		if (activeTools.includes(tool)) {
-			activeTools = activeTools.filter((t) => t !== tool);
-		} else {
-			activeTools = [...activeTools, tool];
-		}
-	};
-
-	const toggleProject = (project: string) => {
-		if (activeProjects.includes(project)) {
-			activeProjects = activeProjects.filter((p) => p !== project);
-		} else {
-			activeProjects = [...activeProjects, project];
-		}
-	};
-
-	const TOOL_COLORS: Record<string, string> = {
-		Bash: 'bg-emerald-500/15 text-emerald-400 ring-emerald-500/30',
-		Read: 'bg-sky-500/15 text-sky-400 ring-sky-500/30',
-		Edit: 'bg-amber-500/15 text-amber-400 ring-amber-500/30',
-		Write: 'bg-orange-500/15 text-orange-400 ring-orange-500/30',
-		Grep: 'bg-violet-500/15 text-violet-400 ring-violet-500/30',
-		Glob: 'bg-teal-500/15 text-teal-400 ring-teal-500/30',
-		WebFetch: 'bg-cyan-500/15 text-cyan-400 ring-cyan-500/30',
-		WebSearch: 'bg-cyan-500/15 text-cyan-400 ring-cyan-500/30',
-		Task: 'bg-rose-500/15 text-rose-400 ring-rose-500/30'
-	};
-
-	const filteredThreads = $derived.by(() => {
-		const q = query.toLowerCase().trim();
-
-		return data.threads.filter((thread) => {
-			// Date range filter
-			if (dateFrom) {
-				const created = thread.metadata.created.slice(0, 10);
-				if (created < dateFrom) return false;
-			}
-			if (dateTo) {
-				const created = thread.metadata.created.slice(0, 10);
-				if (created > dateTo) return false;
-			}
-
-			// Project filter
-			if (activeProjects.length > 0) {
-				if (!activeProjects.includes(thread.metadata.projectName)) return false;
-			}
-
-			// Tool filter
-			if (activeTools.length > 0) {
-				const hasAllTools = activeTools.every((t) => thread.metadata.toolsUsed.includes(t));
-				if (!hasAllTools) return false;
-			}
-
-			// Text search
-			if (!q) return true;
-			return (
-				thread.metadata.title.toLowerCase().includes(q) ||
-				thread.metadata.projectName.toLowerCase().includes(q) ||
-				thread.uploader.githubUsername.toLowerCase().includes(q)
-			);
-		});
+		return () => observer.disconnect();
 	});
-
-	const hasActiveFilters = $derived(
-		query.trim().length > 0 ||
-			activeTools.length > 0 ||
-			activeProjects.length > 0 ||
-			dateFrom !== '' ||
-			dateTo !== ''
-	);
-
-	const clearAll = () => {
-		query = '';
-		activeTools = [];
-		activeProjects = [];
-		dateFrom = '';
-		dateTo = '';
-	};
-
-	let inputEl = $state<HTMLInputElement>();
-
-	const onKeydown = (e: KeyboardEvent) => {
-		if (e.key === '/' && document.activeElement !== inputEl) {
-			e.preventDefault();
-			inputEl?.focus();
-		}
-		if (e.key === 'Escape' && document.activeElement === inputEl) {
-			query = '';
-			inputEl?.blur();
-		}
-	};
 </script>
 
-<svelte:window onkeydown={onKeydown} />
+<svelte:head>
+	<title>ThreadCast — Share Claude Code Sessions</title>
+	<meta
+		name="description"
+		content="Turn your Claude Code conversations into beautiful, shareable web pages. One command to share. Zero setup."
+	/>
+</svelte:head>
 
-<div class="mx-auto max-w-4xl">
-	<div class="mb-10 animate-fade-in">
-		<p class="mb-3 font-mono text-xs tracking-widest text-text-muted uppercase">
-			Claude Code Sessions
-		</p>
-		<h1 class="mb-3 text-4xl font-bold text-text">Conversations worth reading.</h1>
-		<p class="max-w-lg text-text-secondary">
-			Real coding sessions with Claude — shared by developers, preserved for everyone.
-		</p>
+<!-- Hero -->
+<section class="relative overflow-hidden px-6 pt-20 pb-24 lg:pt-32 lg:pb-36">
+	<!-- Ambient glow -->
+	<div
+		class="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+		aria-hidden="true"
+	>
+		<div
+			class="h-[600px] w-[800px] rounded-full opacity-[0.07]"
+			style="background: radial-gradient(ellipse, var(--color-accent) 0%, transparent 70%)"
+		></div>
 	</div>
 
-	{#if data.threads.length === 0}
-		<div class="rounded-lg border border-border bg-surface-1 p-12 text-center">
-			<p class="mb-2 text-lg text-text-secondary">No threads yet</p>
-			<p class="text-sm text-text-muted">
-				Share your first session with <code
-					class="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-accent">threadcast share</code
-				>
+	<div class="relative mx-auto grid max-w-6xl items-center gap-16 lg:grid-cols-2 lg:gap-20">
+		<!-- Left column -->
+		<div class="animate-fade-in max-w-xl">
+			<p class="mb-5 font-mono text-xs tracking-[0.2em] text-accent uppercase" style="--delay: 0ms">
+				Share your sessions
 			</p>
-		</div>
-	{:else}
-		<!-- Search & filter bar -->
-		<div class="mb-6 animate-fade-in" style="--delay: 100ms">
-			<div class="relative">
-				<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+			<h1 class="mb-6 text-4xl leading-[1.1] font-bold tracking-tight text-text md:text-5xl">
+				Your best Claude sessions deserve an audience.
+			</h1>
+			<p class="mb-10 max-w-md text-lg leading-relaxed text-text-secondary">
+				ThreadCast turns Claude Code conversations into beautiful, shareable web pages. One command
+				to share. Zero setup.
+			</p>
+			<div class="flex flex-wrap gap-3">
+				<a
+					href="/threads"
+					class="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-bg transition-opacity hover:opacity-90"
+				>
+					Browse threads
 					<svg
-						class="h-4 w-4 text-text-muted"
-						viewBox="0 0 20 20"
+						class="h-4 w-4"
 						fill="none"
+						viewBox="0 0 24 24"
 						stroke="currentColor"
 						stroke-width="2"
 					>
-						<circle cx="8.5" cy="8.5" r="5.5" />
-						<path d="M12.5 12.5L17 17" stroke-linecap="round" />
+						<path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
 					</svg>
-				</div>
-				<input
-					bind:this={inputEl}
-					bind:value={query}
-					type="text"
-					placeholder="Search threads..."
-					class="w-full rounded-lg border border-border bg-surface-1 py-2.5 pr-12 pl-10 font-mono text-sm text-text placeholder-text-muted transition-colors focus:border-border-light focus:outline-none"
-				/>
-				<div
-					class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 font-mono text-xs text-text-muted"
+				</a>
+				<a
+					href="#install"
+					class="inline-flex items-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-semibold text-text transition-colors hover:border-border-light hover:text-accent"
 				>
-					/
-				</div>
+					Install CLI
+				</a>
 			</div>
-
-			<!-- Filter rows -->
-			<div class="mt-3 flex flex-col gap-2.5">
-				<!-- Date range filter -->
-				<div class="flex items-center gap-2">
-					<span class="w-14 shrink-0 font-mono text-xs text-text-muted">Date</span>
-					<div class="flex flex-wrap items-center gap-1.5">
-						{#each DATE_PRESETS as preset (preset.label)}
-							<button
-								onclick={() => applyPreset(preset)}
-								class="cursor-pointer rounded-full px-2.5 py-0.5 text-xs transition-all {activeDatePreset ===
-								preset.label
-									? 'bg-accent/15 text-accent ring-1 ring-accent/30'
-									: 'bg-surface-2 text-text-muted hover:text-text-secondary'}"
-							>
-								{preset.label}
-							</button>
-						{/each}
-						<span class="mx-1 h-3 w-px bg-border"></span>
-						<input
-							type="date"
-							bind:value={dateFrom}
-							oninput={onDateInput}
-							class="date-input rounded border border-border bg-surface-2 px-2 py-1 font-mono text-xs text-text-secondary transition-colors focus:border-border-light focus:outline-none"
-						/>
-						<span class="font-mono text-xs text-text-muted">&ndash;</span>
-						<input
-							type="date"
-							bind:value={dateTo}
-							oninput={onDateInput}
-							class="date-input rounded border border-border bg-surface-2 px-2 py-1 font-mono text-xs text-text-secondary transition-colors focus:border-border-light focus:outline-none"
-						/>
-					</div>
-				</div>
-
-				<!-- Project filter -->
-				{#if allProjects.length > 1}
-					<div class="flex items-center gap-2">
-						<span class="w-14 shrink-0 font-mono text-xs text-text-muted">Project</span>
-						<div class="flex flex-wrap gap-1.5">
-							{#each allProjects as project (project)}
-								<button
-									onclick={() => toggleProject(project)}
-									class="cursor-pointer rounded-full px-2.5 py-0.5 text-xs transition-all {activeProjects.includes(
-										project
-									)
-										? 'bg-accent/15 text-accent ring-1 ring-accent/30'
-										: 'bg-surface-2 text-text-muted hover:text-text-secondary'}"
-								>
-									{project}
-								</button>
-							{/each}
-						</div>
-					</div>
-				{/if}
-
-				<!-- Tool filter -->
-				{#if allTools.length > 0}
-					<div class="flex items-center gap-2">
-						<span class="w-14 shrink-0 font-mono text-xs text-text-muted">Tools</span>
-						<div class="flex flex-wrap gap-1.5">
-							{#each allTools as tool (tool)}
-								<button
-									onclick={() => toggleTool(tool)}
-									class="cursor-pointer rounded-full px-2.5 py-0.5 text-xs transition-all {activeTools.includes(
-										tool
-									)
-										? `${TOOL_COLORS[tool] || 'bg-surface-2 text-text-muted ring-border'} ring-1`
-										: 'bg-surface-2 text-text-muted hover:text-text-secondary'}"
-								>
-									{tool}
-								</button>
-							{/each}
-						</div>
-					</div>
-				{/if}
-			</div>
-
-			{#if hasActiveFilters}
-				<div class="mt-3 flex items-center justify-between border-t border-border pt-2">
-					<p class="font-mono text-xs text-text-muted">
-						{filteredThreads.length}
-						{filteredThreads.length === 1 ? 'result' : 'results'}
-					</p>
-					<button
-						onclick={clearAll}
-						class="cursor-pointer font-mono text-xs text-text-muted transition-colors hover:text-accent"
-					>
-						Clear filters
-					</button>
-				</div>
-			{/if}
 		</div>
 
-		{#if filteredThreads.length === 0}
-			<div class="rounded-lg border border-border bg-surface-1 p-12 text-center">
-				<p class="mb-2 text-text-secondary">No threads match your search</p>
-				<p class="text-sm text-text-muted">Try a different query or clear the filters</p>
-			</div>
-		{:else}
-			<div class="grid gap-4">
-				{#each filteredThreads as thread, i (thread.id)}
-					<div class="animate-slide-up" style="--delay: {Math.min(i * 60, 400)}ms">
-						<ThreadCard {thread} {query} />
+		<!-- Right column — Mock thread preview -->
+		<div class="animate-slide-up relative" style="--delay: 200ms">
+			<!-- Amber glow behind card -->
+			<div
+				class="pointer-events-none absolute -inset-8 rounded-3xl opacity-[0.12]"
+				aria-hidden="true"
+				style="background: radial-gradient(ellipse at center, var(--color-accent) 0%, transparent 65%)"
+			></div>
+
+			<div class="relative overflow-hidden rounded-xl border border-border bg-surface-1 shadow-2xl">
+				<!-- Thread header -->
+				<div class="border-b border-border px-5 py-3.5">
+					<div class="flex items-center gap-3">
+						<div class="h-6 w-6 rounded-full bg-surface-2 ring-1 ring-border"></div>
+						<div>
+							<p class="text-sm font-medium text-text">Add dark mode toggle</p>
+							<p class="font-mono text-[11px] text-text-muted">
+								sarah-dev &middot; 14 messages &middot; 8m
+							</p>
+						</div>
 					</div>
-				{/each}
+				</div>
+
+				<!-- User message -->
+				<div class="border-b border-border/60 bg-user-bg px-5 py-4">
+					<p class="mb-1 font-mono text-[10px] tracking-wider text-text-muted uppercase">User</p>
+					<p class="text-sm leading-relaxed text-text">
+						Add a dark mode toggle to the settings page. Use the existing theme context.
+					</p>
+				</div>
+
+				<!-- Assistant message -->
+				<div class="border-b border-border/60 bg-assistant-bg px-5 py-4">
+					<p class="mb-1 font-mono text-[10px] tracking-wider text-text-muted uppercase">
+						Assistant
+					</p>
+					<p class="text-sm leading-relaxed text-text-secondary">
+						I'll add the toggle using <code
+							class="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-xs text-accent"
+							>useTheme()</code
+						> and wire it into the settings panel.
+					</p>
+
+					<!-- Tool pills -->
+					<div class="mt-3 flex flex-wrap gap-1.5">
+						<span
+							class="rounded-full bg-sky-500/15 px-2 py-0.5 font-mono text-[10px] text-sky-400 ring-1 ring-sky-500/30"
+							>Read</span
+						>
+						<span
+							class="rounded-full bg-amber-500/15 px-2 py-0.5 font-mono text-[10px] text-amber-400 ring-1 ring-amber-500/30"
+							>Edit</span
+						>
+						<span
+							class="rounded-full bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] text-emerald-400 ring-1 ring-emerald-500/30"
+							>Bash</span
+						>
+					</div>
+				</div>
+
+				<!-- Mini diff -->
+				<div class="bg-tool-bg px-5 py-3">
+					<p class="mb-2 font-mono text-[10px] text-text-muted">settings-page.tsx</p>
+					<div class="font-mono text-[11px] leading-5">
+						<div class="text-red-400/80">
+							<span class="mr-2 select-none text-red-400/40">-</span>return &lt;Settings /&gt;;
+						</div>
+						<div class="text-emerald-400/80">
+							<span class="mr-2 select-none text-emerald-400/40">+</span>return &lt;Settings
+							theme=&#123;mode&#125; /&gt;;
+						</div>
+						<div class="text-emerald-400/80">
+							<span class="mr-2 select-none text-emerald-400/40">+</span>&lt;ThemeToggle
+							onChange=&#123;toggle&#125; /&gt;
+						</div>
+					</div>
+				</div>
 			</div>
-		{/if}
-	{/if}
-</div>
+		</div>
+	</div>
+</section>
+
+<!-- How it works -->
+<section use:registerSection class="reveal-section border-t border-border px-6 py-24 lg:py-32">
+	<div class="mx-auto max-w-6xl">
+		<div class="mb-16 max-w-lg">
+			<p class="mb-3 font-mono text-xs tracking-[0.2em] text-accent uppercase">How it works</p>
+			<h2 class="text-3xl font-bold tracking-tight text-text">Three steps. That's it.</h2>
+		</div>
+
+		<div class="grid gap-8 lg:grid-cols-3 lg:gap-6">
+			<!-- Step 1 -->
+			<div class="reveal-child group" style="--child-delay: 0ms">
+				<div class="mb-5 flex items-center gap-3">
+					<span
+						class="flex h-7 w-7 items-center justify-center rounded-md bg-accent/15 font-mono text-xs font-bold text-accent"
+						>1</span
+					>
+					<h3 class="text-lg font-semibold text-text">Browse</h3>
+				</div>
+				<p class="mb-5 text-sm leading-relaxed text-text-secondary">
+					Every Claude Code session is already saved locally. Launch ThreadCast to see them all.
+				</p>
+				<!-- Terminal mockup -->
+				<div class="overflow-hidden rounded-lg border border-border bg-surface-1">
+					<div class="flex items-center gap-1.5 border-b border-border px-3 py-2">
+						<div class="h-2 w-2 rounded-full bg-text-muted/30"></div>
+						<div class="h-2 w-2 rounded-full bg-text-muted/30"></div>
+						<div class="h-2 w-2 rounded-full bg-text-muted/30"></div>
+					</div>
+					<div class="p-4 font-mono text-[11px] leading-5">
+						<p class="text-text-muted">$ threadcast</p>
+						<p class="mt-2 text-text-secondary">Your sessions:</p>
+						<p class="text-text">
+							<span class="text-accent">&#9656;</span> Add dark mode toggle
+							<span class="text-text-muted">8m ago</span>
+						</p>
+						<p class="text-text-muted">
+							&nbsp; Fix auth middleware
+							<span class="text-text-muted">2h ago</span>
+						</p>
+						<p class="text-text-muted">
+							&nbsp; Refactor API routes
+							<span class="text-text-muted">1d ago</span>
+						</p>
+						<p class="mt-2 text-text-muted">↑↓ navigate &middot; S share &middot; q quit</p>
+					</div>
+				</div>
+			</div>
+
+			<!-- Step 2 -->
+			<div class="reveal-child group" style="--child-delay: 120ms">
+				<div class="mb-5 flex items-center gap-3">
+					<span
+						class="flex h-7 w-7 items-center justify-center rounded-md bg-accent/15 font-mono text-xs font-bold text-accent"
+						>2</span
+					>
+					<h3 class="text-lg font-semibold text-text">Share</h3>
+				</div>
+				<p class="mb-5 text-sm leading-relaxed text-text-secondary">
+					Press S to share any session. Uploads instantly and gives you a permanent link.
+				</p>
+				<!-- Terminal mockup -->
+				<div class="overflow-hidden rounded-lg border border-border bg-surface-1">
+					<div class="flex items-center gap-1.5 border-b border-border px-3 py-2">
+						<div class="h-2 w-2 rounded-full bg-text-muted/30"></div>
+						<div class="h-2 w-2 rounded-full bg-text-muted/30"></div>
+						<div class="h-2 w-2 rounded-full bg-text-muted/30"></div>
+					</div>
+					<div class="p-4 font-mono text-[11px] leading-5">
+						<p class="text-text-muted">Uploading session...</p>
+						<p class="mt-1 text-success">&#10003; Uploaded successfully</p>
+						<p class="mt-2 text-text-secondary">Link copied to clipboard:</p>
+						<p class="text-accent">threadcast.dev/threads/clx9k...</p>
+						<p class="mt-2 text-text-muted">14 messages &middot; 6 tool calls &middot; 8m</p>
+					</div>
+				</div>
+			</div>
+
+			<!-- Step 3 -->
+			<div class="reveal-child group" style="--child-delay: 240ms">
+				<div class="mb-5 flex items-center gap-3">
+					<span
+						class="flex h-7 w-7 items-center justify-center rounded-md bg-accent/15 font-mono text-xs font-bold text-accent"
+						>3</span
+					>
+					<h3 class="text-lg font-semibold text-text">Read</h3>
+				</div>
+				<p class="mb-5 text-sm leading-relaxed text-text-secondary">
+					Beautiful thread pages with full context. Tool calls, diffs, and everything preserved.
+				</p>
+				<!-- Mini preview mockup -->
+				<div class="overflow-hidden rounded-lg border border-border bg-surface-1">
+					<div class="border-b border-border px-4 py-2.5">
+						<p class="text-xs font-medium text-text">Add dark mode toggle</p>
+						<p class="font-mono text-[10px] text-text-muted">sarah-dev &middot; 14 msgs</p>
+					</div>
+					<div class="space-y-2 p-4">
+						<div class="h-2 w-3/4 rounded bg-surface-2"></div>
+						<div class="h-2 w-1/2 rounded bg-surface-2"></div>
+						<div class="mt-3 flex gap-1.5">
+							<span
+								class="rounded-full bg-emerald-500/15 px-2 py-0.5 font-mono text-[9px] text-emerald-400"
+								>Bash</span
+							>
+							<span class="rounded-full bg-sky-500/15 px-2 py-0.5 font-mono text-[9px] text-sky-400"
+								>Read</span
+							>
+							<span
+								class="rounded-full bg-amber-500/15 px-2 py-0.5 font-mono text-[9px] text-amber-400"
+								>Edit</span
+							>
+						</div>
+						<div class="mt-2 flex gap-4 font-mono text-[10px] text-text-muted">
+							<span>6 tool calls</span>
+							<span>342 lines</span>
+							<span>8m</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Feature highlights -->
+<section use:registerSection class="reveal-section border-t border-border px-6 py-24 lg:py-32">
+	<div class="mx-auto max-w-6xl">
+		<div class="mb-16 max-w-lg">
+			<p class="mb-3 font-mono text-xs tracking-[0.2em] text-accent uppercase">Features</p>
+			<h2 class="text-3xl font-bold tracking-tight text-text">Every detail, preserved.</h2>
+		</div>
+
+		<div class="grid gap-4 sm:grid-cols-2">
+			<!-- Inline diffs -->
+			<div
+				class="hover-glow reveal-child rounded-xl border border-border bg-surface-1 p-6"
+				style="--child-delay: 0ms"
+			>
+				<div
+					class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent"
+				>
+					<svg
+						class="h-5 w-5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						stroke-width="1.5"
+					>
+						<path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+					</svg>
+				</div>
+				<h3 class="mb-2 text-base font-semibold text-text">Inline diffs</h3>
+				<p class="text-sm leading-relaxed text-text-secondary">
+					See exactly what changed. File diffs render inline with syntax highlighting.
+				</p>
+			</div>
+
+			<!-- Collapsible tool calls -->
+			<div
+				class="hover-glow reveal-child rounded-xl border border-border bg-surface-1 p-6"
+				style="--child-delay: 80ms"
+			>
+				<div
+					class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent"
+				>
+					<svg
+						class="h-5 w-5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						stroke-width="1.5"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085"
+						/>
+					</svg>
+				</div>
+				<h3 class="mb-2 text-base font-semibold text-text">Collapsible tool calls</h3>
+				<p class="text-sm leading-relaxed text-text-secondary">
+					Bash, Read, Edit, Write — every tool call preserved and expandable.
+				</p>
+			</div>
+
+			<!-- Prompt navigation -->
+			<div
+				class="hover-glow reveal-child rounded-xl border border-border bg-surface-1 p-6"
+				style="--child-delay: 160ms"
+			>
+				<div
+					class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent"
+				>
+					<svg
+						class="h-5 w-5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						stroke-width="1.5"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5-3L16.5 18m0 0L12 13.5m4.5 4.5V4.5"
+						/>
+					</svg>
+				</div>
+				<h3 class="mb-2 text-base font-semibold text-text">Prompt navigation</h3>
+				<p class="text-sm leading-relaxed text-text-secondary">
+					Jump between prompts with keyboard shortcuts. J/K to navigate, / to search.
+				</p>
+			</div>
+
+			<!-- Full-text search -->
+			<div
+				class="hover-glow reveal-child rounded-xl border border-border bg-surface-1 p-6"
+				style="--child-delay: 240ms"
+			>
+				<div
+					class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent"
+				>
+					<svg
+						class="h-5 w-5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						stroke-width="1.5"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+						/>
+					</svg>
+				</div>
+				<h3 class="mb-2 text-base font-semibold text-text">Full-text search</h3>
+				<p class="text-sm leading-relaxed text-text-secondary">
+					Find any session by title, project, tools used, or content.
+				</p>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Install CTA -->
+<section
+	id="install"
+	use:registerSection
+	class="reveal-section border-t border-border px-6 py-24 lg:py-32"
+>
+	<div class="mx-auto max-w-xl text-center">
+		<p class="mb-3 font-mono text-xs tracking-[0.2em] text-accent uppercase">Get started</p>
+		<h2 class="mb-4 text-3xl font-bold tracking-tight text-text">Start sharing in 30 seconds.</h2>
+		<p class="mb-10 text-text-secondary">Install the CLI, run it in any project, and share.</p>
+
+		<!-- Install command block -->
+		<div class="mx-auto mb-10 max-w-md">
+			<button
+				onclick={copyCommand}
+				class="group flex w-full cursor-pointer items-center justify-between rounded-lg border border-border bg-surface-1 px-5 py-3.5 text-left transition-colors hover:border-border-light"
+			>
+				<div class="flex items-center gap-3">
+					<span class="font-mono text-sm text-text-muted">$</span>
+					<code class="font-mono text-sm text-text">bun install -g threadcast</code>
+				</div>
+				<span class="font-mono text-xs text-text-muted transition-colors group-hover:text-accent">
+					{#if copied}
+						copied!
+					{:else}
+						copy
+					{/if}
+				</span>
+			</button>
+		</div>
+
+		<div class="flex flex-wrap justify-center gap-3">
+			<a
+				href="/threads"
+				class="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-bg transition-opacity hover:opacity-90"
+			>
+				Browse threads
+			</a>
+			<a
+				href="https://github.com/threadcast"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="inline-flex items-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-semibold text-text transition-colors hover:border-border-light hover:text-accent"
+			>
+				<svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+					<path
+						d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
+					/>
+				</svg>
+				GitHub
+			</a>
+		</div>
+	</div>
+</section>
+
+<style>
+	/* Scroll-triggered reveal */
+	.reveal-section {
+		opacity: 0;
+		transform: translateY(20px);
+		transition:
+			opacity 0.6s ease-out,
+			transform 0.6s ease-out;
+	}
+
+	.reveal-section:global(.is-visible) {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	/* Staggered children within revealed sections */
+	.reveal-child {
+		opacity: 0;
+		transform: translateY(12px);
+		transition:
+			opacity 0.5s ease-out,
+			transform 0.5s ease-out;
+		transition-delay: var(--child-delay, 0ms);
+	}
+
+	:global(.is-visible) .reveal-child {
+		opacity: 1;
+		transform: translateY(0);
+	}
+</style>
