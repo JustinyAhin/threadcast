@@ -4,20 +4,24 @@
 	let { data } = $props();
 </script>
 
+<svelte:head>
+	<title>{data.username}'s Threads — ThreadCast</title>
+</svelte:head>
+
 <div class="mx-auto max-w-4xl">
 	<div class="mb-8">
-		<h1 class="mb-2 text-3xl font-bold text-text">Recent Threads</h1>
-		<p class="text-text-secondary">Claude Code sessions shared by the community</p>
+		<h1 class="mb-2 text-3xl font-bold text-text">
+			{data.username}
+		</h1>
+		<p class="text-text-secondary">
+			{data.threads.length}
+			{data.threads.length === 1 ? 'thread' : 'threads'} shared
+		</p>
 	</div>
 
 	{#if data.threads.length === 0}
 		<div class="rounded-lg border border-border bg-bg-secondary p-12 text-center">
-			<p class="mb-2 text-lg text-text-secondary">No threads yet</p>
-			<p class="text-sm text-text-muted">
-				Share your first session with <code class="rounded bg-bg-tertiary px-1.5 py-0.5"
-					>threadcast share</code
-				>
-			</p>
+			<p class="text-text-secondary">No threads from this user yet</p>
 		</div>
 	{:else}
 		<div class="grid gap-4">
