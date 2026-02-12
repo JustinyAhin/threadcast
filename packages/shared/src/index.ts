@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // ── Tool Call ────────────────────────────────────────────────────────────────
 
-export const ToolCallSchema = z.object({
+const ToolCallSchema = z.object({
   id: z.string(),
   name: z.string(),
   input: z.record(z.any()),
@@ -14,30 +14,30 @@ export const ToolCallSchema = z.object({
     .optional(),
 });
 
-export type ToolCall = z.infer<typeof ToolCallSchema>;
+type ToolCall = z.infer<typeof ToolCallSchema>;
 
 // ── Content Block ────────────────────────────────────────────────────────────
 
-export const TextBlockSchema = z.object({
+const TextBlockSchema = z.object({
   type: z.literal("text"),
   text: z.string(),
 });
 
-export const ToolCallBlockSchema = z.object({
+const ToolCallBlockSchema = z.object({
   type: z.literal("tool_call"),
   tool: ToolCallSchema,
 });
 
-export const ContentBlockSchema = z.discriminatedUnion("type", [
+const ContentBlockSchema = z.discriminatedUnion("type", [
   TextBlockSchema,
   ToolCallBlockSchema,
 ]);
 
-export type ContentBlock = z.infer<typeof ContentBlockSchema>;
+type ContentBlock = z.infer<typeof ContentBlockSchema>;
 
 // ── Processed Turn ───────────────────────────────────────────────────────────
 
-export const ProcessedTurnSchema = z.object({
+const ProcessedTurnSchema = z.object({
   role: z.enum(["user", "assistant"]),
   timestamp: z.string(),
   content: z.array(ContentBlockSchema),
@@ -54,11 +54,11 @@ export const ProcessedTurnSchema = z.object({
     .optional(),
 });
 
-export type ProcessedTurn = z.infer<typeof ProcessedTurnSchema>;
+type ProcessedTurn = z.infer<typeof ProcessedTurnSchema>;
 
 // ── Thread Metadata ──────────────────────────────────────────────────────────
 
-export const ThreadMetadataSchema = z.object({
+const ThreadMetadataSchema = z.object({
   sessionId: z.string(),
   title: z.string(),
   projectName: z.string(),
@@ -74,31 +74,31 @@ export const ThreadMetadataSchema = z.object({
   messageCount: z.number(),
 });
 
-export type ThreadMetadata = z.infer<typeof ThreadMetadataSchema>;
+type ThreadMetadata = z.infer<typeof ThreadMetadataSchema>;
 
 // ── Uploader ─────────────────────────────────────────────────────────────────
 
-export const UploaderSchema = z.object({
+const UploaderSchema = z.object({
   githubUsername: z.string(),
   githubAvatarUrl: z.string(),
 });
 
-export type Uploader = z.infer<typeof UploaderSchema>;
+type Uploader = z.infer<typeof UploaderSchema>;
 
 // ── Thread Data (core contract) ──────────────────────────────────────────────
 
-export const ThreadDataSchema = z.object({
+const ThreadDataSchema = z.object({
   version: z.literal(1),
   metadata: ThreadMetadataSchema,
   uploader: UploaderSchema,
   turns: z.array(ProcessedTurnSchema),
 });
 
-export type ThreadData = z.infer<typeof ThreadDataSchema>;
+type ThreadData = z.infer<typeof ThreadDataSchema>;
 
 // ── Raw JSONL line types (what Claude Code writes) ───────────────────────────
 
-export interface RawJsonlLine {
+type RawJsonlLine = {
   type: "user" | "assistant" | "file-history-snapshot" | "progress";
   uuid: string;
   parentUuid?: string;
@@ -140,9 +140,9 @@ export interface RawJsonlLine {
   snapshot?: any;
   isSnapshotUpdate?: boolean;
   messageId?: string;
-}
+};
 
-export interface RawMessage {
+type RawMessage = {
   role: "user" | "assistant";
   model?: string;
   id?: string;
@@ -157,9 +157,9 @@ export interface RawMessage {
     cache_read_input_tokens?: number;
     [key: string]: any;
   };
-}
+};
 
-export type RawContentBlock =
+type RawContentBlock =
   | { type: "text"; text: string }
   | { type: "thinking"; thinking: string }
   | { type: "tool_use"; id: string; name: string; input: Record<string, any> }
@@ -167,7 +167,7 @@ export type RawContentBlock =
 
 // ── Session Summary (for `threadcast list`) ──────────────────────────────────
 
-export interface SessionSummary {
+type SessionSummary = {
   sessionId: string;
   path: string;
   projectPath: string;
@@ -176,28 +176,55 @@ export interface SessionSummary {
   created: string;
   lastModified: string;
   sizeBytes: number;
-}
+};
 
 // ── API Types ────────────────────────────────────────────────────────────────
 
-export interface UploadResponse {
+type UploadResponse = {
   id: string;
   url: string;
-}
+};
 
-export interface ApiError {
+type ApiError = {
   error: string;
   message: string;
-}
+};
 
 // ── Config ───────────────────────────────────────────────────────────────────
 
-export interface AuthConfig {
+type AuthConfig = {
   githubToken: string;
   githubUsername: string;
   githubAvatarUrl: string;
-}
+};
 
-export const API_BASE_URL = "https://threadcast.dev";
-export const GITHUB_CLIENT_ID = "PLACEHOLDER_CLIENT_ID";
-export const MAX_THREAD_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+const API_BASE_URL = "https://threadcast.dev";
+const GITHUB_CLIENT_ID = "PLACEHOLDER_CLIENT_ID";
+const MAX_THREAD_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+
+export {
+  ToolCallSchema,
+  TextBlockSchema,
+  ToolCallBlockSchema,
+  ContentBlockSchema,
+  ProcessedTurnSchema,
+  ThreadMetadataSchema,
+  UploaderSchema,
+  ThreadDataSchema,
+  API_BASE_URL,
+  GITHUB_CLIENT_ID,
+  MAX_THREAD_SIZE_BYTES,
+  type ToolCall,
+  type ContentBlock,
+  type ProcessedTurn,
+  type ThreadMetadata,
+  type Uploader,
+  type ThreadData,
+  type RawJsonlLine,
+  type RawMessage,
+  type RawContentBlock,
+  type SessionSummary,
+  type UploadResponse,
+  type ApiError,
+  type AuthConfig,
+};

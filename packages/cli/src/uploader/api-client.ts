@@ -6,11 +6,13 @@ import {
   type ApiError,
 } from "@threadcast/shared";
 
-export async function uploadThread(
-  threadData: ThreadData,
-  token: string
-): Promise<UploadResponse> {
-  const body = JSON.stringify(threadData);
+type UploadThreadOpts = {
+  threadData: ThreadData;
+  token: string;
+};
+
+const uploadThread = async (opts: UploadThreadOpts): Promise<UploadResponse> => {
+  const body = JSON.stringify(opts.threadData);
 
   if (body.length > MAX_THREAD_SIZE_BYTES) {
     throw new Error(
@@ -23,7 +25,7 @@ export async function uploadThread(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${opts.token}`,
     },
     body,
   });
@@ -37,11 +39,11 @@ export async function uploadThread(
   }
 
   return (await res.json()) as UploadResponse;
-}
+};
 
-export async function listRemoteThreads(
+const listRemoteThreads = async (
   token: string
-): Promise<{ id: string; title: string; created: string }[]> {
+): Promise<{ id: string; title: string; created: string }[]> => {
   const res = await fetch(`${API_BASE_URL}/api/threads`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -53,20 +55,24 @@ export async function listRemoteThreads(
   }
 
   return (await res.json()) as { id: string; title: string; created: string }[];
-}
+};
 
-export async function deleteRemoteThread(
-  id: string,
-  token: string
-): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/api/threads/${id}`, {
+type DeleteRemoteThreadOpts = {
+  id: string;
+  token: string;
+};
+
+const deleteRemoteThread = async (opts: DeleteRemoteThreadOpts): Promise<void> => {
+  const res = await fetch(`${API_BASE_URL}/api/threads/${opts.id}`, {
     method: "DELETE",
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${opts.token}`,
     },
   });
 
   if (!res.ok) {
     throw new Error(`Failed to delete thread: ${res.statusText}`);
   }
-}
+};
+
+export { uploadThread, listRemoteThreads, deleteRemoteThread };

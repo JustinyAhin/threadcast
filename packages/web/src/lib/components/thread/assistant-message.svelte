@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ProcessedTurn } from '@threadcast/shared';
 	import { renderMarkdown } from '$lib/markdown';
-	import ToolCallBlock from './ToolCallBlock.svelte';
+	import ToolCallBlock from './tool-call-block.svelte';
 
 	let { turn }: { turn: ProcessedTurn } = $props();
 </script>

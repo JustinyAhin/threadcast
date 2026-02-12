@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ThreadCard from '$lib/components/ThreadCard.svelte';
+	import ThreadCard from '$lib/components/thread-card.svelte';
 
 	let { data } = $props();
 </script>

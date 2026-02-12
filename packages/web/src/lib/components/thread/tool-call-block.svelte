@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { ToolCall } from '@threadcast/shared';
-	import BashBlock from './BashBlock.svelte';
-	import FileReadBlock from './FileReadBlock.svelte';
-	import EditBlock from './EditBlock.svelte';
-	import SearchBlock from './SearchBlock.svelte';
+	import BashBlock from './bash-block.svelte';
+	import FileReadBlock from './file-read-block.svelte';
+	import EditBlock from './edit-block.svelte';
+	import SearchBlock from './search-block.svelte';
 
 	let { tool }: { tool: ToolCall } = $props();
 	let expanded = $state(false);

@@ -3,7 +3,7 @@ import ora from "ora";
 import { githubDeviceFlow } from "../auth/github-device-flow.js";
 import { saveConfig, loadConfig } from "../auth/config.js";
 
-export async function loginCommand() {
+const loginCommand = async () => {
   const existing = await loadConfig();
   if (existing) {
     console.log(
@@ -37,4 +37,6 @@ export async function loginCommand() {
     spinner.fail(err.message);
     process.exit(1);
   }
-}
+};
+
+export { loginCommand };

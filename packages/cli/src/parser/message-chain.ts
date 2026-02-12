@@ -1,20 +1,20 @@
 import type { RawJsonlLine } from "@threadcast/shared";
 
 /**
- * Reconstructs the message chain from parentUuid → uuid links.
+ * Reconstructs the message chain from parentUuid -> uuid links.
  *
  * Claude Code JSONL messages form a tree via parentUuid/uuid.
  * We follow the main chain (non-sidechain) to get the linear conversation.
  *
  * Strategy:
- * 1. Build a map of uuid → message
- * 2. Build a map of parentUuid → children
+ * 1. Build a map of uuid -> message
+ * 2. Build a map of parentUuid -> children
  * 3. Find the root (first message with no parentUuid or parentUuid not in our set)
  * 4. Walk the chain, always following the last child at each step
  *    (since Claude Code appends messages chronologically, the last child
  *     at each node is the "current" continuation of the conversation)
  */
-export function buildMessageChain(messages: RawJsonlLine[]): RawJsonlLine[] {
+const buildMessageChain = (messages: RawJsonlLine[]): RawJsonlLine[] => {
   if (messages.length === 0) return [];
 
   const byUuid = new Map<string, RawJsonlLine>();
@@ -43,7 +43,7 @@ export function buildMessageChain(messages: RawJsonlLine[]): RawJsonlLine[] {
   const chain: RawJsonlLine[] = [];
   const visited = new Set<string>();
 
-  function walk(node: RawJsonlLine) {
+  const walk = (node: RawJsonlLine) => {
     if (visited.has(node.uuid)) return;
     visited.add(node.uuid);
     chain.push(node);
@@ -55,10 +55,12 @@ export function buildMessageChain(messages: RawJsonlLine[]): RawJsonlLine[] {
         walk(child);
       }
     }
-  }
+  };
 
   // Start from the first root
   walk(roots[0]);
 
   return chain;
-}
+};
+
+export { buildMessageChain };

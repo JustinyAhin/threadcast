@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ThreadView from '$lib/components/thread/ThreadView.svelte';
+	import ThreadView from '$lib/components/thread/thread-view.svelte';
 
 	let { data } = $props();
 </script>

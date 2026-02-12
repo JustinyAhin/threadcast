@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import { clearConfig, loadConfig } from "../auth/config.js";
 
-export async function logoutCommand() {
+const logoutCommand = async () => {
   const existing = await loadConfig();
   if (!existing) {
     console.log(chalk.dim("Not logged in."));
@@ -12,4 +12,6 @@ export async function logoutCommand() {
   console.log(
     chalk.green(`Logged out from ${chalk.bold(existing.githubUsername)}.`)
   );
-}
+};
+
+export { logoutCommand };

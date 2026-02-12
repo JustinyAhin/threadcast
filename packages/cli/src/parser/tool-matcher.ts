@@ -6,8 +6,67 @@ import type {
   ProcessedTurn,
 } from "@threadcast/shared";
 
+type MakeAssistantTurnOpts = {
+  content: ContentBlock[];
+  timestamp: string;
+  model: string | undefined;
+  inputTokens: number;
+  outputTokens: number;
+};
+
+const makeAssistantTurn = (opts: MakeAssistantTurnOpts): ProcessedTurn => {
+  const turn: ProcessedTurn = {
+    role: "assistant",
+    timestamp: opts.timestamp,
+    content: opts.content,
+  };
+  if (opts.model || opts.inputTokens > 0 || opts.outputTokens > 0) {
+    turn.metadata = {};
+    if (opts.model) turn.metadata.model = opts.model;
+    if (opts.inputTokens > 0 || opts.outputTokens > 0) {
+      turn.metadata.usage = {
+        input_tokens: opts.inputTokens,
+        output_tokens: opts.outputTokens,
+      };
+    }
+  }
+  return turn;
+};
+
+const extractUserText = (msg: RawJsonlLine): string => {
+  if (!msg.message) return "";
+  const content = msg.message.content;
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content
+      .filter(
+        (b): b is { type: "text"; text: string } =>
+          typeof b === "object" && b.type === "text"
+      )
+      .map((b) => b.text)
+      .join("\n");
+  }
+  return "";
+};
+
+const extractToolResultContent = (
+  content: string | RawContentBlock[] | undefined
+): string => {
+  if (!content) return "";
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((b) => {
+        if (typeof b === "object" && "text" in b) return b.text;
+        return JSON.stringify(b);
+      })
+      .join("\n");
+  }
+  return String(content);
+};
+
 /**
- * Processes raw messages into ProcessedTurns with matched tool_use ↔ tool_result pairs.
+ * Processes raw messages into ProcessedTurns with matched tool_use <-> tool_result pairs.
  *
  * The JSONL structure for tool calls:
  * 1. An assistant message contains a `tool_use` content block with an `id`
@@ -16,7 +75,7 @@ import type {
  *
  * We group consecutive assistant messages between user messages into a single turn.
  */
-export function processMessages(messages: RawJsonlLine[]): ProcessedTurn[] {
+const processMessages = (messages: RawJsonlLine[]): ProcessedTurn[] => {
   // First pass: collect all tool results by tool_use_id
   const toolResults = new Map<
     string,
@@ -41,11 +100,6 @@ export function processMessages(messages: RawJsonlLine[]): ProcessedTurn[] {
         });
       }
     }
-
-    // Also check toolUseResult for error info
-    if (msg.toolUseResult) {
-      // toolUseResult appears alongside the message content
-    }
   }
 
   // Second pass: build turns
@@ -62,13 +116,13 @@ export function processMessages(messages: RawJsonlLine[]): ProcessedTurn[] {
     if (msg.type === "user" && !msg.toolUseResult && !msg.sourceToolAssistantUUID) {
       // Real user message — flush any pending assistant turn
       if (currentAssistantBlocks.length > 0) {
-        turns.push(makeAssistantTurn(
-          currentAssistantBlocks,
-          currentAssistantTimestamp!,
-          currentModel,
-          totalInputTokens,
-          totalOutputTokens,
-        ));
+        turns.push(makeAssistantTurn({
+          content: currentAssistantBlocks,
+          timestamp: currentAssistantTimestamp!,
+          model: currentModel,
+          inputTokens: totalInputTokens,
+          outputTokens: totalOutputTokens,
+        }));
         currentAssistantBlocks = [];
         currentAssistantTimestamp = undefined;
         currentModel = undefined;
@@ -137,71 +191,16 @@ export function processMessages(messages: RawJsonlLine[]): ProcessedTurn[] {
 
   // Flush final assistant turn
   if (currentAssistantBlocks.length > 0) {
-    turns.push(makeAssistantTurn(
-      currentAssistantBlocks,
-      currentAssistantTimestamp!,
-      currentModel,
-      totalInputTokens,
-      totalOutputTokens,
-    ));
+    turns.push(makeAssistantTurn({
+      content: currentAssistantBlocks,
+      timestamp: currentAssistantTimestamp!,
+      model: currentModel,
+      inputTokens: totalInputTokens,
+      outputTokens: totalOutputTokens,
+    }));
   }
 
   return turns;
-}
+};
 
-function makeAssistantTurn(
-  content: ContentBlock[],
-  timestamp: string,
-  model: string | undefined,
-  inputTokens: number,
-  outputTokens: number,
-): ProcessedTurn {
-  const turn: ProcessedTurn = {
-    role: "assistant",
-    timestamp,
-    content,
-  };
-  if (model || inputTokens > 0 || outputTokens > 0) {
-    turn.metadata = {};
-    if (model) turn.metadata.model = model;
-    if (inputTokens > 0 || outputTokens > 0) {
-      turn.metadata.usage = {
-        input_tokens: inputTokens,
-        output_tokens: outputTokens,
-      };
-    }
-  }
-  return turn;
-}
-
-function extractUserText(msg: RawJsonlLine): string {
-  if (!msg.message) return "";
-  const content = msg.message.content;
-  if (typeof content === "string") return content;
-  if (Array.isArray(content)) {
-    return content
-      .filter(
-        (b): b is { type: "text"; text: string } =>
-          typeof b === "object" && b.type === "text"
-      )
-      .map((b) => b.text)
-      .join("\n");
-  }
-  return "";
-}
-
-function extractToolResultContent(
-  content: string | RawContentBlock[] | undefined
-): string {
-  if (!content) return "";
-  if (typeof content === "string") return content;
-  if (Array.isArray(content)) {
-    return content
-      .map((b) => {
-        if (typeof b === "object" && "text" in b) return b.text;
-        return JSON.stringify(b);
-      })
-      .join("\n");
-  }
-  return String(content);
-}
+export { processMessages };

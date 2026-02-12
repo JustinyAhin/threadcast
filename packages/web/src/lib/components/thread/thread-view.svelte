@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ThreadData } from '@threadcast/shared';
-	import UserMessage from './UserMessage.svelte';
-	import AssistantMessage from './AssistantMessage.svelte';
+	import UserMessage from './user-message.svelte';
+	import AssistantMessage from './assistant-message.svelte';
 
 	let { thread }: { thread: ThreadData } = $props();
 </script>

@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import { loadConfig } from "../auth/config.js";
 
-export async function whoamiCommand() {
+const whoamiCommand = async () => {
   const config = await loadConfig();
   if (!config) {
     console.log(chalk.dim("Not logged in. Run ") + chalk.cyan("threadcast login"));
@@ -12,4 +12,6 @@ export async function whoamiCommand() {
     `\n  ${chalk.bold("Username:")} ${config.githubUsername}` +
       `\n  ${chalk.bold("Avatar:")}   ${config.githubAvatarUrl}\n`
   );
-}
+};
+
+export { whoamiCommand };

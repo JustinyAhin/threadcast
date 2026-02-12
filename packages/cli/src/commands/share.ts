@@ -5,10 +5,21 @@ import { loadConfig } from "../auth/config.js";
 import { parseSession } from "../parser/index.js";
 import { discoverSessions, findSession } from "./session-discovery.js";
 import { uploadThread } from "../uploader/api-client.js";
-import { API_BASE_URL, MAX_THREAD_SIZE_BYTES } from "@threadcast/shared";
+import { MAX_THREAD_SIZE_BYTES } from "@threadcast/shared";
 import { stat } from "node:fs/promises";
 
-export async function shareCommand(sessionId?: string) {
+const timeAgo = (date: Date): string => {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+};
+
+const shareCommand = async (sessionId?: string) => {
   // Check auth
   const config = await loadConfig();
   if (!config) {
@@ -105,7 +116,7 @@ export async function shareCommand(sessionId?: string) {
   // Upload
   const uploadSpinner = ora("Uploading...").start();
   try {
-    const result = await uploadThread(threadData, config.githubToken);
+    const result = await uploadThread({ threadData, token: config.githubToken });
     uploadSpinner.succeed("Uploaded!");
     console.log(
       `\n  ${chalk.bold("URL:")} ${chalk.cyan.underline(result.url)}\n`
@@ -114,15 +125,6 @@ export async function shareCommand(sessionId?: string) {
     uploadSpinner.fail(`Upload failed: ${err.message}`);
     process.exit(1);
   }
-}
+};
 
-function timeAgo(date: Date): string {
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
+export { shareCommand };

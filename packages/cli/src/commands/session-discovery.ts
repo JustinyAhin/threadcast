@@ -7,10 +7,70 @@ import type { SessionSummary } from "@threadcast/shared";
 
 const CLAUDE_PROJECTS_DIR = join(homedir(), ".claude", "projects");
 
+const getFirstUserMessage = async (filePath: string): Promise<string | null> => {
+  const stream = createReadStream(filePath, { encoding: "utf-8" });
+  const rl = createInterface({ input: stream, crlfDelay: Infinity });
+
+  try {
+    for await (const line of rl) {
+      try {
+        const data = JSON.parse(line.trim());
+        if (
+          data.type === "user" &&
+          !data.toolUseResult &&
+          !data.sourceToolAssistantUUID &&
+          data.message
+        ) {
+          const content = data.message.content;
+          if (typeof content === "string") return content.slice(0, 100);
+          if (Array.isArray(content)) {
+            const textBlock = content.find(
+              (b: any) => b.type === "text" && b.text
+            );
+            if (textBlock) return textBlock.text.slice(0, 100);
+          }
+        }
+      } catch {
+        continue;
+      }
+    }
+  } finally {
+    stream.destroy();
+  }
+  return null;
+};
+
+const countMessages = async (filePath: string): Promise<number> => {
+  const stream = createReadStream(filePath, { encoding: "utf-8" });
+  const rl = createInterface({ input: stream, crlfDelay: Infinity });
+  let count = 0;
+
+  try {
+    for await (const line of rl) {
+      try {
+        const data = JSON.parse(line.trim());
+        if (
+          (data.type === "user" || data.type === "assistant") &&
+          !data.isSidechain &&
+          !data.isMeta
+        ) {
+          count++;
+        }
+      } catch {
+        continue;
+      }
+    }
+  } finally {
+    stream.destroy();
+  }
+
+  return count;
+};
+
 /**
  * Scan all Claude Code project directories for session files.
  */
-export async function discoverSessions(): Promise<SessionSummary[]> {
+const discoverSessions = async (): Promise<SessionSummary[]> => {
   const sessions: SessionSummary[] = [];
 
   let projectDirs: string[];
@@ -67,74 +127,16 @@ export async function discoverSessions(): Promise<SessionSummary[]> {
   );
 
   return sessions;
-}
+};
 
 /**
  * Find a session by ID across all project directories.
  */
-export async function findSession(
+const findSession = async (
   sessionId: string
-): Promise<SessionSummary | null> {
+): Promise<SessionSummary | null> => {
   const sessions = await discoverSessions();
   return sessions.find((s) => s.sessionId === sessionId) || null;
-}
+};
 
-async function getFirstUserMessage(filePath: string): Promise<string | null> {
-  const stream = createReadStream(filePath, { encoding: "utf-8" });
-  const rl = createInterface({ input: stream, crlfDelay: Infinity });
-
-  try {
-    for await (const line of rl) {
-      try {
-        const data = JSON.parse(line.trim());
-        if (
-          data.type === "user" &&
-          !data.toolUseResult &&
-          !data.sourceToolAssistantUUID &&
-          data.message
-        ) {
-          const content = data.message.content;
-          if (typeof content === "string") return content.slice(0, 100);
-          if (Array.isArray(content)) {
-            const textBlock = content.find(
-              (b: any) => b.type === "text" && b.text
-            );
-            if (textBlock) return textBlock.text.slice(0, 100);
-          }
-        }
-      } catch {
-        continue;
-      }
-    }
-  } finally {
-    stream.destroy();
-  }
-  return null;
-}
-
-async function countMessages(filePath: string): Promise<number> {
-  const stream = createReadStream(filePath, { encoding: "utf-8" });
-  const rl = createInterface({ input: stream, crlfDelay: Infinity });
-  let count = 0;
-
-  try {
-    for await (const line of rl) {
-      try {
-        const data = JSON.parse(line.trim());
-        if (
-          (data.type === "user" || data.type === "assistant") &&
-          !data.isSidechain &&
-          !data.isMeta
-        ) {
-          count++;
-        }
-      } catch {
-        continue;
-      }
-    }
-  } finally {
-    stream.destroy();
-  }
-
-  return count;
-}
+export { discoverSessions, findSession };

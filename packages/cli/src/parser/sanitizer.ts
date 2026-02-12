@@ -10,115 +10,30 @@ const HOME_DIR_PATTERNS = [
   /C:\\Users\\[^\\]+/g,
 ];
 
-/**
- * Sanitize processed turns:
- * 1. Replace absolute home paths with ~
- * 2. Truncate long tool outputs
- * 3. Strip any remaining thinking blocks (already handled in tool-matcher)
- * 4. Remove empty turns
- */
-export function sanitizeTurns(
-  turns: ProcessedTurn[],
-  options: SanitizeOptions = {}
-): ProcessedTurn[] {
-  const { homePath, projectPath } = options;
-
-  return turns
-    .map((turn) => ({
-      ...turn,
-      content: turn.content
-        .map((block) => sanitizeBlock(block, homePath, projectPath))
-        .filter(Boolean) as ContentBlock[],
-    }))
-    .filter((turn) => turn.content.length > 0);
-}
-
-export interface SanitizeOptions {
+type SanitizeOptions = {
   /** User's home directory path to replace with ~ */
   homePath?: string;
   /** Project root path to replace with ./ */
   projectPath?: string;
-}
+};
 
-function sanitizeBlock(
-  block: ContentBlock,
-  homePath?: string,
-  projectPath?: string
-): ContentBlock | null {
-  if (block.type === "text") {
-    const text = sanitizePaths(block.text, homePath, projectPath);
-    if (!text.trim()) return null;
-    return { type: "text", text };
-  }
+type SanitizePathsOpts = {
+  text: string;
+  homePath?: string;
+  projectPath?: string;
+};
 
-  if (block.type === "tool_call") {
-    return {
-      type: "tool_call",
-      tool: sanitizeToolCall(block.tool, homePath, projectPath),
-    };
-  }
-
-  return block;
-}
-
-function sanitizeToolCall(
-  tool: ToolCall,
-  homePath?: string,
-  projectPath?: string
-): ToolCall {
-  const sanitized: ToolCall = {
-    id: tool.id,
-    name: tool.name,
-    input: sanitizeToolInput(tool.input, homePath, projectPath),
-  };
-
-  if (tool.result) {
-    let content = tool.result.content;
-    content = sanitizePaths(content, homePath, projectPath);
-    if (content.length > MAX_TOOL_OUTPUT_LENGTH) {
-      content =
-        content.slice(0, MAX_TOOL_OUTPUT_LENGTH) + TRUNCATION_NOTICE;
-    }
-    sanitized.result = {
-      content,
-      isError: tool.result.isError,
-    };
-  }
-
-  return sanitized;
-}
-
-function sanitizeToolInput(
-  input: Record<string, any>,
-  homePath?: string,
-  projectPath?: string
-): Record<string, any> {
-  const result: Record<string, any> = {};
-  for (const [key, value] of Object.entries(input)) {
-    if (typeof value === "string") {
-      result[key] = sanitizePaths(value, homePath, projectPath);
-    } else {
-      result[key] = value;
-    }
-  }
-  return result;
-}
-
-function sanitizePaths(
-  text: string,
-  homePath?: string,
-  projectPath?: string
-): string {
-  let result = text;
+const sanitizePaths = (opts: SanitizePathsOpts): string => {
+  let result = opts.text;
 
   // Replace project path first (more specific, longer path)
-  if (projectPath) {
-    result = result.replaceAll(projectPath, ".");
+  if (opts.projectPath) {
+    result = result.replaceAll(opts.projectPath, ".");
   }
 
   // Replace home directory
-  if (homePath) {
-    result = result.replaceAll(homePath, "~");
+  if (opts.homePath) {
+    result = result.replaceAll(opts.homePath, "~");
   }
 
   // Fallback: generic home directory patterns
@@ -127,4 +42,99 @@ function sanitizePaths(
   }
 
   return result;
-}
+};
+
+type SanitizeToolInputOpts = {
+  input: Record<string, any>;
+  homePath?: string;
+  projectPath?: string;
+};
+
+const sanitizeToolInput = (opts: SanitizeToolInputOpts): Record<string, any> => {
+  const result: Record<string, any> = {};
+  for (const [key, value] of Object.entries(opts.input)) {
+    if (typeof value === "string") {
+      result[key] = sanitizePaths({ text: value, homePath: opts.homePath, projectPath: opts.projectPath });
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+};
+
+type SanitizeToolCallOpts = {
+  tool: ToolCall;
+  homePath?: string;
+  projectPath?: string;
+};
+
+const sanitizeToolCall = (opts: SanitizeToolCallOpts): ToolCall => {
+  const sanitized: ToolCall = {
+    id: opts.tool.id,
+    name: opts.tool.name,
+    input: sanitizeToolInput({ input: opts.tool.input, homePath: opts.homePath, projectPath: opts.projectPath }),
+  };
+
+  if (opts.tool.result) {
+    let content = opts.tool.result.content;
+    content = sanitizePaths({ text: content, homePath: opts.homePath, projectPath: opts.projectPath });
+    if (content.length > MAX_TOOL_OUTPUT_LENGTH) {
+      content =
+        content.slice(0, MAX_TOOL_OUTPUT_LENGTH) + TRUNCATION_NOTICE;
+    }
+    sanitized.result = {
+      content,
+      isError: opts.tool.result.isError,
+    };
+  }
+
+  return sanitized;
+};
+
+type SanitizeBlockOpts = {
+  block: ContentBlock;
+  homePath?: string;
+  projectPath?: string;
+};
+
+const sanitizeBlock = (opts: SanitizeBlockOpts): ContentBlock | null => {
+  if (opts.block.type === "text") {
+    const text = sanitizePaths({ text: opts.block.text, homePath: opts.homePath, projectPath: opts.projectPath });
+    if (!text.trim()) return null;
+    return { type: "text", text };
+  }
+
+  if (opts.block.type === "tool_call") {
+    return {
+      type: "tool_call",
+      tool: sanitizeToolCall({ tool: opts.block.tool, homePath: opts.homePath, projectPath: opts.projectPath }),
+    };
+  }
+
+  return opts.block;
+};
+
+/**
+ * Sanitize processed turns:
+ * 1. Replace absolute home paths with ~
+ * 2. Truncate long tool outputs
+ * 3. Strip any remaining thinking blocks (already handled in tool-matcher)
+ * 4. Remove empty turns
+ */
+const sanitizeTurns = (
+  turns: ProcessedTurn[],
+  options: SanitizeOptions = {}
+): ProcessedTurn[] => {
+  const { homePath, projectPath } = options;
+
+  return turns
+    .map((turn) => ({
+      ...turn,
+      content: turn.content
+        .map((block) => sanitizeBlock({ block, homePath, projectPath }))
+        .filter(Boolean) as ContentBlock[],
+    }))
+    .filter((turn) => turn.content.length > 0);
+};
+
+export { sanitizeTurns, type SanitizeOptions };
