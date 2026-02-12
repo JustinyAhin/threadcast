@@ -3,6 +3,7 @@
 	import UserMessage from './user-message.svelte';
 	import AssistantMessage from './assistant-message.svelte';
 	import ThreadSidebar from './thread-sidebar.svelte';
+	import ChatNav from './chat-nav.svelte';
 
 	let { thread }: { thread: ThreadData } = $props();
 
@@ -10,6 +11,41 @@
 	let inputEl = $state<HTMLInputElement>();
 	let activeTurnIndex = $state(-1);
 	let turnEls = $state<(HTMLDivElement | null)[]>([]);
+	let activeUserTurnIndex = $state(-1);
+
+	const userTurnIndices = $derived(
+		thread.turns.map((t, i) => (t.role === 'user' ? i : -1)).filter((i) => i !== -1)
+	);
+
+	$effect(() => {
+		const els = userTurnIndices.map((i) => turnEls[i]).filter(Boolean) as HTMLDivElement[];
+		if (els.length === 0) return;
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) {
+						const idx = turnEls.indexOf(entry.target as HTMLDivElement);
+						if (idx !== -1 && thread.turns[idx]?.role === 'user') {
+							activeUserTurnIndex = idx;
+						}
+					}
+				}
+			},
+			{ rootMargin: '-20% 0px -60% 0px' }
+		);
+
+		for (const el of els) observer.observe(el);
+		return () => observer.disconnect();
+	});
+
+	const navigateToTurn = (turnIndex: number) => {
+		const el = turnEls[turnIndex];
+		if (el) {
+			el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			activeUserTurnIndex = turnIndex;
+		}
+	};
 
 	const getTurnText = (turn: (typeof thread.turns)[number]): string => {
 		return turn.content
@@ -81,7 +117,9 @@
 
 <svelte:window onkeydown={onKeydown} />
 
-<div class="mx-auto flex max-w-7xl gap-8">
+<div class="mx-auto flex max-w-7xl items-start gap-8">
+	<ChatNav turns={thread.turns} activeTurnIndex={activeUserTurnIndex} onNavigate={navigateToTurn} />
+
 	<div class="min-w-0 max-w-4xl flex-1">
 		<!-- Thread header -->
 		<div class="mb-8 border-b border-border pb-6">
