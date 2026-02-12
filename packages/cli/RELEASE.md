@@ -8,7 +8,6 @@
 ## Steps
 
 1. **Bump version** in `packages/cli/package.json`
-
 2. **Commit and push**
 
    ```bash
