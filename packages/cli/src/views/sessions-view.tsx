@@ -4,7 +4,11 @@ import { useApp } from "../context/app-context.js";
 import { SessionItem } from "../components/session-item.js";
 import { colors } from "../theme.js";
 
-const SessionsView = () => {
+type SessionsViewProps = {
+  visible?: boolean;
+};
+
+const SessionsView = (props: SessionsViewProps) => {
   const [state, actions] = useApp();
   const [filtering, setFiltering] = createSignal(false);
 
@@ -15,7 +19,7 @@ const SessionsView = () => {
   });
 
   useKeyboard((key) => {
-    if (state.view !== "sessions") return;
+    if (props.visible === false) return;
 
     if (filtering()) {
       if (key.name === "escape") {
@@ -85,7 +89,7 @@ const SessionsView = () => {
   });
 
   return (
-    <box flexDirection="column" width="100%" flexGrow={1}>
+    <box flexDirection="column" width="100%" flexGrow={1} visible={props.visible}>
       <box
         flexDirection="column"
         width="100%"
