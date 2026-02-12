@@ -39,7 +39,7 @@ type ContentBlock = z.infer<typeof ContentBlockSchema>;
 
 const ProcessedTurnSchema = z.object({
   role: z.enum(["user", "assistant"]),
-  timestamp: z.string(),
+  timestamp: z.string().datetime(),
   content: z.array(ContentBlockSchema),
   metadata: z
     .object({
@@ -63,7 +63,7 @@ const ThreadMetadataSchema = z.object({
   title: z.string(),
   projectName: z.string(),
   gitBranch: z.string().optional(),
-  created: z.string(),
+  created: z.string().datetime(),
   duration: z.string(),
   totalTokens: z.object({
     input: z.number(),
@@ -80,7 +80,7 @@ type ThreadMetadata = z.infer<typeof ThreadMetadataSchema>;
 
 const UploaderSchema = z.object({
   githubUsername: z.string(),
-  githubAvatarUrl: z.string(),
+  githubAvatarUrl: z.url(),
 });
 
 type Uploader = z.infer<typeof UploaderSchema>;
@@ -163,7 +163,11 @@ type RawContentBlock =
   | { type: "text"; text: string }
   | { type: "thinking"; thinking: string }
   | { type: "tool_use"; id: string; name: string; input: Record<string, any> }
-  | { type: "tool_result"; tool_use_id: string; content: string | RawContentBlock[] };
+  | {
+      type: "tool_result";
+      tool_use_id: string;
+      content: string | RawContentBlock[];
+    };
 
 // ── Session Summary (for `threadcast list`) ──────────────────────────────────
 
@@ -198,8 +202,8 @@ type AuthConfig = {
   githubAvatarUrl: string;
 };
 
-const API_BASE_URL = "https://threadcast.dev";
-const GITHUB_CLIENT_ID = "PLACEHOLDER_CLIENT_ID";
+const API_BASE_URL = "http://localhost:5173";
+const GITHUB_CLIENT_ID = "Ov23lia5xNvzQnuRLieM";
 const MAX_THREAD_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 
 export {
