@@ -23,17 +23,13 @@
 	function getSummary(t: ToolCall): string {
 		switch (t.name) {
 			case 'Bash':
-				return t.input.command
-					? truncate(t.input.command as string, 80)
-					: 'Run command';
+				return t.input.command ? truncate(t.input.command as string, 80) : 'Run command';
 			case 'Read':
 				return t.input.file_path ? shortPath(t.input.file_path as string) : 'Read file';
 			case 'Edit':
 				return t.input.file_path ? `Edit ${shortPath(t.input.file_path as string)}` : 'Edit file';
 			case 'Write':
-				return t.input.file_path
-					? `Write ${shortPath(t.input.file_path as string)}`
-					: 'Write file';
+				return t.input.file_path ? `Write ${shortPath(t.input.file_path as string)}` : 'Write file';
 			case 'Grep':
 				return t.input.pattern ? `grep "${truncate(t.input.pattern as string, 40)}"` : 'Search';
 			case 'Glob':
@@ -88,7 +84,11 @@
 				<div class="space-y-2">
 					<div class="text-xs text-text-muted">Input</div>
 					<pre
-						class="overflow-x-auto rounded bg-bg-secondary p-2 font-mono text-xs text-text-secondary">{JSON.stringify(tool.input, null, 2)}</pre>
+						class="overflow-x-auto rounded bg-bg-secondary p-2 font-mono text-xs text-text-secondary">{JSON.stringify(
+							tool.input,
+							null,
+							2
+						)}</pre>
 					{#if tool.result}
 						<div class="text-xs text-text-muted">Output</div>
 						<pre

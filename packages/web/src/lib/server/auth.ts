@@ -1,11 +1,9 @@
-interface GitHubUser {
+type GitHubUser = {
 	login: string;
 	avatar_url: string;
-}
+};
 
-export async function verifyGitHubToken(
-	token: string
-): Promise<GitHubUser | null> {
+const verifyGitHubToken = async (token: string): Promise<GitHubUser | null> => {
 	const res = await fetch('https://api.github.com/user', {
 		headers: {
 			Authorization: `Bearer ${token}`,
@@ -17,4 +15,6 @@ export async function verifyGitHubToken(
 	if (!res.ok) return null;
 	const user = (await res.json()) as GitHubUser;
 	return user;
-}
+};
+
+export { verifyGitHubToken, type GitHubUser };

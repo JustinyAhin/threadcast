@@ -17,19 +17,18 @@
 	<div class="grid gap-2 md:grid-cols-2">
 		<div class="rounded border border-red-500/20 bg-bg-secondary">
 			<div class="border-b border-red-500/20 px-3 py-1 text-xs text-red-400">Removed</div>
-			<pre
-				class="max-h-64 overflow-auto p-3 font-mono text-xs text-red-300/80">{oldString || '(empty)'}</pre>
+			<pre class="max-h-64 overflow-auto p-3 font-mono text-xs text-red-300/80">{oldString ||
+					'(empty)'}</pre>
 		</div>
 		<div class="rounded border border-green-500/20 bg-bg-secondary">
 			<div class="border-b border-green-500/20 px-3 py-1 text-xs text-green-400">Added</div>
-			<pre
-				class="max-h-64 overflow-auto p-3 font-mono text-xs text-green-300/80">{newString || '(empty)'}</pre>
+			<pre class="max-h-64 overflow-auto p-3 font-mono text-xs text-green-300/80">{newString ||
+					'(empty)'}</pre>
 		</div>
 	</div>
 
 	{#if tool.result?.isError}
-		<pre class="rounded bg-bg-secondary p-2 font-mono text-xs text-error"
-			>{tool.result.content}</pre
-		>
+		<pre class="rounded bg-bg-secondary p-2 font-mono text-xs text-error">{tool.result
+				.content}</pre>
 	{/if}
 </div>

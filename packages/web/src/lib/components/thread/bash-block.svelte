@@ -22,7 +22,8 @@
 			<pre
 				class="max-h-96 overflow-auto p-3 font-mono text-xs"
 				class:text-error={tool.result.isError}
-				class:text-text-secondary={!tool.result.isError}>{tool.result.content || '(no output)'}</pre>
+				class:text-text-secondary={!tool.result.isError}>{tool.result.content ||
+					'(no output)'}</pre>
 		{/if}
 	</div>
 </div>

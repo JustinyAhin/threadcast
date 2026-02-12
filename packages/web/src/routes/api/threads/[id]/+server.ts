@@ -3,16 +3,16 @@ import { verifyGitHubToken } from '$lib/server/auth';
 import { getThread, getThreadMeta, deleteThread } from '$lib/server/r2';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ params, platform }) => {
+const GET: RequestHandler = async ({ params, platform }) => {
 	const bucket = platform!.env.THREADS_BUCKET;
-	const thread = await getThread(bucket, params.id);
+	const thread = await getThread({ bucket, id: params.id });
 	if (!thread) {
 		error(404, { message: 'Thread not found' });
 	}
 	return json(thread);
 };
 
-export const DELETE: RequestHandler = async ({ params, request, platform }) => {
+const DELETE: RequestHandler = async ({ params, request, platform }) => {
 	// Auth
 	const authHeader = request.headers.get('authorization');
 	if (!authHeader?.startsWith('Bearer ')) {
@@ -28,7 +28,7 @@ export const DELETE: RequestHandler = async ({ params, request, platform }) => {
 	const bucket = platform!.env.THREADS_BUCKET;
 
 	// Check ownership
-	const meta = await getThreadMeta(bucket, params.id);
+	const meta = await getThreadMeta({ bucket, id: params.id });
 	if (!meta) {
 		error(404, { message: 'Thread not found' });
 	}
@@ -36,6 +36,8 @@ export const DELETE: RequestHandler = async ({ params, request, platform }) => {
 		error(403, { message: 'You can only delete your own threads' });
 	}
 
-	await deleteThread(bucket, params.id);
+	await deleteThread({ bucket, id: params.id });
 	return json({ deleted: true });
 };
+
+export { GET, DELETE };

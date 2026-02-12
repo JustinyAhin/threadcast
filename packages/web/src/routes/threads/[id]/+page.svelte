@@ -12,7 +12,8 @@
 	<meta property="og:title" content="{data.thread.metadata.title} — ThreadCast" />
 	<meta
 		property="og:description"
-		content="Claude Code session by {data.thread.uploader.githubUsername} — {data.thread.metadata.messageCount} messages, {data.thread.metadata.duration}"
+		content="Claude Code session by {data.thread.uploader.githubUsername} — {data.thread.metadata
+			.messageCount} messages, {data.thread.metadata.duration}"
 	/>
 	<meta property="og:type" content="article" />
 	<meta property="og:url" content="https://threadcast.dev/threads/{data.id}" />

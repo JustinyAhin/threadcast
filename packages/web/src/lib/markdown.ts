@@ -5,6 +5,8 @@ marked.setOptions({
 	breaks: true
 });
 
-export function renderMarkdown(text: string): string {
+const renderMarkdown = (text: string): string => {
 	return marked.parse(text, { async: false }) as string;
-}
+};
+
+export { renderMarkdown };

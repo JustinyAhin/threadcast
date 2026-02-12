@@ -4,13 +4,13 @@ import { verifyGitHubToken } from '$lib/server/auth';
 import { storeThread, listRecentThreads } from '$lib/server/r2';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ platform }) => {
+const GET: RequestHandler = async ({ platform }) => {
 	const bucket = platform!.env.THREADS_BUCKET;
 	const threads = await listRecentThreads(bucket);
 	return json(threads);
 };
 
-export const POST: RequestHandler = async ({ request, platform }) => {
+const POST: RequestHandler = async ({ request, platform }) => {
 	// Auth
 	const authHeader = request.headers.get('authorization');
 	if (!authHeader?.startsWith('Bearer ')) {
@@ -52,12 +52,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	// Generate ID and store
 	const id = generateId();
 	const bucket = platform!.env.THREADS_BUCKET;
-	await storeThread(bucket, id, threadData);
+	await storeThread({ bucket, id, data: threadData });
 
 	return json({ id, url: `https://threadcast.dev/threads/${id}` }, { status: 201 });
 };
 
-function generateId(): string {
+const generateId = (): string => {
 	const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
 	let id = '';
 	const bytes = crypto.getRandomValues(new Uint8Array(8));
@@ -65,4 +65,6 @@ function generateId(): string {
 		id += chars[b % chars.length];
 	}
 	return id;
-}
+};
+
+export { GET, POST };
