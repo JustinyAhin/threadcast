@@ -8,6 +8,7 @@ import { discoverSessions, findSession } from "../lib/session-discovery.js";
 import { parseSession } from "../parser/index.js";
 import { uploadThread } from "../uploader/api-client.js";
 import { searchSessions } from "../lib/session-search.js";
+import { loadSharedSessions, saveSharedSession } from "../lib/shared-sessions.js";
 
 type AppActions = {
   loadSessions: () => Promise<void>;
@@ -46,6 +47,7 @@ const initialState: AppState = {
   loginDeviceCode: null,
   loginVerificationUri: null,
   loginStatus: "idle",
+  sharedSessions: {},
 };
 
 const AppProvider = (props: ParentProps) => {
@@ -80,12 +82,16 @@ const AppProvider = (props: ParentProps) => {
     loadSessions: async () => {
       setState("sessionsLoading", true);
       try {
-        const auth = await loadConfig();
-        const sessions = await discoverSessions();
+        const [auth, sessions, shared] = await Promise.all([
+          loadConfig(),
+          discoverSessions(),
+          loadSharedSessions(),
+        ]);
         setState(
           produce((s) => {
             s.auth = auth;
             s.sessions = sessions;
+            s.sharedSessions = shared;
             s.sessionsLoading = false;
             s.selectedIndex = 0;
           })
@@ -310,10 +316,17 @@ const AppProvider = (props: ParentProps) => {
           token: state.auth.githubToken,
         });
 
+        const sessionId = state.previewData.metadata.sessionId;
+        await saveSharedSession({ sessionId, url: result.url });
+
         setState(
           produce((s) => {
             s.uploadStatus = "success";
             s.uploadError = result.url;
+            s.sharedSessions[sessionId] = {
+              url: result.url,
+              sharedAt: new Date().toISOString(),
+            };
           })
         );
       } catch (err: any) {

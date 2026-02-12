@@ -1,4 +1,5 @@
 import type { AuthConfig, SessionSummary, ThreadData } from "@threadcast/shared";
+import type { SharedSessionsMap } from "./lib/shared-sessions.js";
 
 type SearchResult = SessionSummary & {
   matchSnippet?: string;
@@ -22,6 +23,7 @@ type AppState = {
   loginDeviceCode: string | null;
   loginVerificationUri: string | null;
   loginStatus: "idle" | "waiting" | "success" | "error";
+  sharedSessions: SharedSessionsMap;
 };
 
 export type { AppState, SearchResult };

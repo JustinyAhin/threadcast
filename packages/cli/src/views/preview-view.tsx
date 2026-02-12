@@ -23,6 +23,11 @@ const PreviewView = () => {
   });
 
   const meta = () => state.previewData?.metadata;
+  const existingShare = () => {
+    const sessionId = meta()?.sessionId;
+    if (!sessionId) return null;
+    return state.sharedSessions[sessionId] ?? null;
+  };
 
   return (
     <box flexDirection="column" width="100%" flexGrow={1} paddingX={1}>
@@ -77,9 +82,16 @@ const PreviewView = () => {
 
         <box height={1} />
 
+        <Show when={existingShare() && state.uploadStatus === "idle"}>
+          <box paddingX={1} paddingBottom={1}>
+            <text fg={colors.success}>{`${symbols.check} Previously shared  `}</text>
+            <text content={existingShare()!.url} fg={colors.textDim} />
+          </box>
+        </Show>
+
         <box paddingX={1}>
           <Show when={state.uploadStatus === "idle"}>
-            <text content={`${symbols.share} Press 's' to share`} fg={colors.warning} />
+            <text content={`${symbols.share} Press 's' to ${existingShare() ? "re-share" : "share"}`} fg={colors.warning} />
           </Show>
           <Show when={state.uploadStatus === "uploading"}>
             <text content={`${symbols.dot} Uploading...`} fg={colors.warning} />

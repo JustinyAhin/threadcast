@@ -134,6 +134,7 @@ const SessionsView = () => {
                   <SessionItem
                     session={session}
                     selected={i() === state.selectedIndex}
+                    shared={session.sessionId in state.sharedSessions}
                   />
                 )}
               </For>

@@ -1,11 +1,13 @@
 import { Show } from "solid-js";
 import type { SearchResult } from "../types.js";
+import type { SharedSessionsMap } from "../lib/shared-sessions.js";
 import { timeAgo, formatBytes } from "../lib/format.js";
 import { colors, symbols } from "../theme.js";
 
 type SessionItemProps = {
   session: SearchResult;
   selected: boolean;
+  shared: boolean;
 };
 
 const SessionItem = (props: SessionItemProps) => {
@@ -41,6 +43,13 @@ const SessionItem = (props: SessionItemProps) => {
           fg={props.selected ? colors.text : colors.textMuted}
           flexGrow={1}
         />
+        <Show when={props.shared}>
+          <text
+            content={`${symbols.share} `}
+            fg={colors.success}
+            width={3}
+          />
+        </Show>
         <text
           content={`${symbols.clock} ${timeAgo(date())}`}
           fg={colors.textDim}
