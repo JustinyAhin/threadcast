@@ -9,7 +9,9 @@ const SessionsView = () => {
   const [filtering, setFiltering] = createSignal(false);
 
   onMount(() => {
-    actions.loadSessions();
+    if (state.sessions.length === 0) {
+      actions.loadSessions();
+    }
   });
 
   useKeyboard((key) => {
