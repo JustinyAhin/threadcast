@@ -1,10 +1,14 @@
+import { For } from "solid-js";
 import { useApp } from "../context/app-context.js";
+import { colors, symbols } from "../theme.js";
+
+type Hint = { key: string; label: string };
 
 const StatusBar = () => {
   const [state] = useApp();
 
   const authLabel = () =>
-    state.auth ? `@${state.auth.githubUsername}` : "not logged in";
+    state.auth ? `${symbols.github} @${state.auth.githubUsername}` : `${symbols.github} not logged in`;
 
   const uploadLabel = () => {
     switch (state.uploadStatus) {
@@ -24,17 +28,36 @@ const StatusBar = () => {
     return ` | searching: ${state.searchProgress}`;
   };
 
-  const hints = () => {
+  const hints = (): Hint[] => {
     switch (state.view) {
       case "sessions":
         if (state.searchMode === "search") {
-          return "j/k:nav  Enter:open  Esc:clear  /:filter  q:quit";
+          return [
+            { key: "j/k", label: "nav" },
+            { key: "Enter", label: "open" },
+            { key: "Esc", label: "clear" },
+            { key: "/", label: "filter" },
+            { key: "q", label: "quit" },
+          ];
         }
-        return "j/k:nav  Enter:open  /:filter  l:login  q:quit";
+        return [
+          { key: "j/k", label: "nav" },
+          { key: "Enter", label: "open" },
+          { key: "/", label: "filter" },
+          { key: "l", label: "login" },
+          { key: "q", label: "quit" },
+        ];
       case "preview":
-        return "s:share  Esc:back  q:quit";
+        return [
+          { key: "s", label: "share" },
+          { key: "Esc", label: "back" },
+          { key: "q", label: "quit" },
+        ];
       case "login":
-        return "Esc:cancel  q:quit";
+        return [
+          { key: "Esc", label: "cancel" },
+          { key: "q", label: "quit" },
+        ];
     }
   };
 
@@ -43,15 +66,25 @@ const StatusBar = () => {
       flexDirection="row"
       width="100%"
       height={1}
-      backgroundColor="#1A1A2E"
+      backgroundColor={colors.bgStatusBar}
       paddingX={1}
     >
       <text
         content={`${authLabel()}${uploadLabel()}${searchLabel()}`}
-        fg="#888888"
+        fg={colors.textDim}
         flexGrow={1}
       />
-      <text content={hints()} fg="#555555" />
+      <box flexDirection="row">
+        <For each={hints()}>
+          {(hint, i) => (
+            <box flexDirection="row">
+              <text fg={colors.textMuted}><b>{hint.key}</b></text>
+              <text content={`:${hint.label}`} fg={colors.textFaint} />
+              <text content={i() < hints().length - 1 ? "  " : ""} />
+            </box>
+          )}
+        </For>
+      </box>
     </box>
   );
 };

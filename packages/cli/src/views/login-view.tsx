@@ -1,6 +1,7 @@
 import { Show } from "solid-js";
 import { useKeyboard } from "@opentui/solid";
 import { useApp } from "../context/app-context.js";
+import { colors, symbols } from "../theme.js";
 
 const LoginView = () => {
   const [state, actions] = useApp();
@@ -18,47 +19,63 @@ const LoginView = () => {
   });
 
   return (
-    <box flexDirection="column" width="100%" flexGrow={1} paddingX={1}>
-      <box height={1}>
-        <text fg="#00BFFF"><b>GitHub Login</b></text>
+    <box
+      flexDirection="column"
+      width="100%"
+      flexGrow={1}
+      justifyContent="center"
+      alignItems="center"
+    >
+      <box
+        flexDirection="column"
+        borderStyle="rounded"
+        borderColor={colors.border}
+        maxWidth={50}
+        width="90%"
+        paddingX={3}
+        paddingY={1}
+      >
+        <box justifyContent="center">
+          <text fg={colors.accent}><b>{`${symbols.github} GitHub Login`}</b></text>
+        </box>
+
+        <Show when={state.loginStatus === "idle"}>
+          <box height={1} />
+          <text content={`${symbols.dot} Requesting device code...`} fg={colors.textDim} />
+        </Show>
+
+        <Show when={state.loginStatus === "waiting"}>
+          <box height={1} />
+          <box flexDirection="column" gap={1}>
+            <box flexDirection="row">
+              <text content="Enter code: " fg={colors.textDim} />
+              <text fg={colors.accent}><b>{state.loginDeviceCode ?? ""}</b></text>
+            </box>
+            <box flexDirection="row">
+              <text content="Open: " fg={colors.textDim} />
+              <text content={state.loginVerificationUri ?? ""} fg={colors.text} />
+            </box>
+            <text content="(Browser should open automatically)" fg={colors.textFaint} />
+            <text content={`${symbols.dot} Waiting for authorization...`} fg={colors.warning} />
+          </box>
+        </Show>
+
+        <Show when={state.loginStatus === "success"}>
+          <box height={1} />
+          <box flexDirection="column">
+            <text fg={colors.success}><b>{`${symbols.check} Logged in as ${state.auth?.githubUsername}`}</b></text>
+            <text content="Returning to sessions..." fg={colors.textDim} />
+          </box>
+        </Show>
+
+        <Show when={state.loginStatus === "error"}>
+          <box height={1} />
+          <box flexDirection="column">
+            <text fg={colors.error}><b>{`${symbols.cross} Login failed`}</b></text>
+            <text content="Press Esc to go back" fg={colors.textDim} />
+          </box>
+        </Show>
       </box>
-
-      <Show when={state.loginStatus === "idle"}>
-        <text content="Requesting device code..." fg="#888888" />
-      </Show>
-
-      <Show when={state.loginStatus === "waiting"}>
-        <box flexDirection="column" gap={0}>
-          <box height={1} />
-          <box flexDirection="row">
-            <text content="Enter code: " fg="#888888" />
-            <text fg="#00BFFF"><b>{state.loginDeviceCode ?? ""}</b></text>
-          </box>
-          <box height={1} />
-          <box flexDirection="row">
-            <text content="Open: " fg="#888888" />
-            <text content={state.loginVerificationUri ?? ""} fg="#FFFFFF" />
-          </box>
-          <box height={1} />
-          <text content="(Browser should open automatically)" fg="#555555" />
-          <box height={1} />
-          <text content="Waiting for authorization..." fg="#FFAA00" />
-        </box>
-      </Show>
-
-      <Show when={state.loginStatus === "success"}>
-        <box flexDirection="column">
-          <text fg="#00FF00"><b>{`Logged in as ${state.auth?.githubUsername}`}</b></text>
-          <text content="Returning to sessions..." fg="#888888" />
-        </box>
-      </Show>
-
-      <Show when={state.loginStatus === "error"}>
-        <box flexDirection="column">
-          <text fg="#FF4444"><b>Login failed</b></text>
-          <text content="Press Esc to go back" fg="#888888" />
-        </box>
-      </Show>
     </box>
   );
 };

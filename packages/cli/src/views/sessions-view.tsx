@@ -2,6 +2,7 @@ import { For, Show, createSignal, onMount } from "solid-js";
 import { useKeyboard } from "@opentui/solid";
 import { useApp } from "../context/app-context.js";
 import { SessionItem } from "../components/session-item.js";
+import { colors } from "../theme.js";
 
 const SessionsView = () => {
   const [state, actions] = useApp();
@@ -81,52 +82,62 @@ const SessionsView = () => {
 
   return (
     <box flexDirection="column" width="100%" flexGrow={1}>
-      <box flexDirection="row" paddingX={1} height={1}>
-        <text fg="#00BFFF"><b>ThreadCast</b></text>
-        <text
-          content={` — ${actions.displayedSessions().length} sessions`}
-          fg="#888888"
-        />
-        <Show when={filtering()}>
-          <text content={`  /${state.filterText}_`} fg="#FFAA00" />
-        </Show>
-        <Show when={!filtering() && state.filterText && state.searchMode === "filter"}>
-          <text content={`  filter: ${state.filterText}`} fg="#FFAA00" />
-        </Show>
-        <Show when={!filtering() && state.searchMode === "search"}>
-          <text content={`  search: ${state.filterText}`} fg="#00FF88" />
-          <Show when={state.searching}>
-            <text content={`  (${state.searchProgress})`} fg="#888888" />
+      <box
+        flexDirection="column"
+        width="100%"
+        flexGrow={1}
+        borderStyle="rounded"
+        borderColor={colors.border}
+      >
+        <box flexDirection="row" paddingX={1} height={1}>
+          <text fg={colors.accent}><b>ThreadCast</b></text>
+          <text
+            content={` — ${actions.displayedSessions().length} sessions`}
+            fg={colors.textDim}
+          />
+          <Show when={filtering()}>
+            <text content={`  /${state.filterText}_`} fg={colors.warning} />
           </Show>
-          <Show when={!state.searching}>
-            <text content={`  (${state.searchResults.length} matches)`} fg="#888888" />
+          <Show when={!filtering() && state.filterText && state.searchMode === "filter"}>
+            <text content={`  filter: ${state.filterText}`} fg={colors.warning} />
           </Show>
-        </Show>
-      </box>
+          <Show when={!filtering() && state.searchMode === "search"}>
+            <text content={`  search: ${state.filterText}`} fg={colors.search} />
+            <Show when={state.searching}>
+              <text content={`  (${state.searchProgress})`} fg={colors.textDim} />
+            </Show>
+            <Show when={!state.searching}>
+              <text content={`  (${state.searchResults.length} matches)`} fg={colors.textDim} />
+            </Show>
+          </Show>
+        </box>
 
-      <box flexDirection="column" width="100%" flexGrow={1}>
-        <Show when={state.sessionsLoading}>
-          <box paddingX={1}>
-            <text content="Scanning sessions..." fg="#888888" />
+        <scrollbox scrollY flexGrow={1} width="100%">
+          <box flexDirection="column" width="100%">
+            <Show when={state.sessionsLoading}>
+              <box paddingX={1} paddingY={1}>
+                <text content="Scanning sessions..." fg={colors.textDim} />
+              </box>
+            </Show>
+
+            <Show when={!state.sessionsLoading && actions.displayedSessions().length === 0}>
+              <box paddingX={1} paddingY={1}>
+                <text content="No sessions found." fg={colors.textFaint} />
+              </box>
+            </Show>
+
+            <Show when={!state.sessionsLoading && actions.displayedSessions().length > 0}>
+              <For each={actions.displayedSessions()}>
+                {(session, i) => (
+                  <SessionItem
+                    session={session}
+                    selected={i() === state.selectedIndex}
+                  />
+                )}
+              </For>
+            </Show>
           </box>
-        </Show>
-
-        <Show when={!state.sessionsLoading && actions.displayedSessions().length === 0}>
-          <box paddingX={1}>
-            <text content="No sessions found." fg="#666666" />
-          </box>
-        </Show>
-
-        <Show when={!state.sessionsLoading && actions.displayedSessions().length > 0}>
-          <For each={actions.displayedSessions().slice(0, 30)}>
-            {(session, i) => (
-              <SessionItem
-                session={session}
-                selected={i() === state.selectedIndex}
-              />
-            )}
-          </For>
-        </Show>
+        </scrollbox>
       </box>
     </box>
   );

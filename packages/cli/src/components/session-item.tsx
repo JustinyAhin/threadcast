@@ -1,5 +1,7 @@
+import { Show } from "solid-js";
 import type { SearchResult } from "../types.js";
 import { timeAgo, formatBytes } from "../lib/format.js";
+import { colors, symbols } from "../theme.js";
 
 type SessionItemProps = {
   session: SearchResult;
@@ -11,7 +13,7 @@ const SessionItem = (props: SessionItemProps) => {
   const project = () => props.session.projectPath.split("/").pop() || "?";
   const preview = () => {
     const msg = props.session.firstMessage;
-    return msg.length > 60 ? msg.slice(0, 60) + "..." : msg;
+    return msg.length > 50 ? msg.slice(0, 50) + symbols.ellipsis : msg;
   };
 
   const snippet = () => props.session.matchSnippet;
@@ -21,49 +23,57 @@ const SessionItem = (props: SessionItemProps) => {
       flexDirection="column"
       width="100%"
       paddingX={1}
-      backgroundColor={props.selected ? "#333333" : undefined}
+      backgroundColor={props.selected ? colors.bgSelected : undefined}
     >
       <box flexDirection="row" width="100%">
         <text
-          content={props.session.sessionId.slice(0, 8)}
-          fg="#666666"
-          width={10}
+          content={props.selected ? symbols.pointer : " "}
+          fg={props.selected ? colors.accent : colors.textDim}
+          width={3}
         />
         <text
-          content={project()}
-          fg="#00BFFF"
-          width={16}
+          content={`${symbols.folder} ${project()}`}
+          fg={colors.accent}
+          width={18}
         />
         <text
           content={preview()}
-          fg={props.selected ? "#FFFFFF" : "#CCCCCC"}
+          fg={props.selected ? colors.text : colors.textMuted}
           flexGrow={1}
         />
         <text
-          content={`${props.session.messageCount} msgs`}
-          fg="#666666"
-          width={10}
-        />
-        <text
-          content={timeAgo(date())}
-          fg="#666666"
-          width={10}
-        />
-        <text
-          content={formatBytes(props.session.sizeBytes)}
-          fg="#666666"
-          width={8}
+          content={`${symbols.clock} ${timeAgo(date())}`}
+          fg={colors.textDim}
+          width={12}
         />
       </box>
-      {snippet() && (
-        <box flexDirection="row" width="100%" paddingLeft={10}>
+      <box flexDirection="row" width="100%" paddingLeft={3}>
+        <text
+          content={`${symbols.messages} ${props.session.messageCount} msgs`}
+          fg={colors.textFaint}
+          width={14}
+        />
+        <text content={symbols.divider} fg={colors.borderDim} width={3} />
+        <text
+          content={formatBytes(props.session.sizeBytes)}
+          fg={colors.textFaint}
+          width={8}
+        />
+        <text content={symbols.divider} fg={colors.borderDim} width={3} />
+        <text
+          content={props.session.sessionId.slice(0, 8)}
+          fg={colors.textFaint}
+        />
+      </box>
+      <Show when={snippet()}>
+        <box flexDirection="row" width="100%" paddingLeft={3}>
           <text
-            content={snippet()!}
-            fg="#888888"
+            content={`${symbols.search} ${snippet()!}`}
+            fg={colors.textDim}
             flexGrow={1}
           />
         </box>
-      )}
+      </Show>
     </box>
   );
 };
