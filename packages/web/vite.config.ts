@@ -22,5 +22,10 @@ const cloudflareDevProxy = (): Plugin => ({
 });
 
 export default defineConfig({
+	build: {
+		rollupOptions: {
+			external: ['cloudflare:workers']
+		}
+	},
 	plugins: [cloudflareDevProxy(), tailwindcss(), sveltekit()]
 });

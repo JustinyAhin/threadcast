@@ -79,6 +79,7 @@ const computeMetadata = (opts: ComputeMetadataOpts): ThreadMetadata => {
     models: [...models],
     toolsUsed: [...toolsUsed],
     messageCount,
+    visibility: "private",
   };
 };
 

@@ -19,7 +19,10 @@ const timeAgo = (date: Date): string => {
   return `${days}d ago`;
 };
 
-const shareCommand = async (sessionId?: string) => {
+const shareCommand = async (
+  sessionId?: string,
+  opts?: { isPublic?: boolean }
+) => {
   // Check auth
   const config = await loadConfig();
   if (!config) {
@@ -95,6 +98,8 @@ const shareCommand = async (sessionId?: string) => {
     parseSpinner.fail(`Failed to parse: ${err.message}`);
     process.exit(1);
   }
+
+  threadData.metadata.visibility = opts?.isPublic ? "public" : "private";
 
   // Preview
   console.log();

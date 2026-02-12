@@ -17,7 +17,10 @@ program
   .command("share")
   .description("Share a Claude Code session")
   .argument("[session-id]", "Session ID to share directly")
-  .action((sessionId?: string) => shareCommand(sessionId));
+  .option("--public", "Make thread publicly visible")
+  .action((sessionId?: string, opts?: { public?: boolean }) =>
+    shareCommand(sessionId, { isPublic: opts?.public })
+  );
 
 program
   .command("list")

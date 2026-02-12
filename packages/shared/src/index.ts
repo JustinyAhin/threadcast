@@ -72,6 +72,7 @@ const ThreadMetadataSchema = z.object({
   models: z.array(z.string()),
   toolsUsed: z.array(z.string()),
   messageCount: z.number(),
+  visibility: z.enum(["public", "private"]).default("private"),
 });
 
 type ThreadMetadata = z.infer<typeof ThreadMetadataSchema>;

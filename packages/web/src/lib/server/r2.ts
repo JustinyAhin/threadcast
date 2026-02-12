@@ -30,7 +30,9 @@ const storeThread = async ({
 		})
 	]);
 
-	await updateIndex({ bucket, key: 'indexes/recent.json', meta });
+	if (data.metadata.visibility === 'public') {
+		await updateIndex({ bucket, key: 'indexes/recent.json', meta });
+	}
 	await updateIndex({
 		bucket,
 		key: `indexes/by-user/${data.uploader.githubUsername}.json`,
