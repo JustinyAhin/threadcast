@@ -1,20 +1,45 @@
-type GitHubUser = {
-	login: string;
-	avatar_url: string;
-};
+import { getRequestEvent } from '$app/server';
+import { betterAuth } from 'better-auth';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { sveltekitCookies } from 'better-auth/svelte-kit';
+import { env } from 'cloudflare:workers';
+import { drizzle } from 'drizzle-orm/d1';
+import * as schema from './db/schema';
 
-const verifyGitHubToken = async (token: string): Promise<GitHubUser | null> => {
-	const res = await fetch('https://api.github.com/user', {
-		headers: {
-			Authorization: `Bearer ${token}`,
-			Accept: 'application/vnd.github+json',
-			'User-Agent': 'ThreadCast/1.0'
+const db = drizzle(env.AUTH_DB, { schema });
+
+const auth = betterAuth({
+	baseURL: env.BETTER_AUTH_URL,
+	secret: env.BETTER_AUTH_SECRET,
+	database: drizzleAdapter(db, {
+		provider: 'sqlite',
+		schema: {
+			user: schema.user,
+			session: schema.session,
+			account: schema.account,
+			verification: schema.verification
 		}
-	});
+	}),
+	socialProviders: {
+		github: {
+			clientId: env.GITHUB_CLIENT_ID,
+			clientSecret: env.GITHUB_CLIENT_SECRET,
+			mapProfileToUser: (profile) => ({
+				githubUsername: profile.login
+			})
+		}
+	},
+	user: {
+		additionalFields: {
+			githubUsername: {
+				type: 'string',
+				required: false,
+				input: false,
+				fieldName: 'githubUsername'
+			}
+		}
+	},
+	plugins: [sveltekitCookies(getRequestEvent)]
+});
 
-	if (!res.ok) return null;
-	const user = (await res.json()) as GitHubUser;
-	return user;
-};
-
-export { verifyGitHubToken, type GitHubUser };
+export { auth };

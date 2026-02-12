@@ -60,6 +60,20 @@ const sendEmail = (opts: { to: string; subject: string; body: string }) => { ...
 const sendEmail = (to: string, subject: string, body: string) => { ... };
 ```
 
+### Database (SQLite / Cloudflare D1)
+
+- All `userId` fields reference `user.id` with `onDelete: 'cascade'`
+- Use `integer('...', { mode: 'timestamp' })` for timestamps
+- Use cuid2 for primary keys:
+
+```typescript
+import { createId } from '@paralleldrive/cuid2';
+
+id: text('id').primaryKey().$defaultFn(() => createId()),
+createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+```
+
 ### Environment Variables
 
 **Managed with [dotenvx](https://dotenvx.com).** Env files are encrypted and safe to commit. Private keys live in `.env.keys` (never committed).

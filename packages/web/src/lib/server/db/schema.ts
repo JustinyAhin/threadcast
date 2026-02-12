@@ -1,4 +1,5 @@
 import { createId } from '@paralleldrive/cuid2';
+import { relations } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 const user = sqliteTable('user', {
@@ -72,4 +73,23 @@ const verification = sqliteTable('verification', {
 	updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
 });
 
-export { account, session, user, verification };
+const userRelations = relations(user, ({ many }) => ({
+	sessions: many(session),
+	accounts: many(account)
+}));
+
+const sessionRelations = relations(session, ({ one }) => ({
+	user: one(user, {
+		fields: [session.userId],
+		references: [user.id]
+	})
+}));
+
+const accountRelations = relations(account, ({ one }) => ({
+	user: one(user, {
+		fields: [account.userId],
+		references: [user.id]
+	})
+}));
+
+export { account, accountRelations, session, sessionRelations, user, userRelations, verification };
