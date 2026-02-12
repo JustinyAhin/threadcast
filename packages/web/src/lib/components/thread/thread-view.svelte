@@ -71,6 +71,16 @@
 		}
 	};
 
+	// Auto-scroll to first match when results change
+	$effect(() => {
+		if (matchingIndices.length > 0) {
+			activeTurnIndex = matchingIndices[0];
+			scrollToTurn(activeTurnIndex);
+		} else if (isSearching) {
+			activeTurnIndex = -1;
+		}
+	});
+
 	const goToMatch = (direction: 'next' | 'prev') => {
 		if (matchingIndices.length === 0) return;
 		const currentPos = matchingIndices.indexOf(activeTurnIndex);
@@ -234,9 +244,8 @@
 			{#each thread.turns as turn, i (i)}
 				<div
 					bind:this={turnEls[i]}
-					class="animate-slide-up transition-opacity duration-200 {isSearching &&
-					!matchingIndices.includes(i)
-						? 'opacity-20'
+					class="animate-slide-up {isSearching && !matchingIndices.includes(i)
+						? 'hidden'
 						: ''} {activeTurnIndex === i ? 'ring-1 ring-accent/30 rounded-lg' : ''}"
 					style="--delay: {Math.min(i * 40, 600)}ms"
 				>
