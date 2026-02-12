@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { ThreadMeta } from '$lib/server/r2';
+	import { highlightText } from '$lib/utils/highlight-text';
 
-	let { thread }: { thread: ThreadMeta } = $props();
+	let { thread, query = '' }: { thread: ThreadMeta; query?: string } = $props();
 
 	const TOOL_COLORS: Record<string, string> = {
 		Bash: 'bg-emerald-500/15 text-emerald-400',
@@ -34,7 +35,8 @@
 >
 	<div class="mb-3 flex items-start justify-between gap-3">
 		<h3 class="line-clamp-2 font-medium text-text transition-colors group-hover:text-accent">
-			{thread.metadata.title}
+			<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+			{@html highlightText(thread.metadata.title, query)}
 		</h3>
 		<span class="shrink-0 font-mono text-xs text-text-muted"
 			>{timeAgo(thread.metadata.created)}</span
@@ -47,10 +49,12 @@
 			alt={thread.uploader.githubUsername}
 			class="h-5 w-5 rounded-full ring-1 ring-border"
 		/>
-		<span>{thread.uploader.githubUsername}</span>
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+		<span>{@html highlightText(thread.uploader.githubUsername, query)}</span>
 		{#if thread.metadata.projectName}
 			<span class="text-text-muted">in</span>
-			<span class="text-text-muted">{thread.metadata.projectName}</span>
+			<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+			<span class="text-text-muted">{@html highlightText(thread.metadata.projectName, query)}</span>
 		{/if}
 	</div>
 

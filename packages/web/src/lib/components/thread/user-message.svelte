@@ -2,8 +2,9 @@
 	import type { ProcessedTurn } from '@threadcast/shared';
 	import { renderMarkdown } from '$lib/markdown';
 	import { highlightProse } from '$lib/actions/highlight-prose';
+	import { highlightSearch } from '$lib/actions/highlight-search';
 
-	let { turn }: { turn: ProcessedTurn } = $props();
+	let { turn, query = '' }: { turn: ProcessedTurn; query?: string } = $props();
 
 	const textContent = $derived(
 		turn.content
@@ -28,7 +29,7 @@
 					<span class="font-mono">{new Date(turn.timestamp).toLocaleTimeString()}</span>
 				{/if}
 			</div>
-			<div class="prose text-sm text-text" use:highlightProse>
+			<div class="prose text-sm text-text" use:highlightProse use:highlightSearch={query}>
 				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 				{@html renderMarkdown(textContent)}
 			</div>

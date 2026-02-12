@@ -116,6 +116,24 @@ html::after {
 	border-color: var(--color-border-light);
 }
 
+/* Date input dark theme */
+.date-input {
+	color-scheme: dark;
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+	filter: invert(0.5);
+	cursor: pointer;
+}
+
+/* Search highlight */
+.search-highlight {
+	background: rgba(245, 158, 11, 0.25);
+	color: inherit;
+	border-radius: 2px;
+	padding: 0 1px;
+}
+
 /* Markdown content styles */
 .prose {
 	line-height: 1.7;
