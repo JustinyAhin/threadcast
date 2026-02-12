@@ -15,4 +15,4 @@ if (subcommand === "logout") {
   process.exit(0);
 }
 
-render(() => <App />);
+render(() => <App />, { useMouse: false });

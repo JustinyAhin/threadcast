@@ -277,12 +277,25 @@ const AppProvider = (props: ParentProps) => {
 
     startUpload: async () => {
       if (!state.auth) {
-        // Redirect to login first
+        // Redirect to login first, then resume upload
         await actions.startLogin();
-        return;
+        if (!state.auth) return; // login failed or cancelled
+        setState("view", "preview");
       }
 
       if (!state.previewData) return;
+
+      // Update uploader info in case it was parsed before login
+      setState(
+        produce((s) => {
+          if (s.previewData && s.auth) {
+            s.previewData.uploader = {
+              githubUsername: s.auth.githubUsername,
+              githubAvatarUrl: s.auth.githubAvatarUrl,
+            };
+          }
+        })
+      );
 
       setState(
         produce((s) => {
