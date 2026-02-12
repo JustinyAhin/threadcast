@@ -5,7 +5,7 @@ import { z } from "zod";
 const ToolCallSchema = z.object({
   id: z.string(),
   name: z.string(),
-  input: z.record(z.any()),
+  input: z.record(z.string(), z.any()),
   result: z
     .object({
       content: z.string(),
