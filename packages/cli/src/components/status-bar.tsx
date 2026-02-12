@@ -31,6 +31,14 @@ const StatusBar = () => {
   const hints = (): Hint[] => {
     switch (state.view) {
       case "sessions":
+        if (state.filtering) {
+          return [
+            { key: "Enter", label: "search" },
+            { key: "Opt+\u232B", label: "del word" },
+            { key: "Ctrl+U", label: "clear" },
+            { key: "Esc", label: "cancel" },
+          ];
+        }
         if (state.searchMode === "search") {
           return [
             { key: "j/k", label: "nav" },

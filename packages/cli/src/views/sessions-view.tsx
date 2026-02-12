@@ -1,4 +1,4 @@
-import { For, Show, createSignal, onMount } from "solid-js";
+import { For, Show, onMount } from "solid-js";
 import { useKeyboard } from "@opentui/solid";
 import { useApp } from "../context/app-context.js";
 import { SessionItem } from "../components/session-item.js";
@@ -10,8 +10,6 @@ type SessionsViewProps = {
 
 const SessionsView = (props: SessionsViewProps) => {
   const [state, actions] = useApp();
-  const [filtering, setFiltering] = createSignal(false);
-
   onMount(() => {
     if (state.sessions.length === 0) {
       actions.loadSessions();
@@ -21,9 +19,9 @@ const SessionsView = (props: SessionsViewProps) => {
   useKeyboard((key) => {
     if (props.visible === false) return;
 
-    if (filtering()) {
+    if (state.filtering) {
       if (key.name === "escape") {
-        setFiltering(false);
+        actions.setFiltering(false);
         if (state.searchMode === "search") {
           actions.cancelSearch();
         } else {
@@ -32,23 +30,39 @@ const SessionsView = (props: SessionsViewProps) => {
         return;
       }
       if (key.name === "return") {
-        setFiltering(false);
+        actions.setFiltering(false);
         if (state.filterText) {
           actions.startSearch();
         }
         return;
       }
       if (key.name === "backspace") {
-        actions.setFilter(state.filterText.slice(0, -1));
+        if (key.meta || key.option) {
+          const trimmed = state.filterText.trimEnd();
+          const lastSpace = trimmed.lastIndexOf(" ");
+          actions.setFilter(lastSpace === -1 ? "" : state.filterText.slice(0, lastSpace + 1));
+        } else {
+          actions.setFilter(state.filterText.slice(0, -1));
+        }
+        return;
+      }
+      if (key.ctrl && key.name === "w") {
+        const trimmed = state.filterText.trimEnd();
+        const lastSpace = trimmed.lastIndexOf(" ");
+        actions.setFilter(lastSpace === -1 ? "" : state.filterText.slice(0, lastSpace + 1));
+        return;
+      }
+      if (key.ctrl && key.name === "u") {
+        actions.setFilter("");
         return;
       }
       if (key.name === "down") {
-        setFiltering(false);
+        actions.setFiltering(false);
         actions.selectSession(state.selectedIndex + 1);
         return;
       }
       if (key.name === "up") {
-        setFiltering(false);
+        actions.setFiltering(false);
         actions.selectSession(state.selectedIndex - 1);
         return;
       }
@@ -76,7 +90,7 @@ const SessionsView = (props: SessionsViewProps) => {
         actions.openPreview();
       }
     } else if (key.name === "/") {
-      setFiltering(true);
+      actions.setFiltering(true);
     } else if (key.name === "s") {
       actions.shareFromList();
     } else if (key.name === "l") {
@@ -103,13 +117,13 @@ const SessionsView = (props: SessionsViewProps) => {
             content={` — ${actions.displayedSessions().length} sessions`}
             fg={colors.textDim}
           />
-          <Show when={filtering()}>
+          <Show when={state.filtering}>
             <text content={`  /${state.filterText}_`} fg={colors.warning} />
           </Show>
-          <Show when={!filtering() && state.filterText && state.searchMode === "filter"}>
+          <Show when={!state.filtering && state.filterText && state.searchMode === "filter"}>
             <text content={`  filter: ${state.filterText}`} fg={colors.warning} />
           </Show>
-          <Show when={!filtering() && state.searchMode === "search"}>
+          <Show when={!state.filtering && state.searchMode === "search"}>
             <text content={`  search: ${state.filterText}`} fg={colors.search} />
             <Show when={state.searching}>
               <text content={`  (${state.searchProgress})`} fg={colors.textDim} />

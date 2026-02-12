@@ -11,6 +11,7 @@ type AppState = {
   sessions: SessionSummary[];
   sessionsLoading: boolean;
   selectedIndex: number;
+  filtering: boolean;
   filterText: string;
   searchMode: "filter" | "search";
   searchResults: SearchResult[];

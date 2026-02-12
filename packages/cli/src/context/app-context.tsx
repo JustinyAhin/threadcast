@@ -16,6 +16,7 @@ type AppActions = {
   selectSession: (index: number) => void;
   openPreview: () => Promise<void>;
   goBack: () => void;
+  setFiltering: (active: boolean) => void;
   setFilter: (text: string) => void;
   startSearch: () => Promise<void>;
   cancelSearch: () => void;
@@ -37,6 +38,7 @@ const initialState: AppState = {
   sessions: [],
   sessionsLoading: false,
   selectedIndex: 0,
+  filtering: false,
   filterText: "",
   searchMode: "filter",
   searchResults: [],
@@ -155,6 +157,10 @@ const AppProvider = (props: ParentProps) => {
           s.uploadError = null;
         })
       );
+    },
+
+    setFiltering: (active: boolean) => {
+      setState("filtering", active);
     },
 
     setFilter: (text: string) => {
