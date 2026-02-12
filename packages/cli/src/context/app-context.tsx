@@ -6,6 +6,7 @@ import { loadConfig, saveConfig, clearConfig } from "../auth/config.js";
 import { githubDeviceFlow } from "../auth/github-device-flow.js";
 import { discoverSessions, findSession } from "../lib/session-discovery.js";
 import { parseSession } from "../parser/index.js";
+import { getCachedThread } from "../lib/thread-cache.js";
 import { uploadThread } from "../uploader/api-client.js";
 import { searchSessions } from "../lib/session-search.js";
 import { loadSharedSessions, saveSharedSession } from "../lib/shared-sessions.js";
@@ -121,9 +122,12 @@ const AppProvider = (props: ParentProps) => {
       );
 
       try {
-        const data = await parseSession(session.path, {
-          githubUsername: state.auth?.githubUsername ?? "anonymous",
-          githubAvatarUrl: state.auth?.githubAvatarUrl ?? "",
+        const data = await getCachedThread({
+          filePath: session.path,
+          uploader: {
+            githubUsername: state.auth?.githubUsername ?? "anonymous",
+            githubAvatarUrl: state.auth?.githubAvatarUrl ?? "",
+          },
         });
         setState(
           produce((s) => {

@@ -77,10 +77,34 @@ const searchSessions = async (opts: {
   const { onMatch, onProgress, signal } = callbacks;
   const lowerQuery = query.toLowerCase();
 
-  for (let i = 0; i < sessions.length; i++) {
+  // Phase 1: pre-filter by metadata (no file I/O)
+  const needsFileSearch: SessionSummary[] = [];
+  let metaMatched = 0;
+
+  for (const session of sessions) {
     if (signal.aborted) return;
 
-    const session = sessions[i];
+    if (
+      session.firstMessage.toLowerCase().includes(lowerQuery) ||
+      session.projectPath.toLowerCase().includes(lowerQuery)
+    ) {
+      const snippet = session.firstMessage.toLowerCase().includes(lowerQuery)
+        ? buildSnippet(session.firstMessage, query)
+        : buildSnippet(session.projectPath, query);
+      onMatch(session, snippet);
+      metaMatched++;
+    } else {
+      needsFileSearch.push(session);
+    }
+  }
+
+  onProgress(metaMatched, sessions.length);
+
+  // Phase 2: deep search only non-matched sessions
+  for (let i = 0; i < needsFileSearch.length; i++) {
+    if (signal.aborted) return;
+
+    const session = needsFileSearch[i];
     let matched = false;
 
     const stream = createReadStream(session.path, { encoding: "utf-8" });
@@ -115,7 +139,7 @@ const searchSessions = async (opts: {
       if (!matched) cleanup();
     }
 
-    onProgress(i + 1, sessions.length);
+    onProgress(metaMatched + i + 1, sessions.length);
   }
 };
 
