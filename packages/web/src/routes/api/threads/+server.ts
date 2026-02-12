@@ -60,8 +60,5 @@ export const POST = async (event) => {
 	await storeThread({ bucket, id, data: threadData });
 
 	const origin = new URL(event.request.url).origin;
-	return json(
-		{ id, url: `${origin}/threads/${id}` },
-		{ status: existingId ? 200 : 201 }
-	);
+	return json({ id, url: `${origin}/threads/${id}` }, { status: existingId ? 200 : 201 });
 };

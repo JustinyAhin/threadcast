@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ToolCall } from '@threadcast/shared';
+	import DiffView from '$lib/components/diff-view.svelte';
 
 	let { tool }: { tool: ToolCall } = $props();
 
@@ -14,18 +15,7 @@
 		<code class="rounded bg-surface-2 px-1.5 py-0.5 text-accent">{filePath}</code>
 	</div>
 
-	<div class="grid gap-2 md:grid-cols-2">
-		<div class="rounded border border-red-500/20 bg-surface-1">
-			<div class="border-b border-red-500/20 px-3 py-1 text-xs text-red-400">Removed</div>
-			<pre class="max-h-64 overflow-auto p-3 font-mono text-xs text-red-300/80">{oldString ||
-					'(empty)'}</pre>
-		</div>
-		<div class="rounded border border-green-500/20 bg-surface-1">
-			<div class="border-b border-green-500/20 px-3 py-1 text-xs text-green-400">Added</div>
-			<pre class="max-h-64 overflow-auto p-3 font-mono text-xs text-green-300/80">{newString ||
-					'(empty)'}</pre>
-		</div>
-	</div>
+	<DiffView oldCode={oldString} newCode={newString} fileName={filePath} />
 
 	{#if tool.result?.isError}
 		<pre class="rounded bg-surface-1 p-2 font-mono text-xs text-error">{tool.result.content}</pre>

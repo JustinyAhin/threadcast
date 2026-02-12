@@ -41,6 +41,7 @@
 	},
 	"dependencies": {
 		"@paralleldrive/cuid2": "^3.3.0",
+		"@pierre/diffs": "^1.0.10",
 		"@threadcast/shared": "workspace:*",
 		"better-auth": "^1.4.18",
 		"drizzle-orm": "^0.45.1",
