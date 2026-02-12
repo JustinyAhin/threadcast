@@ -1,30 +1,23 @@
-import { json, error } from '@sveltejs/kit';
-import { ThreadDataSchema, MAX_THREAD_SIZE_BYTES } from '@threadcast/shared';
-import { verifyGitHubToken } from '$lib/server/auth';
-import { storeThread, listRecentThreads } from '$lib/server/r2';
-import type { RequestHandler } from './$types';
+import { listRecentThreads, storeThread } from '$lib/server/r2';
+import { resolveUser } from '$lib/server/resolve-user';
+import { createId } from '@paralleldrive/cuid2';
+import { error, json } from '@sveltejs/kit';
+import { MAX_THREAD_SIZE_BYTES, ThreadDataSchema } from '@threadcast/shared';
 
-const GET: RequestHandler = async ({ platform }) => {
+export const GET = async ({ platform }) => {
 	const bucket = platform!.env.THREADS_BUCKET;
 	const threads = await listRecentThreads(bucket);
 	return json(threads);
 };
 
-const POST: RequestHandler = async ({ request, platform }) => {
-	// Auth
-	const authHeader = request.headers.get('authorization');
-	if (!authHeader?.startsWith('Bearer ')) {
-		error(401, { message: 'Missing authorization token' });
-	}
-
-	const token = authHeader.slice(7);
-	const user = await verifyGitHubToken(token);
+export const POST = async (event) => {
+	const user = await resolveUser(event);
 	if (!user) {
-		error(401, { message: 'Invalid GitHub token' });
+		error(401, { message: 'Authentication required' });
 	}
 
 	// Size check
-	const contentLength = request.headers.get('content-length');
+	const contentLength = event.request.headers.get('content-length');
 	if (contentLength && parseInt(contentLength) > MAX_THREAD_SIZE_BYTES) {
 		error(413, { message: 'Thread data exceeds 10 MB limit' });
 	}
@@ -32,7 +25,7 @@ const POST: RequestHandler = async ({ request, platform }) => {
 	// Parse and validate
 	let body: unknown;
 	try {
-		body = await request.json();
+		body = await event.request.json();
 	} catch {
 		error(400, { message: 'Invalid JSON body' });
 	}
@@ -50,21 +43,9 @@ const POST: RequestHandler = async ({ request, platform }) => {
 	}
 
 	// Generate ID and store
-	const id = generateId();
-	const bucket = platform!.env.THREADS_BUCKET;
+	const id = createId();
+	const bucket = event.platform!.env.THREADS_BUCKET;
 	await storeThread({ bucket, id, data: threadData });
 
 	return json({ id, url: `https://threadcast.dev/threads/${id}` }, { status: 201 });
 };
-
-const generateId = (): string => {
-	const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-	let id = '';
-	const bytes = crypto.getRandomValues(new Uint8Array(8));
-	for (const b of bytes) {
-		id += chars[b % chars.length];
-	}
-	return id;
-};
-
-export { GET, POST };

@@ -1,9 +1,8 @@
-import { json, error } from '@sveltejs/kit';
-import { verifyGitHubToken } from '$lib/server/auth';
-import { getThread, getThreadMeta, deleteThread } from '$lib/server/r2';
-import type { RequestHandler } from './$types';
+import { deleteThread, getThread, getThreadMeta } from '$lib/server/r2';
+import { resolveUser } from '$lib/server/resolve-user';
+import { error, json } from '@sveltejs/kit';
 
-const GET: RequestHandler = async ({ params, platform }) => {
+export const GET = async ({ params, platform }) => {
 	const bucket = platform!.env.THREADS_BUCKET;
 	const thread = await getThread({ bucket, id: params.id });
 	if (!thread) {
@@ -12,23 +11,16 @@ const GET: RequestHandler = async ({ params, platform }) => {
 	return json(thread);
 };
 
-const DELETE: RequestHandler = async ({ params, request, platform }) => {
-	// Auth
-	const authHeader = request.headers.get('authorization');
-	if (!authHeader?.startsWith('Bearer ')) {
-		error(401, { message: 'Missing authorization token' });
-	}
-
-	const token = authHeader.slice(7);
-	const user = await verifyGitHubToken(token);
+export const DELETE = async (event) => {
+	const user = await resolveUser(event);
 	if (!user) {
-		error(401, { message: 'Invalid GitHub token' });
+		error(401, { message: 'Authentication required' });
 	}
 
-	const bucket = platform!.env.THREADS_BUCKET;
+	const bucket = event.platform!.env.THREADS_BUCKET;
 
 	// Check ownership
-	const meta = await getThreadMeta({ bucket, id: params.id });
+	const meta = await getThreadMeta({ bucket, id: event.params.id });
 	if (!meta) {
 		error(404, { message: 'Thread not found' });
 	}
@@ -36,8 +28,6 @@ const DELETE: RequestHandler = async ({ params, request, platform }) => {
 		error(403, { message: 'You can only delete your own threads' });
 	}
 
-	await deleteThread({ bucket, id: params.id });
+	await deleteThread({ bucket, id: event.params.id });
 	return json({ deleted: true });
 };
-
-export { GET, DELETE };
