@@ -22,6 +22,7 @@ type AppActions = {
   startLogin: () => Promise<void>;
   cancelLogin: () => void;
   startUpload: () => Promise<void>;
+  shareFromList: () => Promise<void>;
   logout: () => Promise<void>;
   displayedSessions: () => SearchResult[];
 };
@@ -321,6 +322,60 @@ const AppProvider = (props: ParentProps) => {
         });
 
         const sessionId = state.previewData.metadata.sessionId;
+        await saveSharedSession({ sessionId, url: result.url });
+
+        setState(
+          produce((s) => {
+            s.uploadStatus = "success";
+            s.uploadError = result.url;
+            s.sharedSessions[sessionId] = {
+              url: result.url,
+              sharedAt: new Date().toISOString(),
+            };
+          })
+        );
+      } catch (err: any) {
+        setState(
+          produce((s) => {
+            s.uploadStatus = "error";
+            s.uploadError = err.message;
+          })
+        );
+      }
+    },
+
+    shareFromList: async () => {
+      const session = displayedSessions()[state.selectedIndex];
+      if (!session) return;
+
+      if (!state.auth) {
+        await actions.startLogin();
+        if (!state.auth) return;
+        setState("view", "sessions");
+      }
+
+      setState(
+        produce((s) => {
+          s.uploadStatus = "uploading";
+          s.uploadError = null;
+        })
+      );
+
+      try {
+        const data = await getCachedThread({
+          filePath: session.path,
+          uploader: {
+            githubUsername: state.auth!.githubUsername,
+            githubAvatarUrl: state.auth!.githubAvatarUrl,
+          },
+        });
+
+        const result = await uploadThread({
+          threadData: data,
+          token: state.auth!.githubToken,
+        });
+
+        const sessionId = data.metadata.sessionId;
         await saveSharedSession({ sessionId, url: result.url });
 
         setState(

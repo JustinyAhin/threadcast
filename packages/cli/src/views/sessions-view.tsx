@@ -73,6 +73,8 @@ const SessionsView = () => {
       }
     } else if (key.name === "/") {
       setFiltering(true);
+    } else if (key.name === "s") {
+      actions.shareFromList();
     } else if (key.name === "l") {
       actions.startLogin();
     } else if (key.name === "q") {
