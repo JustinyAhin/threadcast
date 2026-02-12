@@ -18,6 +18,11 @@
 	};
 
 	const formatModel = (model: string): string => {
+		const match = model.match(/claude-(opus|sonnet|haiku)-(\d+)-(\d+)/i);
+		if (match) {
+			const name = match[1].charAt(0).toUpperCase() + match[1].slice(1);
+			return `${name} ${match[2]}.${match[3]}`;
+		}
 		const lower = model.toLowerCase();
 		if (lower.includes('opus')) return 'Opus';
 		if (lower.includes('sonnet')) return 'Sonnet';

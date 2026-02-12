@@ -4,6 +4,7 @@
 	import AssistantMessage from './assistant-message.svelte';
 	import ThreadSidebar from './thread-sidebar.svelte';
 	import ChatNav from './chat-nav.svelte';
+	import { useIntersectionObserver } from 'runed';
 
 	let { thread }: { thread: ThreadData } = $props();
 
@@ -13,31 +14,22 @@
 	let turnEls = $state<(HTMLDivElement | null)[]>([]);
 	let activeUserTurnIndex = $state(-1);
 
-	const userTurnIndices = $derived(
-		thread.turns.map((t, i) => (t.role === 'user' ? i : -1)).filter((i) => i !== -1)
+	const userTurnEls = $derived(
+		turnEls.filter((_, i) => thread.turns[i]?.role === 'user').filter(Boolean) as HTMLElement[]
 	);
 
-	$effect(() => {
-		const els = userTurnIndices.map((i) => turnEls[i]).filter(Boolean) as HTMLDivElement[];
-		if (els.length === 0) return;
-
-		const observer = new IntersectionObserver(
-			(entries) => {
-				for (const entry of entries) {
-					if (entry.isIntersecting) {
-						const idx = turnEls.indexOf(entry.target as HTMLDivElement);
-						if (idx !== -1 && thread.turns[idx]?.role === 'user') {
-							activeUserTurnIndex = idx;
-						}
-					}
+	useIntersectionObserver(
+		() => userTurnEls,
+		(entries) => {
+			for (const entry of entries) {
+				if (entry.isIntersecting) {
+					const idx = turnEls.indexOf(entry.target as HTMLDivElement);
+					if (idx !== -1) activeUserTurnIndex = idx;
 				}
-			},
-			{ rootMargin: '-20% 0px -60% 0px' }
-		);
-
-		for (const el of els) observer.observe(el);
-		return () => observer.disconnect();
-	});
+			}
+		},
+		{ rootMargin: '-20% 0px -60% 0px' }
+	);
 
 	const navigateToTurn = (turnIndex: number) => {
 		const el = turnEls[turnIndex];
