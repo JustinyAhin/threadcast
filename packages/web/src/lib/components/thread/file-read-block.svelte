@@ -17,7 +17,7 @@
 <div class="space-y-2">
 	<div class="flex items-center gap-2 text-xs">
 		<span class="text-text-muted">Read</span>
-		<code class="rounded bg-bg-tertiary px-1.5 py-0.5 text-accent">{filePath}</code>
+		<code class="rounded bg-surface-2 px-1.5 py-0.5 text-accent">{filePath}</code>
 		{#if rangeLabel}
 			<span class="text-text-muted">{rangeLabel}</span>
 		{/if}
@@ -25,7 +25,7 @@
 
 	{#if tool.result}
 		<pre
-			class="max-h-96 overflow-auto rounded bg-bg-secondary p-3 font-mono text-xs"
+			class="max-h-96 overflow-auto rounded bg-surface-1 p-3 font-mono text-xs"
 			class:text-error={tool.result.isError}
 			class:text-text-secondary={!tool.result.isError}>{tool.result.content}</pre>
 	{/if}

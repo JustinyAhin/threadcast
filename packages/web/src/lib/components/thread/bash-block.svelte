@@ -12,7 +12,7 @@
 		<div class="text-xs text-text-muted">{description}</div>
 	{/if}
 
-	<div class="rounded bg-bg-secondary">
+	<div class="rounded bg-surface-1">
 		<div class="flex items-center gap-2 border-b border-border px-3 py-1.5">
 			<span class="text-xs text-text-muted">$</span>
 			<pre class="flex-1 overflow-x-auto font-mono text-xs text-text">{command}</pre>

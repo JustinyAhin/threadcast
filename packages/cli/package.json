@@ -7,7 +7,7 @@
   },
   "main": "src/index.tsx",
   "scripts": {
-    "build": "bun build src/index.tsx --outfile bin/threadcast.js --target node",
+    "build": "bun run build.ts",
     "dev": "bun run src/index.tsx",
     "typecheck": "tsc --noEmit"
   },
@@ -19,6 +19,7 @@
     "open": "^10.0.0"
   },
   "devDependencies": {
+    "@types/bun": "^1.3.9",
     "@types/node": "catalog:",
     "typescript": "catalog:"
   }

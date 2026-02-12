@@ -8,19 +8,19 @@
 	let { tool }: { tool: ToolCall } = $props();
 	let expanded = $state(false);
 
-	const TOOL_ICONS: Record<string, string> = {
-		Bash: '$ ',
-		Read: '\u{1F4C4} ',
-		Edit: '\u{270F}\u{FE0F} ',
-		Write: '\u{1F4DD} ',
-		Grep: '\u{1F50D} ',
-		Glob: '\u{1F4C2} ',
-		WebFetch: '\u{1F310} ',
-		WebSearch: '\u{1F310} ',
-		Task: '\u{1F4CB} '
+	const TOOL_ICONS: Record<string, { symbol: string; color: string }> = {
+		Bash: { symbol: '$', color: 'text-emerald-400' },
+		Read: { symbol: '>', color: 'text-sky-400' },
+		Edit: { symbol: '~', color: 'text-amber-400' },
+		Write: { symbol: '+', color: 'text-orange-400' },
+		Grep: { symbol: '?', color: 'text-violet-400' },
+		Glob: { symbol: '*', color: 'text-teal-400' },
+		WebFetch: { symbol: '@', color: 'text-cyan-400' },
+		WebSearch: { symbol: '@', color: 'text-cyan-400' },
+		Task: { symbol: '#', color: 'text-rose-400' }
 	};
 
-	function getSummary(t: ToolCall): string {
+	const getSummary = (t: ToolCall): string => {
 		switch (t.name) {
 			case 'Bash':
 				return t.input.command ? truncate(t.input.command as string, 80) : 'Run command';
@@ -37,32 +37,32 @@
 			default:
 				return t.name;
 		}
-	}
+	};
 
-	function shortPath(p: string): string {
+	const shortPath = (p: string): string => {
 		const parts = p.split('/');
 		return parts.length > 3 ? `.../${parts.slice(-2).join('/')}` : p;
-	}
+	};
 
-	function truncate(s: string, max: number): string {
+	const truncate = (s: string, max: number): string => {
 		const firstLine = s.split('\n')[0];
 		return firstLine.length > max ? firstLine.slice(0, max) + '...' : firstLine;
-	}
+	};
 
-	const icon = $derived(TOOL_ICONS[tool.name] || '\u{1F527} ');
+	const iconInfo = $derived(TOOL_ICONS[tool.name] || { symbol: '>', color: 'text-text-muted' });
 	const summary = $derived(getSummary(tool));
 	const hasError = $derived(tool.result?.isError ?? false);
 </script>
 
 <div class="rounded-md border border-tool-border bg-tool-bg">
 	<button
-		class="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-bg-tertiary"
+		class="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-surface-2/50"
 		onclick={() => (expanded = !expanded)}
 	>
-		<span class="shrink-0 font-mono text-xs">{icon}</span>
+		<span class="shrink-0 font-mono text-xs {iconInfo.color}">{iconInfo.symbol}</span>
 		<span class="min-w-0 flex-1 truncate font-mono text-xs text-text-secondary">{summary}</span>
 		{#if hasError}
-			<span class="shrink-0 text-xs text-error">error</span>
+			<span class="shrink-0 rounded-full bg-error/10 px-2 py-0.5 text-xs text-error">error</span>
 		{/if}
 		<span class="shrink-0 text-xs text-text-muted transition-transform" class:rotate-90={expanded}
 			>&#9654;</span
@@ -70,7 +70,7 @@
 	</button>
 
 	{#if expanded}
-		<div class="border-t border-tool-border p-3">
+		<div class="animate-expand border-t border-tool-border p-3">
 			{#if tool.name === 'Bash'}
 				<BashBlock {tool} />
 			{:else if tool.name === 'Read'}
@@ -84,7 +84,7 @@
 				<div class="space-y-2">
 					<div class="text-xs text-text-muted">Input</div>
 					<pre
-						class="overflow-x-auto rounded bg-bg-secondary p-2 font-mono text-xs text-text-secondary">{JSON.stringify(
+						class="overflow-x-auto rounded bg-surface-1 p-2 font-mono text-xs text-text-secondary">{JSON.stringify(
 							tool.input,
 							null,
 							2
@@ -92,7 +92,7 @@
 					{#if tool.result}
 						<div class="text-xs text-text-muted">Output</div>
 						<pre
-							class="max-h-96 overflow-auto rounded bg-bg-secondary p-2 font-mono text-xs"
+							class="max-h-96 overflow-auto rounded bg-surface-1 p-2 font-mono text-xs"
 							class:text-error={tool.result.isError}
 							class:text-text-secondary={!tool.result.isError}>{tool.result.content}</pre>
 					{/if}
