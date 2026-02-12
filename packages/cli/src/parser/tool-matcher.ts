@@ -65,6 +65,17 @@ const extractToolResultContent = (
   return String(content);
 };
 
+const INTERNAL_MESSAGE_PREFIXES = [
+  "<command-name>",
+  "<local-command-",
+  "[Request interrupted by user",
+];
+
+const isInternalMessage = (text: string): boolean => {
+  const trimmed = text.trim();
+  return INTERNAL_MESSAGE_PREFIXES.some((prefix) => trimmed.startsWith(prefix));
+};
+
 /**
  * Processes raw messages into ProcessedTurns with matched tool_use <-> tool_result pairs.
  *
@@ -114,6 +125,11 @@ const processMessages = (messages: RawJsonlLine[]): ProcessedTurn[] => {
     if (!msg.message) continue;
 
     if (msg.type === "user" && !msg.toolUseResult && !msg.sourceToolAssistantUUID) {
+      const text = extractUserText(msg);
+
+      // Skip internal Claude Code messages (commands, interrupts, etc.)
+      if (!text || isInternalMessage(text)) continue;
+
       // Real user message — flush any pending assistant turn
       if (currentAssistantBlocks.length > 0) {
         turns.push(makeAssistantTurn({
@@ -131,14 +147,11 @@ const processMessages = (messages: RawJsonlLine[]): ProcessedTurn[] => {
       }
 
       // Add user turn
-      const text = extractUserText(msg);
-      if (text) {
-        turns.push({
-          role: "user",
-          timestamp: msg.timestamp,
-          content: [{ type: "text", text }],
-        });
-      }
+      turns.push({
+        role: "user",
+        timestamp: msg.timestamp,
+        content: [{ type: "text", text }],
+      });
     } else if (msg.type === "assistant") {
       if (!currentAssistantTimestamp) {
         currentAssistantTimestamp = msg.timestamp;

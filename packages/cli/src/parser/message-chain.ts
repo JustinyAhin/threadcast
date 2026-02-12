@@ -57,8 +57,11 @@ const buildMessageChain = (messages: RawJsonlLine[]): RawJsonlLine[] => {
     }
   };
 
-  // Start from the first root
-  walk(roots[0]);
+  // Walk all roots — filtered-out messages (isMeta, system, etc.) can break
+  // the parent chain, creating multiple disconnected subtrees.
+  for (const root of roots) {
+    walk(root);
+  }
 
   return chain;
 };
