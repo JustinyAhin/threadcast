@@ -12,7 +12,7 @@
 
 	const dateStr = (offsetDays: number) => {
 		const ms = Date.now() - offsetDays * 86_400_000;
-		const d = new Date(ms);  
+		const d = new Date(ms);
 		return d.toISOString().slice(0, 10);
 	};
 
