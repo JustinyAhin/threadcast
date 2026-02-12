@@ -1,0 +1,207 @@
+import type {
+  RawJsonlLine,
+  RawContentBlock,
+  ContentBlock,
+  ToolCall,
+  ProcessedTurn,
+} from "@threadcast/shared";
+
+/**
+ * Processes raw messages into ProcessedTurns with matched tool_use ↔ tool_result pairs.
+ *
+ * The JSONL structure for tool calls:
+ * 1. An assistant message contains a `tool_use` content block with an `id`
+ * 2. The next user message has `toolUseResult` and a `tool_result` content block
+ *    with `tool_use_id` matching the tool_use `id`
+ *
+ * We group consecutive assistant messages between user messages into a single turn.
+ */
+export function processMessages(messages: RawJsonlLine[]): ProcessedTurn[] {
+  // First pass: collect all tool results by tool_use_id
+  const toolResults = new Map<
+    string,
+    { content: string; isError: boolean }
+  >();
+
+  for (const msg of messages) {
+    if (msg.type !== "user" || !msg.message) continue;
+    const content = msg.message.content;
+    if (!Array.isArray(content)) continue;
+
+    for (const block of content) {
+      if (
+        typeof block === "object" &&
+        block.type === "tool_result" &&
+        "tool_use_id" in block
+      ) {
+        const resultContent = extractToolResultContent(block.content);
+        toolResults.set(block.tool_use_id, {
+          content: resultContent,
+          isError: false,
+        });
+      }
+    }
+
+    // Also check toolUseResult for error info
+    if (msg.toolUseResult) {
+      // toolUseResult appears alongside the message content
+    }
+  }
+
+  // Second pass: build turns
+  const turns: ProcessedTurn[] = [];
+  let currentAssistantBlocks: ContentBlock[] = [];
+  let currentAssistantTimestamp: string | undefined;
+  let currentModel: string | undefined;
+  let totalInputTokens = 0;
+  let totalOutputTokens = 0;
+
+  for (const msg of messages) {
+    if (!msg.message) continue;
+
+    if (msg.type === "user" && !msg.toolUseResult && !msg.sourceToolAssistantUUID) {
+      // Real user message — flush any pending assistant turn
+      if (currentAssistantBlocks.length > 0) {
+        turns.push(makeAssistantTurn(
+          currentAssistantBlocks,
+          currentAssistantTimestamp!,
+          currentModel,
+          totalInputTokens,
+          totalOutputTokens,
+        ));
+        currentAssistantBlocks = [];
+        currentAssistantTimestamp = undefined;
+        currentModel = undefined;
+        totalInputTokens = 0;
+        totalOutputTokens = 0;
+      }
+
+      // Add user turn
+      const text = extractUserText(msg);
+      if (text) {
+        turns.push({
+          role: "user",
+          timestamp: msg.timestamp,
+          content: [{ type: "text", text }],
+        });
+      }
+    } else if (msg.type === "assistant") {
+      if (!currentAssistantTimestamp) {
+        currentAssistantTimestamp = msg.timestamp;
+      }
+
+      const msgContent = msg.message.content;
+      if (!msgContent) continue;
+
+      // Track model and usage
+      if (msg.message.model) {
+        currentModel = msg.message.model;
+      }
+      if (msg.message.usage) {
+        totalInputTokens += msg.message.usage.input_tokens || 0;
+        totalOutputTokens += msg.message.usage.output_tokens || 0;
+      }
+
+      if (Array.isArray(msgContent)) {
+        for (const block of msgContent) {
+          if (typeof block !== "object") continue;
+
+          if (block.type === "text" && block.text.trim()) {
+            currentAssistantBlocks.push({
+              type: "text",
+              text: block.text,
+            });
+          } else if (block.type === "tool_use") {
+            const toolCall: ToolCall = {
+              id: block.id,
+              name: block.name,
+              input: block.input,
+              result: toolResults.get(block.id),
+            };
+            currentAssistantBlocks.push({
+              type: "tool_call",
+              tool: toolCall,
+            });
+          }
+          // Skip "thinking" blocks
+        }
+      } else if (typeof msgContent === "string" && msgContent.trim()) {
+        currentAssistantBlocks.push({
+          type: "text",
+          text: msgContent,
+        });
+      }
+    }
+    // Skip user messages that are tool results (sourceToolAssistantUUID)
+  }
+
+  // Flush final assistant turn
+  if (currentAssistantBlocks.length > 0) {
+    turns.push(makeAssistantTurn(
+      currentAssistantBlocks,
+      currentAssistantTimestamp!,
+      currentModel,
+      totalInputTokens,
+      totalOutputTokens,
+    ));
+  }
+
+  return turns;
+}
+
+function makeAssistantTurn(
+  content: ContentBlock[],
+  timestamp: string,
+  model: string | undefined,
+  inputTokens: number,
+  outputTokens: number,
+): ProcessedTurn {
+  const turn: ProcessedTurn = {
+    role: "assistant",
+    timestamp,
+    content,
+  };
+  if (model || inputTokens > 0 || outputTokens > 0) {
+    turn.metadata = {};
+    if (model) turn.metadata.model = model;
+    if (inputTokens > 0 || outputTokens > 0) {
+      turn.metadata.usage = {
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+      };
+    }
+  }
+  return turn;
+}
+
+function extractUserText(msg: RawJsonlLine): string {
+  if (!msg.message) return "";
+  const content = msg.message.content;
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content
+      .filter(
+        (b): b is { type: "text"; text: string } =>
+          typeof b === "object" && b.type === "text"
+      )
+      .map((b) => b.text)
+      .join("\n");
+  }
+  return "";
+}
+
+function extractToolResultContent(
+  content: string | RawContentBlock[] | undefined
+): string {
+  if (!content) return "";
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((b) => {
+        if (typeof b === "object" && "text" in b) return b.text;
+        return JSON.stringify(b);
+      })
+      .join("\n");
+  }
+  return String(content);
+}
