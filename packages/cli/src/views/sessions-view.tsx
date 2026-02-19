@@ -119,6 +119,8 @@ const SessionsView = (props: SessionsViewProps) => {
       actions.setFiltering(true);
     } else if (key.name === "s") {
       actions.shareFromList();
+    } else if (key.name === "r") {
+      actions.loadSessions();
     } else if (key.name === "l") {
       actions.startLogin();
     } else if (key.name === "q") {

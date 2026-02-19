@@ -53,6 +53,7 @@ const StatusBar = () => {
           { key: "j/k", label: "nav" },
           { key: "Enter", label: "open" },
           { key: "s", label: "share" },
+          { key: "r", label: "refresh" },
           { key: "/", label: "filter" },
           { key: "l", label: "login" },
           { key: "q", label: "quit" },

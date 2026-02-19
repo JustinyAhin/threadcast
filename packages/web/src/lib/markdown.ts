@@ -1,8 +1,13 @@
 import { marked } from 'marked';
 
-marked.setOptions({
+marked.use({
 	gfm: true,
-	breaks: true
+	breaks: true,
+	renderer: {
+		html({ text }) {
+			return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+		}
+	}
 });
 
 const renderMarkdown = (text: string): string => {
