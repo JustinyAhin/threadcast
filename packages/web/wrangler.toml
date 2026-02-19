@@ -19,9 +19,5 @@ database_name = "threadcast-auth"
 database_id = "a451c8cc-8326-4f40-a414-9a83c2b6fba7"
 migrations_dir = "drizzle"
 
-[[routes]]
-pattern = "shop.example.com"
-custom_domain = true
-
 [observability]
 enabled = true
