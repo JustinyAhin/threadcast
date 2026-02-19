@@ -203,7 +203,7 @@ type AuthConfig = {
   githubAvatarUrl: string;
 };
 
-const API_BASE_URL = "http://localhost:5173";
+const API_BASE_URL = process.env.THREADCAST_API_URL || "https://threadcast.dev";
 const GITHUB_CLIENT_ID = "Ov23lia5xNvzQnuRLieM";
 const MAX_THREAD_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 
