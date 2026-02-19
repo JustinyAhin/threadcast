@@ -69,28 +69,35 @@ jobs:
                   name: CLI v${{ inputs.version }}
                   files: |
                       artifacts/threadcast-*
+            - name: Upload to R2
+              env:
+                  AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+                  AWS_DEFAULT_REGION: auto
+              run: |
+                  for tarball in artifacts/threadcast-*.tar.gz; do
+                    aws s3 cp "$tarball" \
+                      "s3://threadcast-releases/cli/v${{ inputs.version }}/$(basename "$tarball")" \
+                      --endpoint-url "${{ secrets.R2_ENDPOINT }}"
+                  done
 
     update-homebrew:
         needs: release
         runs-on: ubuntu-latest
         steps:
-            - name: Download release tarballs
-              env:
-                  GH_TOKEN: ${{ github.token }}
-              run: |
-                  mkdir tarballs
-                  cd tarballs
-                  for platform in darwin-arm64 darwin-x64 linux-arm64 linux-x64; do
-                    gh release download "cli-v${{ inputs.version }}" \
-                      --repo "${{ github.repository }}" \
-                      --pattern "threadcast-${platform}.tar.gz"
-                  done
-                  ls -lh
-
             - name: Compute sha256 checksums
               id: checksums
+              env:
+                  AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+                  AWS_DEFAULT_REGION: auto
               run: |
-                  cd tarballs
+                  mkdir tarballs && cd tarballs
+                  for platform in darwin-arm64 darwin-x64 linux-arm64 linux-x64; do
+                    aws s3 cp \
+                      "s3://threadcast-releases/cli/v${{ inputs.version }}/threadcast-${platform}.tar.gz" . \
+                      --endpoint-url "${{ secrets.R2_ENDPOINT }}"
+                  done
                   echo "darwin_arm64=$(sha256sum threadcast-darwin-arm64.tar.gz | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
                   echo "darwin_x64=$(sha256sum threadcast-darwin-x64.tar.gz | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
                   echo "linux_arm64=$(sha256sum threadcast-linux-arm64.tar.gz | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
@@ -100,6 +107,7 @@ jobs:
               env:
                   HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
                   VERSION: ${{ inputs.version }}
+                  R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
                   SHA_DARWIN_ARM64: ${{ steps.checksums.outputs.darwin_arm64 }}
                   SHA_DARWIN_X64: ${{ steps.checksums.outputs.darwin_x64 }}
                   SHA_LINUX_ARM64: ${{ steps.checksums.outputs.linux_arm64 }}
@@ -108,7 +116,7 @@ jobs:
                   git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/JustinyAhin/homebrew-threadcast.git" tap
                   cd tap
 
-                  REPO_URL="https://github.com/JustinyAhin/threadcast/releases/download/cli-v${VERSION}"
+                  REPO_URL="${R2_PUBLIC_URL}/cli/v${VERSION}"
 
                   cat > Formula/threadcast.rb << EOF
                   class Threadcast < Formula
