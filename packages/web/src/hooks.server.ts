@@ -17,16 +17,6 @@ const handle: Handle = async ({ event, resolve }) => {
 	event.locals.user = sessionData?.user ?? null;
 	event.locals.session = sessionData?.session ?? null;
 
-	// DEBUG: log auth route matching for sign-in requests
-	if (event.url.pathname.startsWith('/api/auth/')) {
-		console.log('[hooks]', {
-			pathname: event.url.pathname,
-			method: event.request.method,
-			authBaseURL: auth.options.baseURL,
-			authBasePath: auth.options.basePath
-		});
-	}
-
 	return svelteKitHandler({ event, resolve, auth, building });
 };
 
