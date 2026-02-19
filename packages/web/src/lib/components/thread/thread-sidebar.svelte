@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ThreadData } from '@threadcast/shared';
+	import { calculateThreadCost, formatCost, type ThreadData } from '@threadcast/shared';
 	import { timeAgo } from '$lib/utils/date';
 	import { SvelteSet } from 'svelte/reactivity';
 
@@ -67,6 +67,8 @@
 	const totalTokens = $derived(
 		(thread.metadata.totalTokens.input + thread.metadata.totalTokens.output).toLocaleString()
 	);
+
+	const estimatedCost = $derived(formatCost(calculateThreadCost(thread.turns)));
 
 	const primaryModel = $derived(
 		thread.metadata.models.length > 0 ? formatModel(thread.metadata.models[0]) : 'Unknown'
@@ -221,6 +223,21 @@
 						<path d="M12 6v6l4 2" />
 					</svg>
 					<span class="text-text-secondary">{totalTokens} tokens</span>
+				</div>
+
+				<!-- Cost -->
+				<div class="flex items-center gap-2.5 text-sm">
+					<svg
+						class="h-4 w-4 shrink-0 text-text-muted"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<line x1="12" y1="1" x2="12" y2="23" />
+						<path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+					</svg>
+					<span class="text-text-secondary">{estimatedCost} est.</span>
 				</div>
 
 				<!-- Files -->
