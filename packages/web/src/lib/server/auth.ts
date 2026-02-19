@@ -6,6 +6,14 @@ import { env } from 'cloudflare:workers';
 import { db } from './db';
 import * as schema from './db/schema';
 
+// DEBUG: log env availability at module init
+console.log('[auth init]', {
+	hasBaseURL: !!env.BETTER_AUTH_URL,
+	baseURL: env.BETTER_AUTH_URL,
+	hasGithubClientId: !!env.GITHUB_CLIENT_ID,
+	hasGithubClientSecret: !!env.GITHUB_CLIENT_SECRET
+});
+
 const auth = betterAuth({
 	baseURL: env.BETTER_AUTH_URL,
 	secret: env.BETTER_AUTH_SECRET,
