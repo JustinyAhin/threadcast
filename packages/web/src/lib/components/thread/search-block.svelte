@@ -10,12 +10,14 @@
 </script>
 
 <div class="space-y-2">
-	<div class="flex items-center gap-2 text-xs">
+	<div class="flex flex-wrap items-center gap-1.5 text-xs sm:gap-2">
 		<span class="text-text-muted">{toolLabel}</span>
-		<code class="rounded bg-surface-2 px-1.5 py-0.5 text-accent">{pattern}</code>
+		<code class="min-w-0 break-all rounded bg-surface-2 px-1.5 py-0.5 text-accent">{pattern}</code>
 		{#if path}
 			<span class="text-text-muted">in</span>
-			<code class="rounded bg-surface-2 px-1.5 py-0.5 text-text-secondary">{path}</code>
+			<code class="min-w-0 break-all rounded bg-surface-2 px-1.5 py-0.5 text-text-secondary"
+				>{path}</code
+			>
 		{/if}
 	</div>
 

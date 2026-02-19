@@ -21,7 +21,10 @@ const parseFrontmatter = (raw: string): { data: Record<string, string>; content:
 		const sep = line.indexOf(':');
 		if (sep === -1) continue;
 		const key = line.slice(0, sep).trim();
-		const val = line.slice(sep + 1).trim().replace(/^['"]|['"]$/g, '');
+		const val = line
+			.slice(sep + 1)
+			.trim()
+			.replace(/^['"]|['"]$/g, '');
 		data[key] = val;
 	}
 
