@@ -2,6 +2,7 @@
 	import { authClient } from '$lib/client/auth';
 	import { goto, invalidateAll } from '$app/navigation';
 	import Seo from '$lib/components/seo.svelte';
+	import Logo from '$lib/components/logo.svelte';
 
 	const session = authClient.useSession();
 
@@ -31,7 +32,7 @@
 		{:else}
 			<div class="animate-slide-up flex flex-col items-center gap-6">
 				<div class="flex flex-col items-center gap-3">
-					<span class="text-4xl text-accent">&#9672;</span>
+					<Logo size="lg" />
 					<span class="text-xl font-semibold text-text"
 						>Thread<span class="text-accent">Cast</span></span
 					>

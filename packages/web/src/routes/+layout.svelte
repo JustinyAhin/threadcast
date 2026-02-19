@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Header from '$lib/components/header.svelte';
+	import Logo from '$lib/components/logo.svelte';
 	import '../app.css';
 
 	let { children } = $props();
@@ -13,7 +14,7 @@
 	<footer class="border-t border-border px-6 py-6">
 		<div class="mx-auto flex max-w-7xl items-center justify-between">
 			<div class="flex items-center gap-2 text-sm text-text-muted">
-				<span class="text-accent">&#9672;</span>
+				<Logo size="sm" />
 				<span>Thread<span class="text-accent">Cast</span></span>
 			</div>
 			<div class="flex items-center gap-4 text-xs text-text-muted">

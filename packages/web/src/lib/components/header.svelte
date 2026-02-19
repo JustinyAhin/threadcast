@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { authClient } from '$lib/client/auth';
+	import Logo from '$lib/components/logo.svelte';
 
 	const session = authClient.useSession();
 
@@ -13,9 +14,9 @@
 <header class="border-b border-border px-4 py-4 sm:px-6">
 	<div class="mx-auto flex max-w-7xl items-center justify-between gap-4">
 		<a href="/" class="group flex shrink-0 items-center gap-2 text-lg font-semibold text-text">
-			<span class="text-accent transition-transform duration-200 group-hover:scale-110"
-				>&#9672;</span
-			>
+			<span class="transition-transform duration-200 group-hover:scale-110">
+				<Logo size="sm" />
+			</span>
 			Thread<span class="text-accent">Cast</span>
 		</a>
 		<nav class="flex items-center gap-2 text-sm sm:gap-4">
