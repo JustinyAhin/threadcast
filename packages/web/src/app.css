@@ -139,6 +139,8 @@ html::after {
 /* Markdown content styles */
 .prose {
 	line-height: 1.7;
+	overflow-wrap: break-word;
+	word-break: break-word;
 }
 
 .prose p {

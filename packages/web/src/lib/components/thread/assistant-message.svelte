@@ -16,7 +16,7 @@
 	</div>
 	<div class="min-w-0 flex-1">
 		<div class="rounded-lg border-l-2 border-l-accent-dim/40 bg-assistant-bg px-5 py-4">
-			<div class="mb-3 flex items-center gap-2 text-xs text-text-muted">
+			<div class="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-muted">
 				<span class="font-semibold text-accent">Assistant</span>
 				{#if turn.metadata?.model}
 					<span>&middot;</span>
