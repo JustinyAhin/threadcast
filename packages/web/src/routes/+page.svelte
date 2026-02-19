@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import Seo from '$lib/components/seo.svelte';
 
 	let copied = $state(false);
 	let sections = $state<HTMLElement[]>([]);
@@ -37,13 +38,10 @@
 	});
 </script>
 
-<svelte:head>
-	<title>ThreadCast — Share Claude Code Sessions</title>
-	<meta
-		name="description"
-		content="Turn your Claude Code conversations into beautiful, shareable web pages. One command to share. Zero setup."
-	/>
-</svelte:head>
+<Seo
+	title="ThreadCast — Share Claude Code Sessions"
+	description="Share your Claude Code sessions as readable web pages."
+/>
 
 <!-- Hero -->
 <section class="relative overflow-hidden px-6 pt-20 pb-24 lg:pt-32 lg:pb-36">
@@ -53,7 +51,7 @@
 		aria-hidden="true"
 	>
 		<div
-			class="h-[600px] w-[800px] rounded-full opacity-[0.07]"
+			class="h-150 w-200 rounded-full opacity-[0.07]"
 			style="background: radial-gradient(ellipse, var(--color-accent) 0%, transparent 70%)"
 		></div>
 	</div>

@@ -13,7 +13,10 @@
 	const { title, description, ogImage, ogType = 'website', robots }: Props = $props();
 
 	const canonicalUrl = $derived(`${page.url.origin}${page.url.pathname}`);
-	const ogImageUrl = $derived(ogImage ? `${PUBLIC_OG_URL}${ogImage}` : undefined);
+	const ogImageUrl = $derived.by(() => {
+		if (!ogImage) return `${PUBLIC_OG_URL}/og/home.png`;
+		return `${PUBLIC_OG_URL}${ogImage}`;
+	});
 	const isProduction = $derived(page.url.hostname === 'threadcast.dev');
 	const isLocalhost = $derived(page.url.hostname === 'localhost');
 	const effectiveRobots = $derived(
