@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { renderMarkdown } from '$lib/markdown';
 	import { highlightProse } from '$lib/actions/highlight-prose';
+	import Seo from '$lib/components/seo.svelte';
+	import { renderMarkdown } from '$lib/markdown';
 
 	let { data } = $props();
 
@@ -13,11 +14,10 @@
 	};
 </script>
 
-<svelte:head>
-	<title>{data.changelog.title} — Changelog — ThreadCast</title>
-	<meta name="description" content={data.changelog.summary} />
-</svelte:head>
-
+<Seo
+	title={`${data.changelog.title} — Changelog — ThreadCast`}
+	description={data.changelog.summary}
+/>
 <div class="px-6 py-10">
 	<div class="mx-auto max-w-4xl">
 		<div class="mb-8 animate-fade-in">

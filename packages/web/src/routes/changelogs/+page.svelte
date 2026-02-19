@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Seo from '$lib/components/seo.svelte';
+
 	let { data } = $props();
 
 	const formatDate = (date: Date) => {
@@ -10,13 +12,10 @@
 	};
 </script>
 
-<svelte:head>
-	<title>Changelog — ThreadCast</title>
-	<meta
-		name="description"
-		content="What's new in ThreadCast — release notes and product updates."
-	/>
-</svelte:head>
+<Seo
+	title="Changelog — ThreadCast"
+	description="What's new in ThreadCast — release notes and product updates."
+/>
 
 <div class="px-6 py-10">
 	<div class="mx-auto max-w-4xl">
@@ -32,7 +31,7 @@
 					class="animate-slide-up relative border-l-2 border-border pb-10 pl-8 last:pb-0"
 					style="--delay: {Math.min(i * 80, 400)}ms"
 				>
-					<div class="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-accent"></div>
+					<div class="absolute -left-1.25 top-1 h-2 w-2 rounded-full bg-accent"></div>
 					<time class="font-mono text-xs text-accent">{formatDate(entry.date)}</time>
 					<h2 class="mt-1 text-xl font-semibold text-text">
 						<a href="/changelogs/{entry.slug}" class="transition-colors hover:text-accent">

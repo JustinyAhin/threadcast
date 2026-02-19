@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { authClient } from '$lib/client/auth';
 	import { goto, invalidateAll } from '$app/navigation';
+	import Seo from '$lib/components/seo.svelte';
 
 	const session = authClient.useSession();
 
@@ -16,6 +17,11 @@
 		goto('/threads');
 	};
 </script>
+
+<Seo
+	title="Login — ThreadCast"
+	description="Sign in to ThreadCast with your GitHub account to share and manage threads."
+/>
 
 <div class="px-6 py-10">
 	<div class="mx-auto flex max-w-sm flex-col items-center gap-6 pt-24">
