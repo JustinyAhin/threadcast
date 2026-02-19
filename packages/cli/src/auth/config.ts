@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import type { AuthConfig } from "@threadcast/shared";
 
-const CONFIG_DIR = join(homedir(), ".threadcast");
+const CONFIG_DIR = process.env.THREADCAST_CONFIG_DIR || join(homedir(), ".threadcast");
 const CONFIG_FILE = join(CONFIG_DIR, "config.json");
 
 const loadConfig = async (): Promise<AuthConfig | null> => {
@@ -31,4 +31,6 @@ const clearConfig = async (): Promise<void> => {
   }
 };
 
-export { loadConfig, saveConfig, clearConfig };
+const getConfigDir = () => CONFIG_DIR;
+
+export { loadConfig, saveConfig, clearConfig, getConfigDir };

@@ -1,6 +1,6 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import { homedir } from "node:os";
+import { getConfigDir } from "../auth/config";
 
 type IndexEntry = {
   sessionId: string;
@@ -18,7 +18,7 @@ type SessionIndex = {
   entries: Record<string, IndexEntry>;
 };
 
-const INDEX_DIR = join(homedir(), ".threadcast");
+const INDEX_DIR = getConfigDir();
 const INDEX_PATH = join(INDEX_DIR, "session-index.json");
 
 const loadIndex = async (): Promise<SessionIndex> => {

@@ -8,7 +8,7 @@
   "main": "src/index.tsx",
   "scripts": {
     "build": "bun run build.ts",
-    "dev": "bun run src/index.tsx",
+    "dev": "THREADCAST_CONFIG_DIR=$HOME/.threadcast-dev THREADCAST_API_URL=http://localhost:5173 bun run src/index.tsx",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

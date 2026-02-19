@@ -1,6 +1,6 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import { homedir } from "node:os";
+import { getConfigDir } from "../auth/config";
 
 type SharedSessionEntry = {
   url: string;
@@ -9,8 +9,7 @@ type SharedSessionEntry = {
 
 type SharedSessionsMap = Record<string, SharedSessionEntry>;
 
-const CONFIG_DIR = join(homedir(), ".threadcast");
-const SHARED_FILE = join(CONFIG_DIR, "shared.json");
+const SHARED_FILE = join(getConfigDir(), "shared.json");
 
 const loadSharedSessions = async (): Promise<SharedSessionsMap> => {
   try {
@@ -30,7 +29,7 @@ const saveSharedSession = async (opts: {
     url: opts.url,
     sharedAt: new Date().toISOString(),
   };
-  await mkdir(CONFIG_DIR, { recursive: true });
+  await mkdir(getConfigDir(), { recursive: true });
   await writeFile(SHARED_FILE, JSON.stringify(existing, null, 2));
 };
 
