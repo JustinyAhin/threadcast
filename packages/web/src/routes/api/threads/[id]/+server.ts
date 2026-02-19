@@ -1,6 +1,7 @@
 import { deleteThread, getThread, getThreadMeta, updateThreadVisibility } from '$lib/server/r2';
 import { resolveUser } from '$lib/server/resolve-user';
 import { error, json } from '@sveltejs/kit';
+import { MAX_THREAD_SIZE_BYTES } from '@threadcast/shared';
 
 export const GET = async (event) => {
 	const bucket = event.platform!.env.THREADS_BUCKET;
@@ -38,7 +39,24 @@ export const PATCH = async (event) => {
 		error(403, { message: 'You can only update your own threads' });
 	}
 
-	const body: { visibility?: string } = await event.request.json();
+	let text: string;
+	try {
+		text = await event.request.text();
+	} catch {
+		error(400, { message: 'Could not read request body' });
+	}
+
+	if (new TextEncoder().encode(text).byteLength > MAX_THREAD_SIZE_BYTES) {
+		error(413, { message: 'Request body exceeds 10 MB limit' });
+	}
+
+	let body: { visibility?: string };
+	try {
+		body = JSON.parse(text);
+	} catch {
+		error(400, { message: 'Invalid JSON body' });
+	}
+
 	const visibility = body.visibility;
 	if (visibility !== 'public' && visibility !== 'private') {
 		error(400, { message: 'visibility must be "public" or "private"' });

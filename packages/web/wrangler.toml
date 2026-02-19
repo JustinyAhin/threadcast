@@ -19,5 +19,13 @@ database_name = "threadcast-auth"
 database_id = "a451c8cc-8326-4f40-a414-9a83c2b6fba7"
 migrations_dir = "drizzle"
 
+[[ratelimits]]
+name = "MUTATION_RATE_LIMITER"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 30
+  period = 60
+
 [observability]
 enabled = true

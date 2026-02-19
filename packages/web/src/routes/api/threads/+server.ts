@@ -38,7 +38,8 @@ export const POST = async (event) => {
 
 	const result = ThreadDataSchema.safeParse(body);
 	if (!result.success) {
-		error(400, { message: `Invalid thread data: ${result.error.message}` });
+		console.error('Thread validation error:', result.error.message);
+		error(400, { message: 'Invalid thread data' });
 	}
 
 	const threadData = result.data;

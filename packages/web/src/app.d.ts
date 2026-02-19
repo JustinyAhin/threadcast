@@ -15,6 +15,7 @@ declare global {
 				THREADS_BUCKET: R2Bucket;
 				AUTH_DB: D1Database;
 				ASSETS: Fetcher;
+				MUTATION_RATE_LIMITER: RateLimiter;
 			};
 			ctx: ExecutionContext;
 			caches: CacheStorage;
