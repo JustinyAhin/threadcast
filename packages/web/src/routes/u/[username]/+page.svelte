@@ -1,12 +1,17 @@
 <script lang="ts">
+	import Seo from '$lib/components/seo.svelte';
 	import ThreadCard from '$lib/components/thread-card.svelte';
 
 	let { data } = $props();
 </script>
 
-<svelte:head>
-	<title>{data.username}'s Threads — ThreadCast</title>
-</svelte:head>
+<Seo
+	title="{data.username}'s Threads — ThreadCast"
+	description="{data.username} has shared {data.threads.length} {data.threads.length === 1
+		? 'thread'
+		: 'threads'} on ThreadCast."
+	ogImage="/og/u/{data.username}.png"
+/>
 
 <div class="px-6 py-10">
 	<div class="mx-auto max-w-4xl">

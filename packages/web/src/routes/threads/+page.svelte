@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/components/seo.svelte';
 	import ThreadCard from '$lib/components/thread-card.svelte';
 	import { authClient } from '$lib/client/auth';
 
@@ -142,6 +143,11 @@
 </script>
 
 <svelte:window onkeydown={onKeydown} />
+
+<Seo
+	title="Threads — ThreadCast"
+	description="Browse Claude Code sessions shared by developers — real coding conversations, preserved for everyone."
+/>
 
 <div class="px-6 py-10">
 	<div class="mx-auto max-w-4xl">
