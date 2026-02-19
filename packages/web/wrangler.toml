@@ -1,4 +1,4 @@
-name = "threadcast-web"
+name = 'threadcast'
 compatibility_date = "2026-02-12"
 compatibility_flags = ["nodejs_als"]
 main = ".svelte-kit/cloudflare/_worker.js"
