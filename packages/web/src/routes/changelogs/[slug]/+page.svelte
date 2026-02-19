@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
 	import { highlightProse } from '$lib/actions/highlight-prose';
 	import Seo from '$lib/components/seo.svelte';
 	import { renderMarkdown } from '$lib/markdown';
@@ -35,8 +35,8 @@
 		</div>
 
 		<div class="animate-slide-up prose text-sm text-text" style="--delay: 100ms" use:highlightProse>
-			<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+			eslint-disable-next-line svelte/no-at-html-tags
 			{@html renderMarkdown(data.changelog.content)}
 		</div>
 	</div>
-</div>
+</div> -->

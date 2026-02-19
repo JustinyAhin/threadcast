@@ -28,14 +28,14 @@
 			>
 				Threads
 			</a>
-			<a
+			<!-- <a
 				href="/changelogs"
 				class="transition-colors {page.url.pathname.startsWith('/changelogs')
 					? 'text-text'
 					: 'text-text-secondary hover:text-text'}"
 			>
 				Changelog
-			</a>
+			</a> -->
 
 			<span class="text-border">|</span>
 

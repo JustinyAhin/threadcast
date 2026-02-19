@@ -1,6 +1,6 @@
-import { getChangelogs } from '$lib/changelog';
+// import { getChangelogs } from '$lib/changelog';
 
-export const load = () => {
-	const changelogs = getChangelogs();
-	return { changelogs };
-};
+// export const load = () => {
+// 	const changelogs = getChangelogs();
+// 	return { changelogs };
+// };

@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
 	import Seo from '$lib/components/seo.svelte';
 
 	let { data } = $props();
@@ -43,4 +43,4 @@
 			{/each}
 		</div>
 	</div>
-</div>
+</div> -->
