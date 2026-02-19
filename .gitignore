@@ -3,3 +3,4 @@ dist
 packages/cli/bin
 .DS_Store
 *.bun-build
+.env

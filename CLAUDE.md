@@ -76,23 +76,10 @@ updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() 
 
 ### Environment Variables
 
-**Managed with [dotenvx](https://dotenvx.com).** Env files are encrypted and safe to commit. Private keys live in `.env.keys` (never committed).
+- **Local dev**: `.env` file (gitignored)
+- **Production**: Set in the Cloudflare dashboard (Settings > Build > Build variables)
 
-- `.env` — local dev (encrypted)
-- `.env.production` — production (encrypted)
-- `.env.keys` — private decryption keys (gitignored)
-
-**Never read `.env` or `.env.keys` files.** When environment variables need to be added or updated, describe what's needed and let the user handle it directly. This prevents accidental exposure of secrets.
-
-**Adding a new env var:**
-
-```bash
-# Local
-bunx dotenvx set NEW_VAR "value"
-
-# Production
-bunx dotenvx set NEW_VAR "value" -f .env.production
-```
+**Never read `.env` files.** When environment variables need to be added or updated, describe what's needed and let the user handle it directly. This prevents accidental exposure of secrets.
 
 ## Commands
 

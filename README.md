@@ -26,7 +26,7 @@ ThreadCast transforms recorded Claude Code conversations into shareable threads 
 - **Database**: Cloudflare D1 (SQLite) with [Drizzle ORM](https://orm.drizzle.team)
 - **Auth**: GitHub OAuth ([Better Auth](https://www.better-auth.com))
 - **Validation**: [Zod](https://zod.dev)
-- **Env management**: [dotenvx](https://dotenvx.com) (encrypted)
+- **Env management**: `.env` (local), Cloudflare dashboard (production)
 
 ## Getting Started
 
@@ -43,7 +43,7 @@ ThreadCast transforms recorded Claude Code conversations into shareable threads 
 bun install
 
 # Set up environment variables (see Environment Variables below)
-bunx dotenvx set VARIABLE_NAME "value"
+cp .env.example .env  # then fill in values
 
 # Run database migrations locally
 bun --filter web db:migrate:local
@@ -57,24 +57,17 @@ bun cli
 
 ### Environment Variables
 
-Env files are encrypted with [dotenvx](https://dotenvx.com) and safe to commit. Private keys live in `.env.keys` (gitignored).
+Local dev uses a `.env` file. Production variables are set in the Cloudflare dashboard (Settings > Build > Build variables).
 
 **Web**:
 - `BETTER_AUTH_URL` — Base URL for auth
 - `BETTER_AUTH_SECRET` — Session secret
 - `GITHUB_CLIENT_ID` — GitHub OAuth app ID
 - `GITHUB_CLIENT_SECRET` — GitHub OAuth app secret
+- `PUBLIC_OG_URL` — OG image service URL
 
 **CLI**:
 - `API_BASE_URL` — Web API base URL
-
-```bash
-# Set a local env var
-bunx dotenvx set NEW_VAR "value"
-
-# Set a production env var
-bunx dotenvx set NEW_VAR "value" -f .env.production
-```
 
 ## Commands
 
