@@ -1,18 +1,19 @@
 <script lang="ts">
 	import Header from '$lib/components/header.svelte';
+	import Seo from '$lib/components/seo.svelte';
 	import '../app.css';
 
 	let { children } = $props();
 </script>
 
-<svelte:head>
-	<title>ThreadCast — Share Claude Code Sessions</title>
-	<meta name="description" content="Share your Claude Code sessions as readable web pages." />
-</svelte:head>
+<Seo
+	title="ThreadCast — Share Claude Code Sessions"
+	description="Share your Claude Code sessions as readable web pages."
+/>
 
 <div class="flex min-h-screen flex-col">
 	<Header />
-	<main class="flex-1">
+	<main class="flex flex-1 flex-col">
 		{@render children()}
 	</main>
 	<footer class="border-t border-border px-6 py-6">

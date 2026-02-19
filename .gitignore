@@ -2,3 +2,4 @@ node_modules
 dist
 packages/cli/bin
 .DS_Store
+*.bun-build

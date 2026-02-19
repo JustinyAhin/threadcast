@@ -7,7 +7,11 @@
 	import { activeElement } from 'runed';
 	import { browser } from '$app/environment';
 
-	let { thread }: { thread: ThreadData } = $props();
+	let {
+		thread,
+		threadId,
+		isOwner = false
+	}: { thread: ThreadData; threadId: string; isOwner?: boolean } = $props();
 
 	let query = $state('');
 	let inputEl = $state<HTMLInputElement>();
@@ -269,5 +273,5 @@
 		</div>
 	</div>
 
-	<ThreadSidebar {thread} />
+	<ThreadSidebar {thread} {threadId} {isOwner} />
 </div>

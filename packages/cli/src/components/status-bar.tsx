@@ -5,7 +5,7 @@ import { colors, symbols } from "../theme.js";
 type Hint = { key: string; label: string };
 
 const StatusBar = () => {
-  const [state] = useApp();
+  const [state, actions] = useApp();
 
   const authLabel = () =>
     state.auth ? `${symbols.github} @${state.auth.githubUsername}` : `${symbols.github} not logged in`;
@@ -28,6 +28,15 @@ const StatusBar = () => {
     return ` | searching: ${state.searchProgress}`;
   };
 
+  const sharedLabel = () => {
+    if (state.view !== "sessions") return "";
+    const session = actions.displayedSessions()[state.selectedIndex];
+    if (!session) return "";
+    const entry = state.sharedSessions[session.sessionId];
+    if (!entry) return "";
+    return ` | ${symbols.share} ${entry.url}`;
+  };
+
   const hints = (): Hint[] => {
     switch (state.view) {
       case "sessions":
@@ -44,6 +53,7 @@ const StatusBar = () => {
             { key: "j/k", label: "nav" },
             { key: "Enter", label: "open" },
             { key: "s", label: "share" },
+            { key: "S", label: "bulk share" },
             { key: "Esc", label: "clear" },
             { key: "/", label: "filter" },
             { key: "q", label: "quit" },
@@ -53,9 +63,12 @@ const StatusBar = () => {
           { key: "j/k", label: "nav" },
           { key: "Enter", label: "open" },
           { key: "s", label: "share" },
+          { key: "S", label: "bulk share" },
           { key: "r", label: "refresh" },
           { key: "/", label: "filter" },
-          { key: "l", label: "login" },
+          ...(state.auth
+            ? [{ key: "L", label: "logout" }]
+            : [{ key: "l", label: "login" }]),
           { key: "q", label: "quit" },
         ];
       case "preview":
@@ -81,7 +94,7 @@ const StatusBar = () => {
       paddingX={1}
     >
       <text
-        content={`${authLabel()}${uploadLabel()}${searchLabel()}`}
+        content={`${authLabel()}${uploadLabel()}${searchLabel()}${sharedLabel()}`}
         fg={colors.textDim}
         flexGrow={1}
       />

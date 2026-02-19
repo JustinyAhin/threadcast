@@ -1,5 +1,6 @@
 import type { AuthConfig, SessionSummary, ThreadData } from "@threadcast/shared";
 import type { SharedSessionsMap } from "./lib/shared-sessions.js";
+import type { PresetCount } from "./lib/date-filter.js";
 
 type SearchResult = SessionSummary & {
   matchSnippet?: string;
@@ -25,6 +26,10 @@ type AppState = {
   loginVerificationUri: string | null;
   loginStatus: "idle" | "waiting" | "success" | "error";
   sharedSessions: SharedSessionsMap;
+  bulkShareView: boolean;
+  bulkSharePresetIndex: number;
+  bulkSharePresets: PresetCount[];
+  bulkShareProgress: { current: number; total: number; urls: string[] } | null;
 };
 
 export type { AppState, SearchResult };

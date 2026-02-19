@@ -78,6 +78,47 @@ const listUserThreads = async ({
 	return readIndex({ bucket, key: `indexes/by-user/${username}.json` });
 };
 
+const updateThreadVisibility = async ({
+	bucket,
+	id,
+	visibility
+}: {
+	bucket: R2Bucket;
+	id: string;
+	visibility: 'public' | 'private';
+}): Promise<void> => {
+	const [data, meta] = await Promise.all([
+		getThread({ bucket, id }),
+		getThreadMeta({ bucket, id })
+	]);
+	if (!data || !meta) throw new Error('Thread not found');
+
+	data.metadata.visibility = visibility;
+	meta.metadata.visibility = visibility;
+
+	await Promise.all([
+		bucket.put(`threads/${id}/data.json`, JSON.stringify(data), {
+			httpMetadata: { contentType: 'application/json' }
+		}),
+		bucket.put(`threads/${id}/meta.json`, JSON.stringify(meta), {
+			httpMetadata: { contentType: 'application/json' }
+		})
+	]);
+
+	if (visibility === 'public') {
+		await updateIndex({ bucket, key: 'indexes/recent.json', meta });
+	} else {
+		await removeFromIndex({ bucket, key: 'indexes/recent.json', id });
+	}
+
+	// Always update user index to reflect new metadata
+	await updateIndex({
+		bucket,
+		key: `indexes/by-user/${meta.uploader.githubUsername}.json`,
+		meta
+	});
+};
+
 const deleteThread = async ({ bucket, id }: { bucket: R2Bucket; id: string }): Promise<boolean> => {
 	const meta = await getThreadMeta({ bucket, id });
 	if (!meta) return false;
@@ -170,6 +211,7 @@ export {
 	getThreadMeta,
 	listRecentThreads,
 	listUserThreads,
+	updateThreadVisibility,
 	deleteThread,
 	findThreadBySessionId,
 	type ThreadMeta

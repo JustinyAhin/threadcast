@@ -3,7 +3,11 @@
 	import { timeAgo } from '$lib/utils/date';
 	import { SvelteSet } from 'svelte/reactivity';
 
-	let { thread }: { thread: ThreadData } = $props();
+	let {
+		thread,
+		threadId,
+		isOwner = false
+	}: { thread: ThreadData; threadId: string; isOwner?: boolean } = $props();
 
 	const TOOL_COLORS: Record<string, string> = {
 		Bash: 'bg-emerald-500/15 text-emerald-400',
@@ -74,6 +78,28 @@
 		thread.metadata.models.length > 0 ? formatModel(thread.metadata.models[0]) : 'Unknown'
 	);
 
+	let toggling = $state(false);
+	let visibilityOverride: 'public' | 'private' | null = $state(null);
+	const visibility = $derived(visibilityOverride ?? thread.metadata.visibility);
+
+	const toggleVisibility = async () => {
+		if (toggling) return;
+		toggling = true;
+		const newVisibility = visibility === 'public' ? 'private' : 'public';
+		try {
+			const res = await fetch(`/api/threads/${threadId}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ visibility: newVisibility })
+			});
+			if (res.ok) {
+				visibilityOverride = newVisibility;
+			}
+		} finally {
+			toggling = false;
+		}
+	};
+
 	let copied = $state(false);
 
 	const copySessionId = async () => {
@@ -85,44 +111,95 @@
 
 <aside class="sticky top-8 hidden w-72 shrink-0 lg:block">
 	<div class="space-y-6">
-		<!-- Visibility badge -->
-		<div>
-			{#if thread.metadata.visibility === 'public'}
-				<span
-					class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-400"
+		<!-- Visibility -->
+		{#if isOwner}
+			<button
+				onclick={toggleVisibility}
+				disabled={toggling}
+				class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-border px-3 py-2.5 transition-colors hover:border-border-light disabled:opacity-50"
+			>
+				<div class="flex items-center gap-2">
+					{#if visibility === 'public'}
+						<svg
+							class="h-4 w-4 text-emerald-400"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<path
+								d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+							/>
+						</svg>
+						<span class="text-sm text-text">Public</span>
+					{:else}
+						<svg
+							class="h-4 w-4 text-amber-400"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+							<path d="M7 11V7a5 5 0 0 1 10 0v4" />
+						</svg>
+						<span class="text-sm text-text">Private</span>
+					{/if}
+				</div>
+				<!-- Toggle switch -->
+				<div
+					class="relative h-5 w-9 rounded-full transition-colors {visibility === 'public'
+						? 'bg-emerald-500'
+						: 'bg-surface-3'}"
 				>
-					<svg
-						class="h-3 w-3"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
+					<div
+						class="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform {visibility ===
+						'public'
+							? 'translate-x-4'
+							: 'translate-x-0.5'}"
+					></div>
+				</div>
+			</button>
+		{:else}
+			<div>
+				{#if visibility === 'public'}
+					<span
+						class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-400"
 					>
-						<circle cx="12" cy="12" r="10" />
-						<path
-							d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
-						/>
-					</svg>
-					Public
-				</span>
-			{:else}
-				<span
-					class="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-medium text-amber-400"
-				>
-					<svg
-						class="h-3 w-3"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
+						<svg
+							class="h-3 w-3"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<path
+								d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+							/>
+						</svg>
+						Public
+					</span>
+				{:else}
+					<span
+						class="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-medium text-amber-400"
 					>
-						<rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-						<path d="M7 11V7a5 5 0 0 1 10 0v4" />
-					</svg>
-					Private
-				</span>
-			{/if}
-		</div>
+						<svg
+							class="h-3 w-3"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+							<path d="M7 11V7a5 5 0 0 1 10 0v4" />
+						</svg>
+						Private
+					</span>
+				{/if}
+			</div>
+		{/if}
 
 		<!-- Thread metadata -->
 		<div>

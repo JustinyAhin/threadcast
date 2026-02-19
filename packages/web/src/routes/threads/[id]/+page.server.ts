@@ -20,5 +20,7 @@ export const load = async ({ params, platform, locals }) => {
 		error(404, { message: 'Thread not found' });
 	}
 
-	return { thread, id: params.id };
+	const isOwner = locals.user?.githubUsername === meta.uploader.githubUsername;
+
+	return { thread, id: params.id, isOwner };
 };

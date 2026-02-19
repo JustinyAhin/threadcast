@@ -44,6 +44,7 @@ const SessionsView = (props: SessionsViewProps) => {
 
   useKeyboard((key) => {
     if (props.visible === false) return;
+    if (state.bulkShareView) return;
 
     if (state.filtering) {
       if (key.name === "escape") {
@@ -117,10 +118,14 @@ const SessionsView = (props: SessionsViewProps) => {
       }
     } else if (key.name === "/") {
       actions.setFiltering(true);
+    } else if (key.name === "s" && key.shift) {
+      actions.openBulkShare();
     } else if (key.name === "s") {
       actions.shareFromList();
     } else if (key.name === "r") {
       actions.loadSessions();
+    } else if (key.name === "l" && key.shift) {
+      actions.logout();
     } else if (key.name === "l") {
       actions.startLogin();
     } else if (key.name === "q") {

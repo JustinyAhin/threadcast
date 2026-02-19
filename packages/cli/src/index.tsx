@@ -1,6 +1,7 @@
 import { render } from "@opentui/solid";
 import { App } from "./app.js";
 import { clearConfig, loadConfig } from "./auth/config.js";
+import { runBulkShare } from "./commands/bulk-share.js";
 
 const subcommand = process.argv[2];
 
@@ -13,6 +14,10 @@ if (subcommand === "logout") {
     console.log("Logged out successfully.");
   }
   process.exit(0);
+}
+
+if (subcommand === "share" && process.argv.length > 3) {
+  await runBulkShare(process.argv.slice(3));
 }
 
 render(() => <App />, { useMouse: false });

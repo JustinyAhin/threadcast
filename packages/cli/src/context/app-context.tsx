@@ -10,6 +10,7 @@ import { getCachedThread } from "../lib/thread-cache.js";
 import { uploadThread } from "../uploader/api-client.js";
 import { searchSessions } from "../lib/session-search.js";
 import { loadSharedSessions, saveSharedSession } from "../lib/shared-sessions.js";
+import { getPresetCounts, filterSessionsByAge } from "../lib/date-filter.js";
 
 type AppActions = {
   loadSessions: () => Promise<void>;
@@ -26,6 +27,10 @@ type AppActions = {
   shareFromList: () => Promise<void>;
   logout: () => Promise<void>;
   displayedSessions: () => SearchResult[];
+  openBulkShare: () => void;
+  closeBulkShare: () => void;
+  selectBulkSharePreset: (index: number) => void;
+  confirmBulkShare: () => Promise<void>;
 };
 
 type AppContextValue = [AppState, AppActions];
@@ -52,6 +57,10 @@ const initialState: AppState = {
   loginVerificationUri: null,
   loginStatus: "idle",
   sharedSessions: {},
+  bulkShareView: false,
+  bulkSharePresetIndex: 0,
+  bulkSharePresets: [],
+  bulkShareProgress: null,
 };
 
 const AppProvider = (props: ParentProps) => {
@@ -407,6 +416,105 @@ const AppProvider = (props: ParentProps) => {
     logout: async () => {
       await clearConfig();
       setState("auth", null);
+    },
+
+    openBulkShare: () => {
+      const presets = getPresetCounts({
+        sessions: state.sessions,
+      });
+      setState(
+        produce((s) => {
+          s.bulkShareView = true;
+          s.bulkSharePresetIndex = 0;
+          s.bulkSharePresets = presets;
+          s.bulkShareProgress = null;
+        })
+      );
+    },
+
+    closeBulkShare: () => {
+      setState(
+        produce((s) => {
+          s.bulkShareView = false;
+          s.bulkSharePresets = [];
+          s.bulkShareProgress = null;
+        })
+      );
+    },
+
+    selectBulkSharePreset: (index: number) => {
+      const max = state.bulkSharePresets.length - 1;
+      setState("bulkSharePresetIndex", Math.max(0, Math.min(index, max)));
+    },
+
+    confirmBulkShare: async () => {
+      const preset = state.bulkSharePresets[state.bulkSharePresetIndex];
+      if (!preset || preset.total === 0) return;
+
+      if (!state.auth) {
+        await actions.startLogin();
+        if (!state.auth) return;
+        setState("bulkShareView", true);
+      }
+
+      const sessions = filterSessionsByAge({
+        sessions: state.sessions,
+        days: preset.days,
+      });
+
+      setState("bulkShareProgress", {
+        current: 0,
+        total: sessions.length,
+        urls: [],
+      });
+
+      for (let i = 0; i < sessions.length; i++) {
+        const session = sessions[i];
+        try {
+          const data = await getCachedThread({
+            filePath: session.path,
+            uploader: {
+              githubUsername: state.auth!.githubUsername,
+              githubAvatarUrl: state.auth!.githubAvatarUrl,
+            },
+          });
+
+          const result = await uploadThread({
+            threadData: data,
+            token: state.auth!.githubToken,
+          });
+
+          await saveSharedSession({
+            sessionId: session.sessionId,
+            url: result.url,
+          });
+
+          setState(
+            produce((s) => {
+              s.sharedSessions[session.sessionId] = {
+                url: result.url,
+                sharedAt: new Date().toISOString(),
+              };
+              s.bulkShareProgress = {
+                current: i + 1,
+                total: sessions.length,
+                urls: [...(s.bulkShareProgress?.urls ?? []), result.url],
+              };
+            })
+          );
+        } catch {
+          // Update progress even on failure
+          setState(
+            produce((s) => {
+              s.bulkShareProgress = {
+                current: i + 1,
+                total: sessions.length,
+                urls: s.bulkShareProgress?.urls ?? [],
+              };
+            })
+          );
+        }
+      }
     },
 
     displayedSessions,
