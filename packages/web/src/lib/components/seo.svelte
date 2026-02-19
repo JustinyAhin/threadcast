@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { PUBLIC_OG_URL } from '$env/static/public';
 	import { page } from '$app/state';
 
 	type Props = {
@@ -12,8 +13,7 @@
 	const { title, description, ogImage, ogType = 'website', robots }: Props = $props();
 
 	const canonicalUrl = $derived(`${page.url.origin}${page.url.pathname}`);
-	const ogOrigin = 'https://og.threadcast.dev';
-	const ogImageUrl = $derived(ogImage ? `${ogOrigin}${ogImage}` : undefined);
+	const ogImageUrl = $derived(ogImage ? `${PUBLIC_OG_URL}${ogImage}` : undefined);
 	const isProduction = $derived(page.url.hostname === 'threadcast.dev');
 	const isLocalhost = $derived(page.url.hostname === 'localhost');
 	const effectiveRobots = $derived(
