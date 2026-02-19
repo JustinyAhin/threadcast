@@ -22,3 +22,6 @@ migrations_dir = "drizzle"
 [[routes]]
 pattern = "shop.example.com"
 custom_domain = true
+
+[observability]
+enabled = true
