@@ -1,5 +1,8 @@
 <script lang="ts">
 	import ThreadCard from '$lib/components/thread-card.svelte';
+	import { authClient } from '$lib/client/auth';
+
+	const session = authClient.useSession();
 
 	let { data } = $props();
 
@@ -160,6 +163,14 @@
 						class="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-accent">threadcast share</code
 					>
 				</p>
+				{#if !$session.data}
+					<a
+						href="/login"
+						class="mt-4 inline-block cursor-pointer rounded-lg bg-accent px-4 py-2 text-sm font-medium text-bg transition-opacity hover:opacity-90"
+					>
+						Sign in with GitHub
+					</a>
+				{/if}
 			</div>
 		{:else}
 			<!-- Search & filter bar -->

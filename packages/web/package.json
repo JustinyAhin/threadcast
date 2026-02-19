@@ -14,7 +14,9 @@
 		"format": "prettier --write .",
 		"gen": "wrangler types",
 		"atlas:diff": "atlas migrate diff --env local",
-		"atlas:hash": "atlas migrate hash --dir file://drizzle"
+		"atlas:hash": "atlas migrate hash --dir file://drizzle",
+		"db:migrate:local": "wrangler d1 migrations apply threadcast-auth --local",
+		"db:migrate:remote": "wrangler d1 migrations apply threadcast-auth --remote"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.0.2",

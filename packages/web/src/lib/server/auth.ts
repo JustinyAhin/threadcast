@@ -3,10 +3,8 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { env } from 'cloudflare:workers';
-import { drizzle } from 'drizzle-orm/d1';
+import { db } from './db';
 import * as schema from './db/schema';
-
-const db = drizzle(env.AUTH_DB, { schema });
 
 const auth = betterAuth({
 	baseURL: env.BETTER_AUTH_URL,
@@ -25,7 +23,10 @@ const auth = betterAuth({
 			clientId: env.GITHUB_CLIENT_ID,
 			clientSecret: env.GITHUB_CLIENT_SECRET,
 			mapProfileToUser: (profile) => ({
-				githubUsername: profile.login
+				githubUsername: profile.login,
+				githubBio: profile.bio ?? null,
+				githubLocation: profile.location ?? null,
+				githubBlog: profile.blog ?? null
 			})
 		}
 	},
@@ -36,6 +37,24 @@ const auth = betterAuth({
 				required: false,
 				input: false,
 				fieldName: 'githubUsername'
+			},
+			githubBio: {
+				type: 'string',
+				required: false,
+				input: false,
+				fieldName: 'githubBio'
+			},
+			githubLocation: {
+				type: 'string',
+				required: false,
+				input: false,
+				fieldName: 'githubLocation'
+			},
+			githubBlog: {
+				type: 'string',
+				required: false,
+				input: false,
+				fieldName: 'githubBlog'
 			}
 		}
 	},

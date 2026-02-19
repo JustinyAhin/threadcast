@@ -11,6 +11,9 @@ const user = sqliteTable('user', {
 	emailVerified: integer('email_verified', { mode: 'boolean' }).notNull(),
 	image: text('image'),
 	githubUsername: text('github_username'),
+	githubBio: text('github_bio'),
+	githubLocation: text('github_location'),
+	githubBlog: text('github_blog'),
 	createdAt: integer('created_at', { mode: 'timestamp' })
 		.notNull()
 		.$defaultFn(() => new Date()),

@@ -13,6 +13,7 @@ declare global {
 		interface Platform {
 			env: {
 				THREADS_BUCKET: R2Bucket;
+				AUTH_DB: D1Database;
 				ASSETS: Fetcher;
 			};
 			ctx: ExecutionContext;
