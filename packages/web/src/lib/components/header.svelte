@@ -10,15 +10,15 @@
 	};
 </script>
 
-<header class="border-b border-border px-6 py-4">
-	<div class="mx-auto flex max-w-7xl items-center justify-between">
-		<a href="/" class="group flex items-center gap-2 text-lg font-semibold text-text">
+<header class="border-b border-border px-4 py-4 sm:px-6">
+	<div class="mx-auto flex max-w-7xl items-center justify-between gap-4">
+		<a href="/" class="group flex shrink-0 items-center gap-2 text-lg font-semibold text-text">
 			<span class="text-accent transition-transform duration-200 group-hover:scale-110"
 				>&#9672;</span
 			>
 			Thread<span class="text-accent">Cast</span>
 		</a>
-		<nav class="flex items-center gap-4 text-sm">
+		<nav class="flex items-center gap-2 text-sm sm:gap-4">
 			<a
 				href="/threads"
 				class="transition-colors {page.url.pathname.startsWith('/threads')
@@ -47,7 +47,7 @@
 								alt={$session.data.user.name}
 								class="h-6 w-6 rounded-full ring-1 ring-border"
 							/>
-							<span class="text-text-secondary transition-colors hover:text-text"
+							<span class="hidden text-text-secondary transition-colors hover:text-text sm:inline"
 								>{$session.data.user.name}</span
 							>
 						</a>

@@ -19,6 +19,6 @@
 	<meta property="og:url" content="https://threadcast.dev/threads/{data.id}" />
 </svelte:head>
 
-<div class="px-6 py-10">
+<div class="px-4 py-6 sm:px-6 sm:py-10">
 	<ThreadView thread={data.thread} />
 </div>

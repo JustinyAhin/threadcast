@@ -134,7 +134,9 @@
 		<!-- Thread header -->
 		<div class="mb-8 border-b border-border pb-6">
 			<p class="mb-3 font-mono text-xs tracking-widest text-text-muted uppercase">Session</p>
-			<h1 class="mb-3 text-2xl font-bold text-text">{thread.metadata.title}</h1>
+			<h1 class="mb-3 text-xl font-bold break-words text-text sm:text-2xl">
+				{thread.metadata.title}
+			</h1>
 			<div class="mb-4 flex items-center gap-3">
 				<img
 					src={thread.uploader.githubAvatarUrl}
