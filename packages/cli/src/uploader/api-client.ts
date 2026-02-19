@@ -1,10 +1,12 @@
 import {
-  API_BASE_URL,
+  API_BASE_URL as DEFAULT_API_BASE_URL,
   MAX_THREAD_SIZE_BYTES,
   type ThreadData,
   type UploadResponse,
   type ApiError,
 } from "@threadcast/shared";
+
+const API_BASE_URL = process.env.THREADCAST_API_URL || DEFAULT_API_BASE_URL;
 
 type UploadThreadOpts = {
   threadData: ThreadData;
