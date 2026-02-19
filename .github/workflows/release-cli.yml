@@ -58,7 +58,9 @@ jobs:
                   cd artifacts
                   for binary in threadcast-*; do
                     chmod +x "$binary"
-                    tar czf "${binary}.tar.gz" "$binary"
+                    cp "$binary" threadcast
+                    tar czf "${binary}.tar.gz" threadcast
+                    rm threadcast
                   done
                   ls -lh
             - uses: softprops/action-gh-release@v2
