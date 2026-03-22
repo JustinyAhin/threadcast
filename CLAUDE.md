@@ -91,4 +91,8 @@ bun run --filter '*' typecheck  # Typecheck all packages
 
 ## Fetching Pages
 
-If a page content fetch fails with the default tools, first, use `bunx playbooks get [url]` and then https://r.jina.ai/ with curl as last resort.
+When you need to fetch a page's content, use this order:
+
+1. `curl https://defuddle.md/[url]` — preferred, returns clean markdown
+2. `bunx playbooks get [url]` — fallback if defuddle fails or result is poor
+3. WebFetch tool — last resort
