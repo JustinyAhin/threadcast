@@ -1,6 +1,7 @@
 node_modules
 dist
 packages/cli/bin
+packages/plugin-threadcast/server/*.js
 .DS_Store
 *.bun-build
 .env

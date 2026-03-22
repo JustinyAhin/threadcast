@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@threadcast/local-core": "workspace:*",
     "@threadcast/shared": "workspace:*",
     "@opentui/core": "latest",
     "@opentui/solid": "latest",

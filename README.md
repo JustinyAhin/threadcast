@@ -16,6 +16,9 @@ ThreadCast transforms recorded Claude Code conversations into shareable threads 
 |---------|-------------|
 | `packages/web` | SvelteKit app hosted on Cloudflare Workers — displays threads |
 | `packages/cli` | Terminal UI for discovering, previewing, and uploading sessions |
+| `packages/local-core` | Shared local discovery, parsing, auth, and upload logic for native clients |
+| `packages/mcp` | Local stdio MCP server that exposes ThreadCast tools to Claude Code |
+| `packages/plugin-threadcast` | Claude Code plugin with slash commands backed by the local MCP server |
 | `packages/shared` | Shared Zod schemas, types, and utilities |
 
 ## Tech Stack
@@ -78,6 +81,7 @@ bun cli                  # Run CLI in dev mode
 
 # Build
 bun build                # Build all packages
+bun build:plugin         # Bundle the Claude Code plugin server
 
 # Quality
 bun run --filter '*' typecheck   # Typecheck all packages
@@ -100,6 +104,26 @@ threadcast share --since 2025-01-01  # Share sessions since a date
 threadcast share --force          # Re-share already shared sessions
 threadcast logout                 # Clear stored credentials
 ```
+
+## Claude Code Plugin
+
+ThreadCast can also be used from inside Claude Code via the bundled plugin.
+
+```bash
+# Build the plugin's bundled MCP server
+bun build:plugin
+
+# Start Claude Code with the plugin directory
+claude --plugin-dir ./packages/plugin-threadcast
+```
+
+This adds the following commands inside Claude Code:
+
+- `/threadcast:login`
+- `/threadcast:logout`
+- `/threadcast:status`
+- `/threadcast:share`
+- `/threadcast:share-recent`
 
 ### Keyboard Shortcuts (TUI)
 

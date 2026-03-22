@@ -1,2 +1,7 @@
-export { githubDeviceFlow, getGitHubUser } from "./github-device-flow.js";
-export { loadConfig, saveConfig, clearConfig } from "./config.js";
+export {
+  githubDeviceFlow,
+  getGitHubUser,
+  loadConfig,
+  saveConfig,
+  clearConfig,
+} from "@threadcast/local-core";
