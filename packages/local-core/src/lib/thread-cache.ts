@@ -23,7 +23,7 @@ const getCachedThread = async (opts: {
     return { ...cached, uploader };
   }
 
-  const data = await parseSession(filePath, uploader);
+  const data = await parseSession({ filePath, uploader });
   threadLru.set({ key, value: data });
   return data;
 };

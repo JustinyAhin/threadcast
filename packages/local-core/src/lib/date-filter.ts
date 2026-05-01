@@ -1,9 +1,5 @@
 import type { SessionSummary } from "@threadcast/shared";
-
-type DatePreset = {
-  label: string;
-  days: number;
-};
+import type { DatePreset, PresetCount } from "../types.js";
 
 const DATE_PRESETS: DatePreset[] = [
   { label: "Today", days: 1 },
@@ -34,12 +30,6 @@ const filterSessionsSince = (opts: {
   );
 };
 
-type PresetCount = {
-  label: string;
-  days: number;
-  total: number;
-};
-
 const getPresetCounts = (opts: {
   sessions: SessionSummary[];
 }): PresetCount[] => {
@@ -61,6 +51,4 @@ export {
   filterSessionsSince,
   getPresetCounts,
   DATE_PRESETS,
-  type DatePreset,
-  type PresetCount,
 };

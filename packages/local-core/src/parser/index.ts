@@ -1,7 +1,7 @@
 import { readSessionMessages } from "./jsonl-reader.js";
 import { buildMessageChain } from "./message-chain.js";
 import { processMessages } from "./tool-matcher.js";
-import { sanitizeTurns, type SanitizeOptions } from "./sanitizer.js";
+import { sanitizeTurns } from "./sanitizer.js";
 import type {
   ThreadData,
   ThreadMetadata,
@@ -10,6 +10,7 @@ import type {
 } from "@threadcast/shared";
 import { homedir } from "node:os";
 import { basename } from "node:path";
+import type { SanitizeOptions } from "../types.js";
 
 type ComputeMetadataOpts = {
   sessionId: string;
@@ -81,10 +82,13 @@ const computeMetadata = (opts: ComputeMetadataOpts): ThreadMetadata => {
   };
 };
 
-const parseSession = async (
-  filePath: string,
-  uploader: Uploader
-): Promise<ThreadData> => {
+const parseSession = async ({
+  filePath,
+  uploader,
+}: {
+  filePath: string;
+  uploader: Uploader;
+}): Promise<ThreadData> => {
   const rawMessages = await readSessionMessages(filePath);
   if (rawMessages.length === 0) {
     throw new Error("Session contains no messages");
@@ -105,7 +109,10 @@ const parseSession = async (
     homePath: homedir(),
     projectPath: cwd || undefined,
   };
-  const sanitizedTurns = sanitizeTurns(turns, sanitizeOpts);
+  const sanitizedTurns = sanitizeTurns({
+    turns,
+    options: sanitizeOpts,
+  });
 
   const metadata = computeMetadata({
     sessionId,

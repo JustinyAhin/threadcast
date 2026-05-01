@@ -1,16 +1,6 @@
 import type { SessionSummary } from "@threadcast/shared";
 import { discoverSessions, findSession } from "./session-discovery.js";
-
-type SelectSessionOptions = {
-  sessionId?: string;
-  projectPath?: string;
-  cwdProjectPath?: string;
-};
-
-type SelectSessionResult = {
-  session: SessionSummary | null;
-  selector: "sessionId" | "projectPath" | "cwd" | "latest" | "none";
-};
+import type { SelectSessionOptions, SelectSessionResult } from "../types.js";
 
 const listRecentSessions = async (opts: {
   limit?: number;
@@ -51,4 +41,4 @@ const selectSession = async (
   return { session: sessions[0] ?? null, selector: sessions[0] ? "latest" : "none" };
 };
 
-export { selectSession, listRecentSessions, type SelectSessionOptions, type SelectSessionResult };
+export { selectSession, listRecentSessions };

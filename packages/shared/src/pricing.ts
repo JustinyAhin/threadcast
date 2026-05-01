@@ -1,10 +1,4 @@
-import type { ProcessedTurn } from "./index";
-
-// Pricing per 1M tokens (USD)
-type ModelPricing = {
-  input: number;
-  output: number;
-};
+import type { ModelPricing, ProcessedTurn } from "./types";
 
 const MODEL_PRICING: Record<string, ModelPricing> = {
   // Claude 4.6
@@ -68,4 +62,4 @@ const formatCost = (cost: number): string => {
   return `$${cost.toFixed(2)}`;
 };
 
-export { calculateThreadCost, formatCost, MODEL_PRICING, type ModelPricing };
+export { calculateThreadCost, formatCost, MODEL_PRICING };

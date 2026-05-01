@@ -1,16 +1,4 @@
-type CacheEntry = {
-  mtimeMs: number;
-  size: number;
-  firstMessage: string;
-  messageCount: number;
-};
-
-type SessionCache = {
-  get: (filePath: string) => CacheEntry | undefined;
-  set: (opts: { filePath: string; entry: CacheEntry }) => void;
-  entries: () => IterableIterator<[string, CacheEntry]>;
-  clear: () => void;
-};
+import type { CacheEntry, SessionCache } from "../types.js";
 
 const createSessionCache = (): SessionCache => {
   const map = new Map<string, CacheEntry>();
@@ -25,4 +13,4 @@ const createSessionCache = (): SessionCache => {
   };
 };
 
-export { createSessionCache, type CacheEntry, type SessionCache };
+export { createSessionCache };

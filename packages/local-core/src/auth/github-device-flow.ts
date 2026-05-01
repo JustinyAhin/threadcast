@@ -3,6 +3,7 @@ import open from "open";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { getConfigDir, saveConfig } from "./config.js";
+import type { PendingDeviceLogin, PendingLoginAdvanceResult } from "../types.js";
 
 type DeviceCodeResponse = {
   device_code: string;
@@ -28,15 +29,6 @@ type GitHubUser = {
   avatar_url: string;
 };
 
-type PendingDeviceLogin = {
-  deviceCode: string;
-  userCode: string;
-  verificationUri: string;
-  expiresIn: number;
-  interval: number;
-  createdAt: string;
-};
-
 const PENDING_DEVICE_LOGIN_FILE = join(getConfigDir(), "pending-device-login.json");
 
 const sleep = (ms: number): Promise<void> =>
@@ -47,10 +39,6 @@ type PollForTokenOpts = {
   interval: number;
   expiresIn: number;
 };
-
-type PendingLoginAdvanceResult =
-  | { status: "pending"; pending: PendingDeviceLogin }
-  | { status: "complete"; auth: AuthConfig };
 
 const requestDeviceAccessToken = async (
   deviceCode: string
@@ -296,6 +284,4 @@ export {
   clearPendingDeviceLogin,
   completePendingGitHubDeviceFlow,
   advancePendingGitHubDeviceFlow,
-  type PendingDeviceLogin,
-  type PendingLoginAdvanceResult,
 };

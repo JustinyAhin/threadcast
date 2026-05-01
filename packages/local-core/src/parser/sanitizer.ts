@@ -1,4 +1,5 @@
 import type { ProcessedTurn, ContentBlock, ToolCall } from "@threadcast/shared";
+import type { SanitizeOptions } from "../types.js";
 
 const MAX_TOOL_OUTPUT_LENGTH = 5000;
 const TRUNCATION_NOTICE = "\n... [output truncated]";
@@ -8,11 +9,6 @@ const HOME_DIR_PATTERNS = [
   /\/home\/[^/\s]+/g,
   /C:\\Users\\[^\\]+/g,
 ];
-
-type SanitizeOptions = {
-  homePath?: string;
-  projectPath?: string;
-};
 
 type SanitizePathsOpts = {
   text: string;
@@ -108,10 +104,13 @@ const sanitizeBlock = (opts: SanitizeBlockOpts): ContentBlock | null => {
   return opts.block;
 };
 
-const sanitizeTurns = (
-  turns: ProcessedTurn[],
-  options: SanitizeOptions = {}
-): ProcessedTurn[] => {
+const sanitizeTurns = ({
+  turns,
+  options = {},
+}: {
+  turns: ProcessedTurn[];
+  options?: SanitizeOptions;
+}): ProcessedTurn[] => {
   const { homePath, projectPath } = options;
 
   return turns
@@ -124,4 +123,4 @@ const sanitizeTurns = (
     .filter((turn) => turn.content.length > 0);
 };
 
-export { sanitizeTurns, type SanitizeOptions };
+export { sanitizeTurns };

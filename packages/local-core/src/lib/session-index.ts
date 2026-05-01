@@ -1,22 +1,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { getConfigDir } from "../auth/config.js";
-
-type IndexEntry = {
-  sessionId: string;
-  projectPath: string;
-  firstMessage: string;
-  messageCount: number;
-  created: string;
-  lastModified: string;
-  sizeBytes: number;
-  mtimeMs: number;
-};
-
-type SessionIndex = {
-  version: 1;
-  entries: Record<string, IndexEntry>;
-};
+import type { SessionIndex } from "../types.js";
 
 const INDEX_DIR = getConfigDir();
 const INDEX_PATH = join(INDEX_DIR, "session-index.json");
@@ -37,4 +22,4 @@ const saveIndex = async (opts: { index: SessionIndex }): Promise<void> => {
   await writeFile(INDEX_PATH, JSON.stringify(opts.index), "utf-8");
 };
 
-export { loadIndex, saveIndex, type IndexEntry, type SessionIndex };
+export { loadIndex, saveIndex };

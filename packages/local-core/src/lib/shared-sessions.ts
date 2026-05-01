@@ -1,13 +1,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { getConfigDir } from "../auth/config.js";
-
-type SharedSessionEntry = {
-  url: string;
-  sharedAt: string;
-};
-
-type SharedSessionsMap = Record<string, SharedSessionEntry>;
+import type { SharedSessionsMap } from "../types.js";
 
 const SHARED_FILE = join(getConfigDir(), "shared.json");
 
@@ -33,4 +27,4 @@ const saveSharedSession = async (opts: {
   await writeFile(SHARED_FILE, JSON.stringify(existing, null, 2));
 };
 
-export { loadSharedSessions, saveSharedSession, type SharedSessionEntry, type SharedSessionsMap };
+export { loadSharedSessions, saveSharedSession };

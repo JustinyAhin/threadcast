@@ -2,22 +2,8 @@ import { loadConfig } from "../auth/config.js";
 import { getCachedThread } from "../lib/thread-cache.js";
 import { loadSharedSessions, saveSharedSession } from "../lib/shared-sessions.js";
 import { selectSession } from "../lib/session-selector.js";
+import type { ShareSessionOptions, ShareSessionResult } from "../types.js";
 import { uploadThread } from "../uploader/api-client.js";
-
-type ShareSessionOptions = {
-  sessionId?: string;
-  projectPath?: string;
-  cwdProjectPath?: string;
-  force?: boolean;
-};
-
-type ShareSessionResult = {
-  id: string;
-  url: string;
-  sessionId: string;
-  title: string;
-  previouslyShared: boolean;
-};
 
 const shareSession = async (
   opts: ShareSessionOptions = {}
@@ -76,4 +62,4 @@ const shareSession = async (
   };
 };
 
-export { shareSession, type ShareSessionOptions, type ShareSessionResult };
+export { shareSession };

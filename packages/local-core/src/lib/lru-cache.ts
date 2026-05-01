@@ -1,8 +1,4 @@
-type LruCache<T> = {
-  get: (key: string) => T | undefined;
-  set: (opts: { key: string; value: T }) => void;
-  clear: () => void;
-};
+import type { LruCache } from "../types.js";
 
 const createLruCache = <T>(opts: { maxSize: number }): LruCache<T> => {
   const { maxSize } = opts;
@@ -28,4 +24,4 @@ const createLruCache = <T>(opts: { maxSize: number }): LruCache<T> => {
   };
 };
 
-export { createLruCache, type LruCache };
+export { createLruCache };

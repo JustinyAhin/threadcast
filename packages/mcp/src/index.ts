@@ -99,21 +99,41 @@ const tools: Tool[] = [
   },
 ];
 
-const sendResponse = (id: JsonRpcId, result: Record<string, unknown>) => {
+const sendResponse = ({
+  id,
+  result,
+}: {
+  id: JsonRpcId;
+  result: Record<string, unknown>;
+}) => {
   process.stdout.write(`${JSON.stringify({ jsonrpc: "2.0", id, result })}\n`);
 };
 
-const sendError = (id: JsonRpcId | null, code: number, message: string, data?: unknown) => {
+const sendError = ({
+  id,
+  code,
+  message,
+  data,
+}: {
+  id: JsonRpcId | null;
+  code: number;
+  message: string;
+  data?: unknown;
+}) => {
   process.stdout.write(
     `${JSON.stringify({ jsonrpc: "2.0", id, error: { code, message, data } })}\n`
   );
 };
 
-const textResult = (
-  text: string,
-  structuredContent?: Record<string, unknown>,
-  isError?: boolean
-) => ({
+const textResult = ({
+  text,
+  structuredContent,
+  isError,
+}: {
+  text: string;
+  structuredContent?: Record<string, unknown>;
+  isError?: boolean;
+}) => ({
   content: [{ type: "text", text }],
   structuredContent,
   isError,
@@ -121,10 +141,13 @@ const textResult = (
 
 const resolveDefaultProjectPath = () => process.cwd();
 
-const handleToolCall = async (
-  name: string,
-  args: Record<string, unknown> | undefined
-) => {
+const handleToolCall = async ({
+  name,
+  args,
+}: {
+  name: string;
+  args: Record<string, unknown> | undefined;
+}) => {
   switch (name) {
     case "threadcast.status": {
       const auth = await loadConfig();
@@ -141,70 +164,73 @@ const handleToolCall = async (
         pendingLogin,
         latestSession,
       };
-      return textResult(
-        auth
+      return textResult({
+        text: auth
           ? `Logged in as @${auth.githubUsername}.${latestSession ? ` Latest session: ${latestSession.firstMessage}` : " No sessions found."}`
           : pendingLogin
             ? `Login pending. Open ${pendingLogin.verificationUri} and enter code ${pendingLogin.userCode}, then run /threadcast:login again after approving in GitHub.`
             : "Not logged in to ThreadCast.",
-        structured
-      );
+        structuredContent: structured,
+      });
     }
     case "threadcast.login": {
       const auth = await loadConfig();
       if (auth) {
-        return textResult(
-          `Already logged in as @${auth.githubUsername}.`,
-          {
+        return textResult({
+          text: `Already logged in as @${auth.githubUsername}.`,
+          structuredContent: {
             authenticated: true,
             githubUsername: auth.githubUsername,
             githubAvatarUrl: auth.githubAvatarUrl,
-          }
-        );
+          },
+        });
       }
 
       const pending = await loadPendingDeviceLogin();
       if (!pending) {
         const started = await startGitHubDeviceFlow();
-        return textResult(
-          `Open ${started.verificationUri} and enter code ${started.userCode}. After approving in GitHub, run /threadcast:login again.`,
-          {
+        return textResult({
+          text: `Open ${started.verificationUri} and enter code ${started.userCode}. After approving in GitHub, run /threadcast:login again.`,
+          structuredContent: {
             verificationUri: started.verificationUri,
             userCode: started.userCode,
             expiresIn: started.expiresIn,
             interval: started.interval,
             pending: true,
-          }
-        );
+          },
+        });
       }
 
       const result = await advancePendingGitHubDeviceFlow();
       if (result.status === "pending") {
-        return textResult(
-          `Still waiting for GitHub approval. Open ${result.pending.verificationUri} and enter code ${result.pending.userCode}, then run /threadcast:login again.`,
-          {
+        return textResult({
+          text: `Still waiting for GitHub approval. Open ${result.pending.verificationUri} and enter code ${result.pending.userCode}, then run /threadcast:login again.`,
+          structuredContent: {
             verificationUri: result.pending.verificationUri,
             userCode: result.pending.userCode,
             expiresIn: result.pending.expiresIn,
             interval: result.pending.interval,
             pending: true,
-          }
-        );
+          },
+        });
       }
 
-      return textResult(
-        `Logged in as @${result.auth.githubUsername}.`,
-        {
+      return textResult({
+        text: `Logged in as @${result.auth.githubUsername}.`,
+        structuredContent: {
           authenticated: true,
           githubUsername: result.auth.githubUsername,
           githubAvatarUrl: result.auth.githubAvatarUrl,
-        }
-      );
+        },
+      });
     }
     case "threadcast.logout": {
       await clearConfig();
       await clearPendingDeviceLogin();
-      return textResult("Logged out of ThreadCast.", { success: true });
+      return textResult({
+        text: "Logged out of ThreadCast.",
+        structuredContent: { success: true },
+      });
     }
     case "threadcast.list_recent_sessions": {
       const limit = typeof args?.limit === "number" ? args.limit : 10;
@@ -213,17 +239,18 @@ const handleToolCall = async (
           ? args.projectPath
           : resolveDefaultProjectPath();
       const sessions = await listRecentSessions({ limit, projectPath });
-      return textResult(
-        sessions.length > 0
-          ? sessions
-              .map(
-                (session, index) =>
-                  `${index + 1}. ${session.sessionId} | ${session.firstMessage} | ${session.projectPath}`
-              )
-              .join("\n")
-          : "No local Claude Code sessions found.",
-        { sessions }
-      );
+      return textResult({
+        text:
+          sessions.length > 0
+            ? sessions
+                .map(
+                  (session, index) =>
+                    `${index + 1}. ${session.sessionId} | ${session.firstMessage} | ${session.projectPath}`
+                )
+                .join("\n")
+            : "No local Claude Code sessions found.",
+        structuredContent: { sessions },
+      });
     }
     case "threadcast.share_session": {
       const sessionId = typeof args?.sessionId === "string" ? args.sessionId : undefined;
@@ -238,15 +265,19 @@ const handleToolCall = async (
           force,
         });
 
-        return textResult(
-          result.previouslyShared
+        return textResult({
+          text: result.previouslyShared
             ? `Already shared: ${result.url}`
             : `Shared "${result.title}": ${result.url}`,
-          result
-        );
+          structuredContent: result,
+        });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to share session";
-        return textResult(message, { error: message }, true);
+        return textResult({
+          text: message,
+          structuredContent: { error: message },
+          isError: true,
+        });
       }
     }
     default:
@@ -257,43 +288,58 @@ const handleToolCall = async (
 const handleRequest = async (request: JsonRpcRequest) => {
   switch (request.method) {
     case "initialize":
-      sendResponse(request.id, {
+      sendResponse({
+        id: request.id,
+        result: {
         protocolVersion: PROTOCOL_VERSION,
         capabilities: {
           tools: {},
         },
         serverInfo: SERVER_INFO,
+        },
       });
       break;
     case "ping":
-      sendResponse(request.id, {});
+      sendResponse({ id: request.id, result: {} });
       break;
     case "tools/list":
-      sendResponse(request.id, { tools });
+      sendResponse({ id: request.id, result: { tools } });
       break;
     case "tools/call": {
       const params = request.params ?? {};
       const name = typeof params.name === "string" ? params.name : "";
       if (!name) {
-        sendError(request.id, -32602, "Tool name is required");
+        sendError({ id: request.id, code: -32602, message: "Tool name is required" });
         return;
       }
       try {
-        const result = await handleToolCall(
+        const result = await handleToolCall({
           name,
-          typeof params.arguments === "object" && params.arguments !== null
-            ? (params.arguments as Record<string, unknown>)
-            : undefined
-        );
-        sendResponse(request.id, result);
+          args:
+            typeof params.arguments === "object" && params.arguments !== null
+              ? (params.arguments as Record<string, unknown>)
+              : undefined,
+        });
+        sendResponse({ id: request.id, result });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Tool call failed";
-        sendResponse(request.id, textResult(message, { error: message }, true));
+        sendResponse({
+          id: request.id,
+          result: textResult({
+            text: message,
+            structuredContent: { error: message },
+            isError: true,
+          }),
+        });
       }
       break;
     }
     default:
-      sendError(request.id, -32601, `Method not found: ${request.method}`);
+      sendError({
+        id: request.id,
+        code: -32601,
+        message: `Method not found: ${request.method}`,
+      });
   }
 };
 

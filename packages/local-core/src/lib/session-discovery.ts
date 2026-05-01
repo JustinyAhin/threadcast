@@ -5,7 +5,8 @@ import { createReadStream } from "node:fs";
 import { createInterface } from "node:readline";
 import type { SessionSummary } from "@threadcast/shared";
 import { createSessionCache } from "./session-cache.js";
-import { loadIndex, saveIndex, type IndexEntry } from "./session-index.js";
+import { loadIndex, saveIndex } from "./session-index.js";
+import type { IndexEntry } from "../types.js";
 
 const CLAUDE_PROJECTS_DIR = join(homedir(), ".claude", "projects");
 
