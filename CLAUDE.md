@@ -89,6 +89,24 @@ bun dev:web            # Start web dev server
 bun run --filter '*' typecheck  # Typecheck all packages
 ```
 
+
+## Git
+
+- Do not add `Co-Authored-By` lines to commit messages.
+- Prefix every commit with a topic tag in square brackets so history is greppable. Pick one:
+  - `[seo]` — titles, meta, sitemap, schema, internal linking for rankings
+  - `[content]` — blog posts, copy, landing-page text, FAQ
+  - `[tools]` — free tool definitions and templates
+  - `[feat]` — new app features
+  - `[fix]` — bug fixes
+  - `[ui]` — styling, layout, components
+  - `[db]` — schema, migrations, queries
+  - `[infra]` — deploy, wrangler, build, hooks
+  - `[chore]` — deps, lockfile, internal scripts, tooling
+- Examples: `[seo] rewrite competitor comparison titles for search intent`, `[content] add menu engineering blog post`, `[fix] preserve dialog tab across close`.
+- Keep commit descriptions short. Add a longer body only when it provides real value/context (non-obvious why, tricky tradeoff, follow-up notes).
+
+
 ## Fetching Pages
 
 When you need to fetch a page's content, use this order:
