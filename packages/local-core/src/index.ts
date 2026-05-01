@@ -8,6 +8,7 @@ export {
   completePendingGitHubDeviceFlow,
   advancePendingGitHubDeviceFlow,
 } from "./auth/github-device-flow.js";
+export { loginWithBrowser } from "./auth/local-browser-login.js";
 export { createLruCache } from "./lib/lru-cache.js";
 export { createSessionCache } from "./lib/session-cache.js";
 export { loadIndex, saveIndex } from "./lib/session-index.js";
@@ -32,6 +33,7 @@ export type {
   CacheEntry,
   DatePreset,
   IndexEntry,
+  LocalAuthExchangeResponse,
   LruCache,
   PendingDeviceLogin,
   PendingLoginAdvanceResult,

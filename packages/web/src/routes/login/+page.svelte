@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { authClient } from '$lib/client/auth';
 	import { goto, invalidateAll } from '$app/navigation';
+	import { page } from '$app/state';
 	import Seo from '$lib/components/seo.svelte';
 	import Logo from '$lib/components/logo.svelte';
 
@@ -9,7 +10,7 @@
 	const signIn = async () => {
 		await authClient.signIn.social({
 			provider: 'github',
-			callbackURL: '/threads'
+			callbackURL: page.url.searchParams.get('callbackURL') ?? '/threads'
 		});
 	};
 

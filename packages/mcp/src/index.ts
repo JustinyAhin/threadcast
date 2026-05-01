@@ -3,6 +3,7 @@ import {
   clearConfig,
   clearPendingDeviceLogin,
   listRecentSessions,
+  loginWithBrowser,
   loadConfig,
   loadPendingDeviceLogin,
   shareSession,
@@ -52,7 +53,7 @@ const tools: Tool[] = [
   {
     name: "threadcast.login",
     title: "ThreadCast Login",
-    description: "Start or resume GitHub device login. Run it once to get the code, then run it again after approving in the browser.",
+    description: "Log in to ThreadCast by opening a browser and waiting for approval.",
     inputSchema: {
       type: "object",
       properties: {},
@@ -85,7 +86,7 @@ const tools: Tool[] = [
   {
     name: "threadcast.share_session",
     title: "Share Session",
-    description: "Share a local Claude Code session to ThreadCast using the saved GitHub credentials.",
+    description: "Share a local Claude Code session to ThreadCast using saved credentials.",
     inputSchema: {
       type: "object",
       properties: {
@@ -168,7 +169,7 @@ const handleToolCall = async ({
         text: auth
           ? `Logged in as @${auth.githubUsername}.${latestSession ? ` Latest session: ${latestSession.firstMessage}` : " No sessions found."}`
           : pendingLogin
-            ? `Login pending. Open ${pendingLogin.verificationUri} and enter code ${pendingLogin.userCode}, then run /threadcast:login again after approving in GitHub.`
+            ? `Device login pending. Open ${pendingLogin.verificationUri} and enter code ${pendingLogin.userCode}, then run /threadcast:login again after approving in GitHub.`
             : "Not logged in to ThreadCast.",
         structuredContent: structured,
       });
@@ -188,17 +189,31 @@ const handleToolCall = async ({
 
       const pending = await loadPendingDeviceLogin();
       if (!pending) {
-        const started = await startGitHubDeviceFlow();
-        return textResult({
-          text: `Open ${started.verificationUri} and enter code ${started.userCode}. After approving in GitHub, run /threadcast:login again.`,
-          structuredContent: {
-            verificationUri: started.verificationUri,
-            userCode: started.userCode,
-            expiresIn: started.expiresIn,
-            interval: started.interval,
-            pending: true,
-          },
-        });
+        try {
+          const browserAuth = await loginWithBrowser();
+          return textResult({
+            text: `Logged in as @${browserAuth.githubUsername}.`,
+            structuredContent: {
+              authenticated: true,
+              githubUsername: browserAuth.githubUsername,
+              githubAvatarUrl: browserAuth.githubAvatarUrl,
+              expiresAt: browserAuth.expiresAt,
+            },
+          });
+        } catch {
+          const started = await startGitHubDeviceFlow();
+          return textResult({
+            text: `Browser login could not complete. Open ${started.verificationUri} and enter code ${started.userCode}. After approving in GitHub, run /threadcast:login again.`,
+            structuredContent: {
+              verificationUri: started.verificationUri,
+              userCode: started.userCode,
+              expiresIn: started.expiresIn,
+              interval: started.interval,
+              pending: true,
+              fallback: "device",
+            },
+          });
+        }
       }
 
       const result = await advancePendingGitHubDeviceFlow();

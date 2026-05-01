@@ -45,7 +45,7 @@ const shareSession = async (
 
   const result = await uploadThread({
     threadData: data,
-    token: config.githubToken,
+    token: config.threadcastToken,
   });
 
   await saveSharedSession({

@@ -76,9 +76,49 @@ const verification = sqliteTable('verification', {
 	updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
 });
 
+const localAuthCode = sqliteTable('local_auth_code', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => createId()),
+	codeHash: text('code_hash').notNull().unique(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	githubUsername: text('github_username').notNull(),
+	githubAvatarUrl: text('github_avatar_url').notNull(),
+	expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+	consumedAt: integer('consumed_at', { mode: 'timestamp' }),
+	createdAt: integer('created_at', { mode: 'timestamp' })
+		.notNull()
+		.$defaultFn(() => new Date()),
+	updatedAt: integer('updated_at', { mode: 'timestamp' })
+		.notNull()
+		.$defaultFn(() => new Date())
+});
+
+const localAuthToken = sqliteTable('local_auth_token', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => createId()),
+	tokenHash: text('token_hash').notNull().unique(),
+	userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }),
+	githubUsername: text('github_username').notNull(),
+	githubAvatarUrl: text('github_avatar_url').notNull(),
+	expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+	lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
+	createdAt: integer('created_at', { mode: 'timestamp' })
+		.notNull()
+		.$defaultFn(() => new Date()),
+	updatedAt: integer('updated_at', { mode: 'timestamp' })
+		.notNull()
+		.$defaultFn(() => new Date())
+});
+
 const userRelations = relations(user, ({ many }) => ({
 	sessions: many(session),
-	accounts: many(account)
+	accounts: many(account),
+	localAuthCodes: many(localAuthCode),
+	localAuthTokens: many(localAuthToken)
 }));
 
 const sessionRelations = relations(session, ({ one }) => ({
@@ -95,4 +135,30 @@ const accountRelations = relations(account, ({ one }) => ({
 	})
 }));
 
-export { account, accountRelations, session, sessionRelations, user, userRelations, verification };
+const localAuthCodeRelations = relations(localAuthCode, ({ one }) => ({
+	user: one(user, {
+		fields: [localAuthCode.userId],
+		references: [user.id]
+	})
+}));
+
+const localAuthTokenRelations = relations(localAuthToken, ({ one }) => ({
+	user: one(user, {
+		fields: [localAuthToken.userId],
+		references: [user.id]
+	})
+}));
+
+export {
+	account,
+	accountRelations,
+	localAuthCode,
+	localAuthCodeRelations,
+	localAuthToken,
+	localAuthTokenRelations,
+	session,
+	sessionRelations,
+	user,
+	userRelations,
+	verification
+};

@@ -1,9 +1,17 @@
-import { GITHUB_CLIENT_ID, type AuthConfig } from "@threadcast/shared";
+import {
+  API_BASE_URL as DEFAULT_API_BASE_URL,
+  GITHUB_CLIENT_ID,
+  type AuthConfig,
+} from "@threadcast/shared";
 import open from "open";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { getConfigDir, saveConfig } from "./config.js";
-import type { PendingDeviceLogin, PendingLoginAdvanceResult } from "../types.js";
+import type {
+  LocalAuthExchangeResponse,
+  PendingDeviceLogin,
+  PendingLoginAdvanceResult,
+} from "../types.js";
 
 type DeviceCodeResponse = {
   device_code: string;
@@ -30,6 +38,7 @@ type GitHubUser = {
 };
 
 const PENDING_DEVICE_LOGIN_FILE = join(getConfigDir(), "pending-device-login.json");
+const API_BASE_URL = process.env.THREADCAST_API_URL || DEFAULT_API_BASE_URL;
 
 const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
@@ -59,14 +68,30 @@ const requestDeviceAccessToken = async (
   return (await res.json()) as TokenResponse | TokenErrorResponse;
 };
 
-const buildAndSaveAuthConfig = async (token: string): Promise<AuthConfig> => {
-  const user = await getGitHubUser(token);
+const exchangeGitHubTokenForLocalAuth = async (
+  githubToken: string
+): Promise<AuthConfig> => {
+  const res = await fetch(`${API_BASE_URL}/api/local-auth/device-exchange`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ githubToken }),
+  });
 
-  const auth: AuthConfig = {
-    githubToken: token,
-    githubUsername: user.login,
-    githubAvatarUrl: user.avatar_url,
+  if (!res.ok) {
+    throw new Error(`Device login exchange failed: ${res.statusText}`);
+  }
+
+  const auth = (await res.json()) as LocalAuthExchangeResponse;
+  return {
+    threadcastToken: auth.token,
+    githubUsername: auth.githubUsername,
+    githubAvatarUrl: auth.githubAvatarUrl,
+    expiresAt: auth.expiresAt,
   };
+};
+
+const buildAndSaveAuthConfig = async (token: string): Promise<AuthConfig> => {
+  const auth = await exchangeGitHubTokenForLocalAuth(token);
 
   await saveConfig(auth);
   await clearPendingDeviceLogin();

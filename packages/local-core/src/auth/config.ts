@@ -9,7 +9,11 @@ const CONFIG_FILE = join(CONFIG_DIR, "config.json");
 const loadConfig = async (): Promise<AuthConfig | null> => {
   try {
     const raw = await readFile(CONFIG_FILE, "utf-8");
-    return JSON.parse(raw) as AuthConfig;
+    const parsed = JSON.parse(raw) as Partial<AuthConfig>;
+    if (!parsed.threadcastToken || !parsed.githubUsername || !parsed.githubAvatarUrl) {
+      return null;
+    }
+    return parsed as AuthConfig;
   } catch {
     return null;
   }

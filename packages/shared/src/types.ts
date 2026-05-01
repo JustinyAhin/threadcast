@@ -88,9 +88,10 @@ type ApiError = {
 };
 
 type AuthConfig = {
-  githubToken: string;
+  threadcastToken: string;
   githubUsername: string;
   githubAvatarUrl: string;
+  expiresAt?: string;
 };
 
 type ModelPricing = {

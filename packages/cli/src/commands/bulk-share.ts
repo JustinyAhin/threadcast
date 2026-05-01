@@ -110,7 +110,7 @@ const runBulkShare = async (argv: string[]): Promise<void> => {
 
       const result = await uploadThread({
         threadData: data,
-        token: config.githubToken,
+        token: config.threadcastToken,
       });
 
       await saveSharedSession({ sessionId: session.sessionId, url: result.url });

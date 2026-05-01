@@ -333,7 +333,7 @@ const AppProvider = (props: ParentProps) => {
       try {
         const result = await uploadThread({
           threadData: state.previewData,
-          token: state.auth.githubToken,
+          token: state.auth.threadcastToken,
         });
 
         const sessionId = state.previewData.metadata.sessionId;
@@ -387,7 +387,7 @@ const AppProvider = (props: ParentProps) => {
 
         const result = await uploadThread({
           threadData: data,
-          token: state.auth!.githubToken,
+          token: state.auth!.threadcastToken,
         });
 
         const sessionId = data.metadata.sessionId;
@@ -481,7 +481,7 @@ const AppProvider = (props: ParentProps) => {
 
           const result = await uploadThread({
             threadData: data,
-            token: state.auth!.githubToken,
+            token: state.auth!.threadcastToken,
           });
 
           await saveSharedSession({

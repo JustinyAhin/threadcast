@@ -13,6 +13,13 @@ type PendingLoginAdvanceResult =
   | { status: "pending"; pending: PendingDeviceLogin }
   | { status: "complete"; auth: AuthConfig };
 
+type LocalAuthExchangeResponse = {
+  token: string;
+  githubUsername: string;
+  githubAvatarUrl: string;
+  expiresAt: string;
+};
+
 type LruCache<T> = {
   get: (key: string) => T | undefined;
   set: (opts: { key: string; value: T }) => void;
@@ -102,6 +109,7 @@ export type {
   CacheEntry,
   DatePreset,
   IndexEntry,
+  LocalAuthExchangeResponse,
   LruCache,
   PendingDeviceLogin,
   PendingLoginAdvanceResult,
