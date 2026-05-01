@@ -6,7 +6,7 @@
 	let sections = $state<HTMLElement[]>([]);
 
 	const copyCommand = async () => {
-		await navigator.clipboard.writeText('bun install -g threadcast');
+		await navigator.clipboard.writeText('claude --plugin-dir ./packages/plugin-threadcast');
 		copied = true;
 		setTimeout(() => (copied = false), 2000);
 	};
@@ -89,7 +89,7 @@
 					href="#install"
 					class="inline-flex items-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-semibold text-text transition-colors hover:border-border-light hover:text-accent"
 				>
-					Install CLI
+					Install plugin
 				</a>
 			</div>
 		</div>
@@ -205,7 +205,7 @@
 						<div class="h-2 w-2 rounded-full bg-text-muted/30"></div>
 					</div>
 					<div class="p-4 font-mono text-[11px] leading-5">
-						<p class="text-text-muted">$ threadcast</p>
+						<p class="text-text-muted">$ /threadcast:share</p>
 						<p class="mt-2 text-text-secondary">Your sessions:</p>
 						<p class="text-text">
 							<span class="text-accent">&#9656;</span> Add dark mode toggle
@@ -428,7 +428,9 @@
 	<div class="mx-auto max-w-xl text-center">
 		<p class="mb-3 font-mono text-xs tracking-[0.2em] text-accent uppercase">Get started</p>
 		<h2 class="mb-4 text-3xl font-bold tracking-tight text-text">Start sharing in 30 seconds.</h2>
-		<p class="mb-10 text-text-secondary">Install the CLI, run it in any project, and share.</p>
+		<p class="mb-10 text-text-secondary">
+			Add the Claude Code plugin, run a slash command, and share.
+		</p>
 
 		<!-- Install command block -->
 		<div class="mx-auto mb-10 max-w-md">
@@ -438,7 +440,9 @@
 			>
 				<div class="flex items-center gap-3">
 					<span class="font-mono text-sm text-text-muted">$</span>
-					<code class="font-mono text-sm text-text">bun install -g threadcast</code>
+					<code class="font-mono text-sm text-text"
+						>claude --plugin-dir ./packages/plugin-threadcast</code
+					>
 				</div>
 				<span class="font-mono text-xs text-text-muted transition-colors group-hover:text-accent">
 					{#if copied}

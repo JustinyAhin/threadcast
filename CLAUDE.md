@@ -1,6 +1,6 @@
 # Threadcast
 
-Monorepo: `packages/web` (SvelteKit), `packages/cli` (Bun CLI), `packages/shared` (shared types/utils).
+Monorepo: `packages/web` (SvelteKit), `packages/mcp` (local MCP server), `packages/plugin-threadcast` (Claude Code plugin), `packages/local-core` (local session logic), `packages/shared` (shared types/utils).
 
 ## Plan Mode
 

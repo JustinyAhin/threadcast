@@ -166,7 +166,8 @@
 				<p class="mb-2 text-lg text-text-secondary">No threads yet</p>
 				<p class="text-sm text-text-muted">
 					Share your first session with <code
-						class="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-accent">threadcast share</code
+						class="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-accent"
+						>/threadcast:share</code
 					>
 				</p>
 				{#if !$session.data}

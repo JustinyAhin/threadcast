@@ -1,6 +1,6 @@
 # Threadcast Design Guidelines
 
-Dark-mode-only, warm-toned interface shared across web (SvelteKit + Tailwind) and CLI (OpenTUI/Solid).
+Dark-mode-only, warm-toned interface for the web app and Claude Code plugin surfaces.
 
 ---
 
@@ -18,7 +18,6 @@ Dark-mode-only, warm-toned interface shared across web (SvelteKit + Tailwind) an
 | `text` | `#ece8e1` | Primary text |
 | `text-secondary` | `#a8a29e` | Descriptions, labels |
 | `text-muted` | `#78716c` | Metadata, timestamps |
-| `text-faint` | `#57534e` | Hints, quaternary (CLI only) |
 | `accent` | `#f59e0b` | Primary accent (amber-500) — buttons, links, highlights |
 | `accent-dim` | `#b45309` | Subtle accent — borders, secondary emphasis |
 | `error` | `#ef4444` | Error states |
@@ -70,19 +69,6 @@ Each tool gets a distinct color at `500/15` bg + `400` text:
 | Muted | `text-text-muted` |
 | Inline code | `font-mono text-xs bg-surface-2 text-accent` |
 
-### Hierarchy (CLI)
-
-Bold (`<b>`) is the only emphasis. No italic.
-
-| Level | Style |
-|-------|-------|
-| Title | `accent` + bold |
-| Label | `textDim` + bold |
-| Body | `text` |
-| Secondary | `textMuted` |
-| Dim | `textDim` |
-| Hint | `textFaint` |
-
 ---
 
 ## Spacing
@@ -99,16 +85,6 @@ Bold (`<b>`) is the only emphasis. No italic.
 | Max content width | `max-w-7xl` |
 | Content column | `max-w-4xl` |
 | Right sidebar | `w-72` |
-
-### CLI
-
-| Context | Value |
-|---------|-------|
-| Horizontal padding | `paddingX={1}` |
-| Indentation | `paddingLeft={3}` |
-| Status bar height | `height={1}` |
-| Spacer | `height={1}` |
-| Containers | `flexGrow={1}` |
 
 ---
 
@@ -147,14 +123,6 @@ placeholder-text-muted focus:border-border-light focus:outline-none
 
 Sticky at top: `sticky top-0 z-10 backdrop-blur-md` with semi-transparent `bg` at 85% opacity.
 
-### Borders (CLI)
-
-`borderStyle="rounded"` with `colors.border`. Applied to main containers and dialogs.
-
-### Selection (CLI)
-
-Selected items get: `backgroundColor={colors.bgSelected}` + `pointer` symbol in `accent` + primary text color.
-
 ---
 
 ## Icons
@@ -162,26 +130,6 @@ Selected items get: `backgroundColor={colors.bgSelected}` + `pointer` symbol in 
 ### Web
 
 All inline SVGs. Standard sizes: `h-4 w-4` (default), `h-3.5 w-3.5` (small), `h-6 w-6` (large). Inherit color from parent via `currentColor`.
-
-### CLI
-
-Unicode symbols defined in `theme.ts`:
-
-| Symbol | Glyph | Usage |
-|--------|-------|-------|
-| pointer | `▸` | Selection indicator |
-| dot | `●` | Loading/status |
-| check | `✔` | Success |
-| cross | `✘` | Error |
-| ellipsis | `…` | Truncation |
-| divider | `│` | Vertical separator |
-| messages | `◈` | Message count |
-| clock | `◗` | Timestamps |
-| folder | `▪` | Project |
-| share | `↗` | Share action |
-| search | `⌕` | Search |
-
-Always prefix status text with the appropriate symbol.
 
 ---
 
@@ -229,21 +177,6 @@ Stagger with `--delay` CSS variable. Hover transitions: `0.2s ease` on box-shado
 
 ---
 
-## Keyboard Conventions (CLI)
-
-| Action | Keys |
-|--------|------|
-| Navigate | `j`/`k` or arrows |
-| Open/Execute | `Enter` |
-| Share | `s` |
-| Filter/Search | `/` |
-| Back/Cancel | `Esc` |
-| Quit | `q` |
-
-Status bar shows context-sensitive keyboard hints: bold key in `textMuted`, colon separator in `textFaint`.
-
----
-
 ## Design Principles
 
 1. **Dark-only** — no light theme, warm stone/amber tones
@@ -251,5 +184,4 @@ Status bar shows context-sensitive keyboard hints: bold key in `textMuted`, colo
 3. **Semantic color coding** — each tool/message type has a consistent color
 4. **Minimal motion** — short durations (0.2–0.4s), no gratuitous animation
 5. **Progressive disclosure** — sidebars hide on smaller screens, tool calls collapse by default
-6. **Symbols before text** — CLI status messages always prefixed with a unicode symbol
-7. **Use tokens, not raw values** — always reference theme colors, never hardcode hex
+6. **Use tokens, not raw values** — always reference theme colors, never hardcode hex

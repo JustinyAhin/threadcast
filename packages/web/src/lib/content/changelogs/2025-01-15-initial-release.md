@@ -15,11 +15,11 @@ We're excited to launch ThreadCast, a new way to share your Claude Code sessions
 
 ## Getting started
 
-Install the CLI and share your first session:
+Install the Claude Code plugin and share your first session:
 
 ```bash
-bun add -g @threadcast/cli
-threadcast share
+claude --plugin-dir ./packages/plugin-threadcast
+/threadcast:share
 ```
 
 That's it. Your session is now a readable web page.
