@@ -11,11 +11,7 @@ declare global {
 		}
 
 		interface Platform {
-			env: {
-				THREADS_BUCKET: R2Bucket;
-				AUTH_DB: D1Database;
-				ASSETS: Fetcher;
-			};
+			env: Env;
 			ctx: ExecutionContext;
 			caches: CacheStorage;
 			cf?: IncomingRequestCfProperties;
