@@ -1,7 +1,7 @@
 import type { Handle } from '@sveltejs/kit';
 import { building } from '$app/environment';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
-import { auth } from '$lib/server/auth';
+import { createAuth } from '$lib/server/auth';
 
 const handle: Handle = async ({ event, resolve }) => {
 	if (building) {
@@ -9,6 +9,8 @@ const handle: Handle = async ({ event, resolve }) => {
 		event.locals.session = null;
 		return resolve(event);
 	}
+
+	const auth = createAuth({ env: event.platform!.env });
 
 	const sessionData = await auth.api.getSession({
 		headers: event.request.headers

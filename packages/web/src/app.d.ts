@@ -1,7 +1,8 @@
-import type { auth } from '$lib/server/auth';
+import type { createAuth } from '$lib/server/auth';
 
-type Session = typeof auth.$Infer.Session.session;
-type User = typeof auth.$Infer.Session.user;
+type Auth = ReturnType<typeof createAuth>;
+type Session = Auth['$Infer']['Session']['session'];
+type User = Auth['$Infer']['Session']['user'];
 
 declare global {
 	namespace App {

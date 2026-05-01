@@ -1,3 +1,4 @@
+import { getDb } from '$lib/server/db';
 import { createLocalAuthCode } from '$lib/server/local-auth';
 import { error, redirect } from '@sveltejs/kit';
 
@@ -29,6 +30,7 @@ export const GET = async (event) => {
 	}
 
 	const code = await createLocalAuthCode({
+		db: getDb(event.platform!.env.AUTH_DB),
 		userId: event.locals.user.id,
 		githubUsername,
 		githubAvatarUrl: event.locals.user.image ?? ''

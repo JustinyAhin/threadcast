@@ -1,10 +1,12 @@
-import { db } from '$lib/server/db';
 import { localAuthCode, localAuthToken } from '$lib/server/db/schema';
+import type { getDb } from '$lib/server/db';
 import { createId } from '@paralleldrive/cuid2';
 import { and, eq, gt, isNull } from 'drizzle-orm';
 
 const LOCAL_TOKEN_TTL_DAYS = 90;
 const LOCAL_AUTH_CODE_TTL_MINUTES = 5;
+
+type Db = ReturnType<typeof getDb>;
 
 type LocalAuthUser = {
 	userId?: string;
@@ -42,7 +44,8 @@ const getExpiry = (opts: { days?: number; minutes?: number }): Date => {
 	return date;
 };
 
-const createLocalAuthCode = async (user: LocalAuthCodeUser): Promise<string> => {
+const createLocalAuthCode = async (opts: LocalAuthCodeUser & { db: Db }): Promise<string> => {
+	const { db, ...user } = opts;
 	const code = randomToken('tc_code');
 	const now = new Date();
 	await db.insert(localAuthCode).values({
@@ -57,7 +60,8 @@ const createLocalAuthCode = async (user: LocalAuthCodeUser): Promise<string> => 
 	return code;
 };
 
-const consumeLocalAuthCode = async (code: string): Promise<LocalAuthUser | null> => {
+const consumeLocalAuthCode = async (opts: { db: Db; code: string }): Promise<LocalAuthUser | null> => {
+	const { db, code } = opts;
 	const now = new Date();
 	const rows = await db
 		.select()
@@ -85,7 +89,8 @@ const consumeLocalAuthCode = async (code: string): Promise<LocalAuthUser | null>
 	};
 };
 
-const issueLocalAuthToken = async (user: LocalAuthUser): Promise<IssuedLocalAuthToken> => {
+const issueLocalAuthToken = async (opts: LocalAuthUser & { db: Db }): Promise<IssuedLocalAuthToken> => {
+	const { db, ...user } = opts;
 	const token = randomToken('tc_local');
 	const expiresAt = getExpiry({ days: LOCAL_TOKEN_TTL_DAYS });
 	const now = new Date();
@@ -107,13 +112,18 @@ const issueLocalAuthToken = async (user: LocalAuthUser): Promise<IssuedLocalAuth
 	};
 };
 
-const exchangeLocalAuthCode = async (code: string): Promise<IssuedLocalAuthToken | null> => {
-	const user = await consumeLocalAuthCode(code);
+const exchangeLocalAuthCode = async (opts: {
+	db: Db;
+	code: string;
+}): Promise<IssuedLocalAuthToken | null> => {
+	const { db, code } = opts;
+	const user = await consumeLocalAuthCode({ db, code });
 	if (!user) return null;
-	return issueLocalAuthToken(user);
+	return issueLocalAuthToken({ db, ...user });
 };
 
-const validateLocalAuthToken = async (token: string): Promise<LocalAuthUser | null> => {
+const validateLocalAuthToken = async (opts: { db: Db; token: string }): Promise<LocalAuthUser | null> => {
+	const { db, token } = opts;
 	const now = new Date();
 	const rows = await db
 		.select()

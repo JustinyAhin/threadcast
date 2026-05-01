@@ -1,3 +1,4 @@
+import { getDb } from '$lib/server/db';
 import { issueLocalAuthToken } from '$lib/server/local-auth';
 import { error, json } from '@sveltejs/kit';
 
@@ -31,6 +32,7 @@ export const POST = async (event) => {
 	}
 
 	const auth = await issueLocalAuthToken({
+		db: getDb(event.platform!.env.AUTH_DB),
 		githubUsername: user.login,
 		githubAvatarUrl: user.avatar_url
 	});

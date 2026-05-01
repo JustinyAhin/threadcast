@@ -1,4 +1,5 @@
 import type { RequestEvent } from '@sveltejs/kit';
+import { getDb } from './db';
 import { validateLocalAuthToken } from './local-auth';
 
 type ResolvedUser = {
@@ -20,7 +21,10 @@ const resolveUser = async (event: RequestEvent): Promise<ResolvedUser | null> =>
 	const authHeader = event.request.headers.get('authorization');
 	if (authHeader?.startsWith('Bearer ')) {
 		const token = authHeader.slice(7);
-		const localUser = await validateLocalAuthToken(token);
+		const localUser = await validateLocalAuthToken({
+			db: getDb(event.platform!.env.AUTH_DB),
+			token
+		});
 		if (!localUser) return null;
 		return {
 			login: localUser.githubUsername,

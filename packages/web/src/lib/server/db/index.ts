@@ -1,7 +1,6 @@
-import { env } from 'cloudflare:workers';
 import { drizzle } from 'drizzle-orm/d1';
 import * as schema from './schema';
 
-const db = drizzle(env.AUTH_DB, { schema });
+const getDb = (d1: D1Database) => drizzle(d1, { schema });
 
-export { db };
+export { getDb };
