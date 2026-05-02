@@ -19,7 +19,7 @@
 			</div>
 			<div class="flex items-center gap-4 text-xs text-text-muted">
 				<a href="/changelogs" class="transition-colors hover:text-text">Changelog</a>
-				<span class="hidden sm:inline">Share your Claude Code sessions</span>
+				<span class="hidden sm:inline">Share your Claude Code and Codex sessions</span>
 			</div>
 		</div>
 	</footer>

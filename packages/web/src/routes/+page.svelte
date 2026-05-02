@@ -40,7 +40,7 @@
 
 <Seo
 	title="ThreadCast — Share Claude Code Sessions"
-	description="Share your Claude Code sessions as readable web pages."
+	description="Share your Claude Code and Codex sessions as readable web pages."
 />
 
 <!-- Hero -->
