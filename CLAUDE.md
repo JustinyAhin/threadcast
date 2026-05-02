@@ -89,7 +89,6 @@ bun dev:web            # Start web dev server
 bun run --filter '*' typecheck  # Typecheck all packages
 ```
 
-
 ## Git
 
 - Do not add `Co-Authored-By` lines to commit messages.
