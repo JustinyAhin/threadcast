@@ -54,6 +54,7 @@ const ProcessedTurnSchema = z.object({
 
 const ThreadMetadataSchema = z.object({
   sessionId: z.string(),
+  source: z.enum(["claude-code", "codex"]).default("claude-code"),
   title: z.string(),
   projectName: z.string(),
   gitBranch: z.string().optional(),

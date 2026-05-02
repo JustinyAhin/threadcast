@@ -194,14 +194,18 @@ const removeFromIndex = async ({
 const findThreadBySessionId = async ({
 	bucket,
 	username,
-	sessionId
+	sessionId,
+	source
 }: {
 	bucket: R2Bucket;
 	username: string;
 	sessionId: string;
+	source: ThreadMetadata['source'];
 }): Promise<string | null> => {
 	const index = await readIndex({ bucket, key: `indexes/by-user/${username}.json` });
-	const entry = index.find((m) => m.metadata.sessionId === sessionId);
+	const entry = index.find(
+		(m) => m.metadata.sessionId === sessionId && (m.metadata.source ?? 'claude-code') === source
+	);
 	return entry?.id ?? null;
 };
 

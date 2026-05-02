@@ -7,12 +7,13 @@
 	const ogImage = $derived(
 		data.thread.metadata.visibility === 'public' ? `/og/threads/${data.id}.png` : undefined
 	);
+	const sourceLabel = $derived(data.thread.metadata.source === 'codex' ? 'Codex' : 'Claude Code');
 </script>
 
 <Seo
 	title="{data.thread.metadata.title} — ThreadCast"
-	description="Claude Code session by {data.thread.uploader.githubUsername} — {data.thread.metadata
-		.messageCount} messages, {data.thread.metadata.duration}"
+	description="{sourceLabel} session by {data.thread.uploader.githubUsername} — {data.thread
+		.metadata.messageCount} messages, {data.thread.metadata.duration}"
 	ogType="article"
 	{ogImage}
 />

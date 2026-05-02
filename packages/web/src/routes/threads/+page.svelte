@@ -28,6 +28,15 @@
 		{ label: '90d', offset: 90, range: false }
 	] as const;
 
+	const SOURCE_OPTIONS = [
+		{ value: 'claude-code', label: 'Claude Code' },
+		{ value: 'codex', label: 'Codex' }
+	] as const;
+
+	type SourceValue = (typeof SOURCE_OPTIONS)[number]['value'];
+
+	let activeSources = $state<SourceValue[]>([]);
+
 	const applyPreset = (preset: (typeof DATE_PRESETS)[number]) => {
 		if (activeDatePreset === preset.label) {
 			dateFrom = '';
@@ -65,6 +74,17 @@
 		}
 	};
 
+	const toggleSource = (source: SourceValue) => {
+		if (activeSources.includes(source)) {
+			activeSources = activeSources.filter((s) => s !== source);
+		} else {
+			activeSources = [...activeSources, source];
+		}
+	};
+
+	const getSourceLabel = (source: SourceValue | undefined) =>
+		source === 'codex' ? 'Codex' : 'Claude Code';
+
 	const TOOL_COLORS: Record<string, string> = {
 		Bash: 'bg-emerald-500/15 text-emerald-400 ring-emerald-500/30',
 		Read: 'bg-sky-500/15 text-sky-400 ring-sky-500/30',
@@ -91,6 +111,10 @@
 				if (created > dateTo) return false;
 			}
 
+			// Source filter
+			const source = thread.metadata.source ?? 'claude-code';
+			if (activeSources.length > 0 && !activeSources.includes(source)) return false;
+
 			// Project filter
 			if (activeProjects.length > 0) {
 				if (!activeProjects.includes(thread.metadata.projectName)) return false;
@@ -107,6 +131,7 @@
 			return (
 				thread.metadata.title.toLowerCase().includes(q) ||
 				thread.metadata.projectName.toLowerCase().includes(q) ||
+				getSourceLabel(source).toLowerCase().includes(q) ||
 				thread.uploader.githubUsername.toLowerCase().includes(q)
 			);
 		});
@@ -114,6 +139,7 @@
 
 	const hasActiveFilters = $derived(
 		query.trim().length > 0 ||
+			activeSources.length > 0 ||
 			activeTools.length > 0 ||
 			activeProjects.length > 0 ||
 			dateFrom !== '' ||
@@ -122,6 +148,7 @@
 
 	const clearAll = () => {
 		query = '';
+		activeSources = [];
 		activeTools = [];
 		activeProjects = [];
 		dateFrom = '';
@@ -146,18 +173,19 @@
 
 <Seo
 	title="Threads — ThreadCast"
-	description="Browse Claude Code sessions shared by developers — real coding conversations, preserved for everyone."
+	description="Browse Claude Code and Codex sessions shared by developers — real coding conversations, preserved for everyone."
 />
 
 <div class="px-6 py-10">
 	<div class="mx-auto max-w-4xl">
 		<div class="mb-10 animate-fade-in">
 			<p class="mb-3 font-mono text-xs tracking-widest text-text-muted uppercase">
-				Claude Code Sessions
+				Claude Code + Codex Sessions
 			</p>
 			<h1 class="mb-3 text-4xl font-bold text-text">Conversations worth reading.</h1>
 			<p class="max-w-lg text-text-secondary">
-				Real coding sessions with Claude — shared by developers, preserved for everyone.
+				Real coding sessions from Claude Code and Codex, shared by developers and preserved for
+				everyone.
 			</p>
 		</div>
 
@@ -166,8 +194,7 @@
 				<p class="mb-2 text-lg text-text-secondary">No threads yet</p>
 				<p class="text-sm text-text-muted">
 					Share your first session with <code
-						class="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-accent"
-						>/threadcast:share</code
+						class="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-accent">/threadcast:share</code
 					>
 				</p>
 				{#if !$session.data}
@@ -240,6 +267,27 @@
 								oninput={onDateInput}
 								class="date-input rounded border border-border bg-surface-2 px-2 py-1 font-mono text-xs text-text-secondary transition-colors focus:border-border-light focus:outline-none"
 							/>
+						</div>
+					</div>
+
+					<!-- Source filter -->
+					<div class="flex items-center gap-2">
+						<span class="w-14 shrink-0 font-mono text-xs text-text-muted">Source</span>
+						<div class="flex flex-wrap gap-1.5">
+							{#each SOURCE_OPTIONS as source (source.value)}
+								<button
+									onclick={() => toggleSource(source.value)}
+									class="cursor-pointer rounded-full px-2.5 py-0.5 text-xs transition-all {activeSources.includes(
+										source.value
+									)
+										? source.value === 'codex'
+											? 'bg-sky-500/15 text-sky-400 ring-1 ring-sky-500/30'
+											: 'bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/30'
+										: 'bg-surface-2 text-text-muted hover:text-text-secondary'}"
+								>
+									{source.label}
+								</button>
+							{/each}
 						</div>
 					</div>
 

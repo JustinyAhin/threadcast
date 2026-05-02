@@ -73,6 +73,7 @@
 	);
 
 	const estimatedCost = $derived(formatCost(calculateThreadCost(thread.turns)));
+	const sourceLabel = $derived(thread.metadata.source === 'codex' ? 'Codex' : 'Claude Code');
 
 	const primaryModel = $derived(
 		thread.metadata.models.length > 0 ? formatModel(thread.metadata.models[0]) : 'Unknown'
@@ -205,6 +206,21 @@
 		<div>
 			<h3 class="mb-3 font-mono text-xs tracking-widest text-text-muted uppercase">Thread</h3>
 			<div class="space-y-3">
+				<!-- Source -->
+				<div class="flex items-center gap-2.5 text-sm">
+					<svg
+						class="h-4 w-4 shrink-0 text-text-muted"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<rect x="4" y="4" width="16" height="16" rx="2" />
+						<path d="M8 9h8M8 15h8M8 12h4" />
+					</svg>
+					<span class="text-text-secondary">{sourceLabel}</span>
+				</div>
+
 				<!-- Date -->
 				<div class="flex items-center gap-2.5 text-sm">
 					<svg

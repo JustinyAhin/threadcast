@@ -74,6 +74,7 @@
 	});
 
 	const isSearching = $derived(query.trim().length > 0);
+	const sourceLabel = $derived(thread.metadata.source === 'codex' ? 'Codex' : 'Claude Code');
 
 	const scrollToTurn = (index: number) => {
 		const el = turnEls[index];
@@ -137,7 +138,16 @@
 	<div class="min-w-0 max-w-4xl flex-1">
 		<!-- Thread header -->
 		<div class="mb-8 border-b border-border pb-6">
-			<p class="mb-3 font-mono text-xs tracking-widest text-text-muted uppercase">Session</p>
+			<div class="mb-3 flex flex-wrap items-center gap-2">
+				<p class="font-mono text-xs tracking-widest text-text-muted uppercase">Session</p>
+				<span
+					class="rounded-full px-2 py-0.5 font-mono text-[11px] {thread.metadata.source === 'codex'
+						? 'bg-sky-500/15 text-sky-400'
+						: 'bg-amber-500/15 text-amber-400'}"
+				>
+					{sourceLabel}
+				</span>
+			</div>
 			<h1 class="mb-3 text-xl font-bold break-words text-text sm:text-2xl">
 				{thread.metadata.title}
 			</h1>

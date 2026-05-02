@@ -16,6 +16,8 @@
 		WebSearch: 'bg-cyan-500/15 text-cyan-400',
 		Task: 'bg-rose-500/15 text-rose-400'
 	};
+
+	const sourceLabel = $derived(thread.metadata.source === 'codex' ? 'Codex' : 'Claude Code');
 </script>
 
 <a
@@ -27,9 +29,16 @@
 			<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 			{@html highlightText(thread.metadata.title, query)}
 		</h3>
-		<span class="shrink-0 font-mono text-xs text-text-muted"
-			>{timeAgo(thread.metadata.created)}</span
-		>
+		<div class="flex shrink-0 flex-col items-end gap-1">
+			<span
+				class="rounded-full px-2 py-0.5 font-mono text-[11px] {thread.metadata.source === 'codex'
+					? 'bg-sky-500/15 text-sky-400'
+					: 'bg-amber-500/15 text-amber-400'}"
+			>
+				{sourceLabel}
+			</span>
+			<span class="font-mono text-xs text-text-muted">{timeAgo(thread.metadata.created)}</span>
+		</div>
 	</div>
 
 	<div class="mb-3 flex items-center gap-2 text-sm text-text-secondary">

@@ -53,7 +53,8 @@ export const POST = async (event) => {
 	const existingId = await findThreadBySessionId({
 		bucket,
 		username: user.login,
-		sessionId: threadData.metadata.sessionId
+		sessionId: threadData.metadata.sessionId,
+		source: threadData.metadata.source
 	});
 	const id = existingId ?? createId();
 

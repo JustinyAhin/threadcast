@@ -198,6 +198,7 @@ const computeThreadMetadata = (opts: {
 
   return {
     sessionId: opts.metadata.sessionId,
+    source: "codex",
     title,
     projectName: opts.metadata.cwd ? basename(opts.metadata.cwd) : "unknown",
     gitBranch: opts.metadata.gitBranch,
