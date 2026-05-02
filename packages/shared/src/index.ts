@@ -112,6 +112,7 @@ export type {
   RawContentBlock,
   RawJsonlLine,
   RawMessage,
+  SessionSource,
   SessionSummary,
   ThreadData,
   ThreadMetadata,

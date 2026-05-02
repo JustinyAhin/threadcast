@@ -1,4 +1,5 @@
 import { loadConfig } from "../auth/config.js";
+import { getSessionShareKey } from "../lib/session-source.js";
 import { getCachedThread } from "../lib/thread-cache.js";
 import { loadSharedSessions, saveSharedSession } from "../lib/shared-sessions.js";
 import { selectSession } from "../lib/session-selector.js";
@@ -15,21 +16,27 @@ const shareSession = async (
 
   const selection = await selectSession({
     sessionId: opts.sessionId,
+    source: opts.source,
     projectPath: opts.projectPath,
     cwdProjectPath: opts.cwdProjectPath,
   });
 
   if (!selection.session) {
-    throw new Error("No matching Claude Code session found");
+    throw new Error("No matching Claude Code or Codex session found");
   }
 
   const shared = await loadSharedSessions();
-  const existing = shared[selection.session.sessionId];
+  const shareKey = getSessionShareKey({
+    source: selection.session.source,
+    sessionId: selection.session.sessionId,
+  });
+  const existing = shared[shareKey] ?? shared[selection.session.sessionId];
   if (existing && !opts.force) {
     return {
       id: selection.session.sessionId,
       url: existing.url,
       sessionId: selection.session.sessionId,
+      source: selection.session.source,
       title: selection.session.firstMessage,
       previouslyShared: true,
     };
@@ -37,6 +44,7 @@ const shareSession = async (
 
   const data = await getCachedThread({
     filePath: selection.session.path,
+    source: selection.session.source,
     uploader: {
       githubUsername: config.githubUsername,
       githubAvatarUrl: config.githubAvatarUrl,
@@ -49,7 +57,7 @@ const shareSession = async (
   });
 
   await saveSharedSession({
-    sessionId: selection.session.sessionId,
+    sessionId: shareKey,
     url: result.url,
   });
 
@@ -57,6 +65,7 @@ const shareSession = async (
     id: result.id,
     url: result.url,
     sessionId: selection.session.sessionId,
+    source: selection.session.source,
     title: data.metadata.title,
     previouslyShared: false,
   };

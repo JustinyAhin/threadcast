@@ -1,4 +1,4 @@
-import type { AuthConfig, SessionSummary } from "@threadcast/shared";
+import type { AuthConfig, SessionSource, SessionSummary } from "@threadcast/shared";
 
 type PendingDeviceLogin = {
   deviceCode: string;
@@ -42,6 +42,7 @@ type SessionCache = {
 
 type IndexEntry = {
   sessionId: string;
+  source?: SessionSource;
   projectPath: string;
   firstMessage: string;
   messageCount: number;
@@ -76,6 +77,7 @@ type PresetCount = {
 
 type SelectSessionOptions = {
   sessionId?: string;
+  source?: SessionSource;
   projectPath?: string;
   cwdProjectPath?: string;
 };
@@ -92,6 +94,7 @@ type SanitizeOptions = {
 
 type ShareSessionOptions = {
   sessionId?: string;
+  source?: SessionSource;
   projectPath?: string;
   cwdProjectPath?: string;
   force?: boolean;
@@ -101,6 +104,7 @@ type ShareSessionResult = {
   id: string;
   url: string;
   sessionId: string;
+  source: SessionSource;
   title: string;
   previouslyShared: boolean;
 };

@@ -12,7 +12,13 @@ export { loginWithBrowser } from "./auth/local-browser-login.js";
 export { createLruCache } from "./lib/lru-cache.js";
 export { createSessionCache } from "./lib/session-cache.js";
 export { loadIndex, saveIndex } from "./lib/session-index.js";
-export { discoverSessions, findSession, scanSessionFile } from "./lib/session-discovery.js";
+export {
+  discoverSessions,
+  findSession,
+  scanClaudeSessionFile,
+  scanCodexSessionFile,
+} from "./lib/session-discovery.js";
+export { getSessionShareKey, isSessionSource } from "./lib/session-source.js";
 export { loadSharedSessions, saveSharedSession } from "./lib/shared-sessions.js";
 export { getCachedThread } from "./lib/thread-cache.js";
 export {

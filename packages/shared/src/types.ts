@@ -7,6 +7,8 @@ type ThreadMetadata = z.infer<typeof import("./index").ThreadMetadataSchema>;
 type Uploader = z.infer<typeof import("./index").UploaderSchema>;
 type ThreadData = z.infer<typeof import("./index").ThreadDataSchema>;
 
+type SessionSource = "claude-code" | "codex";
+
 type RawJsonlLine = {
   type: "user" | "assistant" | "file-history-snapshot" | "progress";
   uuid: string;
@@ -68,6 +70,7 @@ type RawContentBlock =
 
 type SessionSummary = {
   sessionId: string;
+  source: SessionSource;
   path: string;
   projectPath: string;
   firstMessage: string;
@@ -108,6 +111,7 @@ export type {
   RawContentBlock,
   RawJsonlLine,
   RawMessage,
+  SessionSource,
   SessionSummary,
   ThreadData,
   ThreadMetadata,

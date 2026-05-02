@@ -8,6 +8,7 @@ import {
   loadPendingDeviceLogin,
   shareSession,
   startGitHubDeviceFlow,
+  isSessionSource,
 } from "@threadcast/local-core";
 import { getConfigDir } from "@threadcast/local-core";
 
@@ -43,7 +44,7 @@ const tools: Tool[] = [
   {
     name: "threadcast.status",
     title: "ThreadCast Status",
-    description: "Show login state and the latest local Claude Code session for this project.",
+    description: "Show login state and the latest local Claude Code or Codex session for this project.",
     inputSchema: {
       type: "object",
       properties: {},
@@ -73,11 +74,12 @@ const tools: Tool[] = [
   {
     name: "threadcast.list_recent_sessions",
     title: "List Recent Sessions",
-    description: "List recent local Claude Code sessions, optionally filtered to a project path.",
+    description: "List recent local Claude Code and Codex sessions, optionally filtered to a source or project path.",
     inputSchema: {
       type: "object",
       properties: {
         limit: { type: "number", minimum: 1, maximum: 50 },
+        source: { type: "string", enum: ["claude-code", "codex"] },
         projectPath: { type: "string" },
       },
       additionalProperties: false,
@@ -86,11 +88,12 @@ const tools: Tool[] = [
   {
     name: "threadcast.share_session",
     title: "Share Session",
-    description: "Share a local Claude Code session to ThreadCast using saved credentials.",
+    description: "Share a local Claude Code or Codex session to ThreadCast using saved credentials.",
     inputSchema: {
       type: "object",
       properties: {
         sessionId: { type: "string" },
+        source: { type: "string", enum: ["claude-code", "codex"] },
         projectPath: { type: "string" },
         latest: { type: "boolean" },
         force: { type: "boolean" },
@@ -141,6 +144,8 @@ const textResult = ({
 });
 
 const resolveDefaultProjectPath = () => process.cwd();
+
+const formatSource = (source: string) => (source === "codex" ? "Codex" : "Claude Code");
 
 const handleToolCall = async ({
   name,
@@ -249,32 +254,37 @@ const handleToolCall = async ({
     }
     case "threadcast.list_recent_sessions": {
       const limit = typeof args?.limit === "number" ? args.limit : 10;
+      const rawSource = args?.source;
+      const source = isSessionSource(rawSource) ? rawSource : undefined;
       const projectPath =
         typeof args?.projectPath === "string" && args.projectPath.length > 0
           ? args.projectPath
           : resolveDefaultProjectPath();
-      const sessions = await listRecentSessions({ limit, projectPath });
+      const sessions = await listRecentSessions({ limit, source, projectPath });
       return textResult({
         text:
           sessions.length > 0
             ? sessions
                 .map(
                   (session, index) =>
-                    `${index + 1}. ${session.sessionId} | ${session.firstMessage} | ${session.projectPath}`
+                    `${index + 1}. ${formatSource(session.source)} | ${session.sessionId} | ${session.firstMessage} | ${session.projectPath || "(unknown project)"}`
                 )
                 .join("\n")
-            : "No local Claude Code sessions found.",
+            : "No local Claude Code or Codex sessions found.",
         structuredContent: { sessions },
       });
     }
     case "threadcast.share_session": {
       const sessionId = typeof args?.sessionId === "string" ? args.sessionId : undefined;
+      const rawSource = args?.source;
+      const source = isSessionSource(rawSource) ? rawSource : undefined;
       const projectPath = typeof args?.projectPath === "string" ? args.projectPath : undefined;
       const force = args?.force === true;
 
       try {
         const result = await shareSession({
           sessionId,
+          source,
           projectPath,
           cwdProjectPath: !sessionId && !projectPath ? resolveDefaultProjectPath() : undefined,
           force,
@@ -365,6 +375,14 @@ const handleNotification = (_notification: JsonRpcNotification) => {
 const start = () => {
   process.stdin.setEncoding("utf8");
   let buffer = "";
+  let pending = Promise.resolve();
+  let stdinEnded = false;
+
+  const finishIfDone = () => {
+    if (stdinEnded) {
+      pending.finally(() => process.exit(0));
+    }
+  };
 
   process.stdin.on("data", async (chunk: string) => {
     buffer += chunk;
@@ -375,21 +393,26 @@ const start = () => {
       const line = rawLine.trim();
       if (!line) continue;
 
-      try {
-        const message = JSON.parse(line) as JsonRpcRequest | JsonRpcNotification;
-        if ("id" in message) {
-          await handleRequest(message);
-        } else {
-          handleNotification(message);
+      pending = pending.then(async () => {
+        try {
+          const message = JSON.parse(line) as JsonRpcRequest | JsonRpcNotification;
+          if ("id" in message) {
+            await handleRequest(message);
+          } else {
+            handleNotification(message);
+          }
+        } catch (error) {
+          console.error("Invalid MCP message", error);
         }
-      } catch (error) {
-        console.error("Invalid MCP message", error);
-      }
+      });
     }
+
+    finishIfDone();
   });
 
   process.stdin.on("end", () => {
-    process.exit(0);
+    stdinEnded = true;
+    finishIfDone();
   });
 };
 

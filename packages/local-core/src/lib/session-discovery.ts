@@ -3,18 +3,27 @@ import { join, basename } from "node:path";
 import { homedir } from "node:os";
 import { createReadStream } from "node:fs";
 import { createInterface } from "node:readline";
-import type { SessionSummary } from "@threadcast/shared";
+import type { SessionSource, SessionSummary } from "@threadcast/shared";
 import { createSessionCache } from "./session-cache.js";
 import { loadIndex, saveIndex } from "./session-index.js";
 import type { IndexEntry } from "../types.js";
 
 const CLAUDE_PROJECTS_DIR = join(homedir(), ".claude", "projects");
+const CODEX_SESSIONS_DIR = join(homedir(), ".codex", "sessions");
 
 const sessionCache = createSessionCache();
 
-const scanSessionFile = async (
+type ScanResult = {
+  sessionId?: string;
+  projectPath?: string;
+  gitBranch?: string;
+  firstMessage: string | null;
+  messageCount: number;
+};
+
+const scanClaudeSessionFile = async (
   filePath: string
-): Promise<{ firstMessage: string | null; messageCount: number }> => {
+): Promise<ScanResult> => {
   const stream = createReadStream(filePath, { encoding: "utf-8" });
   const rl = createInterface({ input: stream, crlfDelay: Infinity });
 
@@ -59,21 +68,255 @@ const scanSessionFile = async (
   return { firstMessage, messageCount };
 };
 
-const discoverSessions = async (): Promise<SessionSummary[]> => {
-  const sessions: SessionSummary[] = [];
+const extractCodexText = (content: unknown): string => {
+  if (typeof content === "string") return content;
+  if (!Array.isArray(content)) return "";
+  return content
+    .map((block) => {
+      if (!block || typeof block !== "object") return "";
+      const data = block as { type?: unknown; text?: unknown };
+      if (
+        (data.type === "input_text" || data.type === "output_text" || data.type === "text") &&
+        typeof data.text === "string"
+      ) {
+        return data.text;
+      }
+      return "";
+    })
+    .filter(Boolean)
+    .join("\n");
+};
 
-  let projectDirs: string[];
+const CODEX_INTERNAL_PREFIXES = ["# AGENTS.md instructions", "<environment_context>"];
+
+const isCodexInternalText = (text: string): boolean => {
+  const trimmed = text.trim();
+  return CODEX_INTERNAL_PREFIXES.some((prefix) => trimmed.startsWith(prefix));
+};
+
+const scanCodexSessionFile = async (filePath: string): Promise<ScanResult> => {
+  const stream = createReadStream(filePath, { encoding: "utf-8" });
+  const rl = createInterface({ input: stream, crlfDelay: Infinity });
+
+  let sessionId: string | undefined;
+  let projectPath: string | undefined;
+  let gitBranch: string | undefined;
+  let firstMessage: string | null = null;
+  let messageCount = 0;
+
   try {
-    projectDirs = await readdir(CLAUDE_PROJECTS_DIR);
-  } catch {
-    return [];
+    for await (const line of rl) {
+      try {
+        const data = JSON.parse(line.trim());
+        const payload = data.payload;
+
+        if (data.type === "session_meta" && payload && typeof payload === "object") {
+          if (typeof payload.id === "string") sessionId = payload.id;
+          if (typeof payload.cwd === "string") projectPath = payload.cwd;
+          if (payload.git && typeof payload.git === "object") {
+            const git = payload.git as { branch?: unknown };
+            if (typeof git.branch === "string") gitBranch = git.branch;
+          }
+          continue;
+        }
+
+        if (data.type === "turn_context" && payload && typeof payload === "object") {
+          if (!projectPath && typeof payload.cwd === "string") projectPath = payload.cwd;
+          continue;
+        }
+
+        if (data.type !== "response_item" || !payload || typeof payload !== "object") {
+          continue;
+        }
+
+        if (payload.type === "message" && (payload.role === "user" || payload.role === "assistant")) {
+          const text = extractCodexText(payload.content);
+          if (payload.role === "user" && isCodexInternalText(text)) continue;
+          if (!text.trim()) continue;
+          messageCount++;
+          if (firstMessage === null && payload.role === "user") {
+            firstMessage = text.slice(0, 100);
+          }
+        } else if (payload.type === "function_call") {
+          messageCount++;
+        }
+      } catch {
+        continue;
+      }
+    }
+  } finally {
+    stream.destroy();
   }
 
-  const persistedIndex = await loadIndex();
-  const newIndexEntries: Record<string, IndexEntry> = {};
-  const newCache = createSessionCache();
+  return { sessionId, projectPath, gitBranch, firstMessage, messageCount };
+};
+
+const listJsonlFiles = async (dir: string): Promise<string[]> => {
+  const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
+  const files: string[] = [];
+
+  for (const entry of entries) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...(await listJsonlFiles(path)));
+    } else if (entry.isFile() && entry.name.endsWith(".jsonl")) {
+      files.push(path);
+    }
+  }
+
+  return files;
+};
+
+const pushSession = (opts: {
+  sessions: SessionSummary[];
+  filePath: string;
+  fileStat: Awaited<ReturnType<typeof stat>>;
+  sessionId: string;
+  source: SessionSource;
+  projectPath: string;
+  firstMessage: string;
+  messageCount: number;
+}) => {
+  opts.sessions.push({
+    sessionId: opts.sessionId,
+    source: opts.source,
+    path: opts.filePath,
+    projectPath: opts.projectPath,
+    firstMessage: opts.firstMessage,
+    messageCount: opts.messageCount,
+    created: opts.fileStat.birthtime.toISOString(),
+    lastModified: opts.fileStat.mtime.toISOString(),
+    sizeBytes: Number(opts.fileStat.size),
+  });
+};
+
+const discoverSessionsForSource = async (opts: {
+  source: SessionSource;
+  files: string[];
+  projectPathForFile: (filePath: string) => string;
+  sessionIdForFile: (filePath: string) => string;
+  scanFile: (filePath: string) => Promise<ScanResult>;
+  persistedEntries: Record<string, IndexEntry>;
+  newIndexEntries: Record<string, IndexEntry>;
+  sessions: SessionSummary[];
+}): Promise<boolean> => {
   let indexDirty = false;
 
+  for (const filePath of opts.files) {
+    const fileStat = await stat(filePath).catch(() => null);
+    if (!fileStat) continue;
+
+    const fallbackProjectPath = opts.projectPathForFile(filePath);
+    const fallbackSessionId = opts.sessionIdForFile(filePath);
+
+    const memCached = sessionCache.get(filePath);
+    if (memCached && memCached.mtimeMs === fileStat.mtimeMs && memCached.size === fileStat.size) {
+      if (memCached.messageCount === 0) continue;
+
+      const indexed = opts.persistedEntries[filePath];
+      const sessionId = indexed?.sessionId ?? fallbackSessionId;
+      const projectPath = indexed?.projectPath ?? fallbackProjectPath;
+      opts.newIndexEntries[filePath] = {
+        sessionId,
+        source: opts.source,
+        projectPath,
+        firstMessage: memCached.firstMessage,
+        messageCount: memCached.messageCount,
+        created: fileStat.birthtime.toISOString(),
+        lastModified: fileStat.mtime.toISOString(),
+        sizeBytes: fileStat.size,
+        mtimeMs: fileStat.mtimeMs,
+      };
+      pushSession({
+        sessions: opts.sessions,
+        filePath,
+        fileStat,
+        sessionId,
+        source: opts.source,
+        projectPath,
+        firstMessage: memCached.firstMessage,
+        messageCount: memCached.messageCount,
+      });
+      continue;
+    }
+
+    const indexed = opts.persistedEntries[filePath];
+    if (
+      indexed &&
+      indexed.mtimeMs === fileStat.mtimeMs &&
+      indexed.sizeBytes === fileStat.size &&
+      (!indexed.source || indexed.source === opts.source)
+    ) {
+      if (indexed.messageCount === 0) continue;
+
+      const cacheEntry = {
+        mtimeMs: fileStat.mtimeMs,
+        size: fileStat.size,
+        firstMessage: indexed.firstMessage,
+        messageCount: indexed.messageCount,
+      };
+      sessionCache.set({ filePath, entry: cacheEntry });
+      opts.newIndexEntries[filePath] = { ...indexed, source: opts.source };
+      pushSession({
+        sessions: opts.sessions,
+        filePath,
+        fileStat,
+        sessionId: indexed.sessionId,
+        source: opts.source,
+        projectPath: indexed.projectPath,
+        firstMessage: indexed.firstMessage,
+        messageCount: indexed.messageCount,
+      });
+      continue;
+    }
+
+    indexDirty = true;
+    const result = await opts.scanFile(filePath);
+    if (result.messageCount === 0) continue;
+
+    const sessionId = result.sessionId ?? fallbackSessionId;
+    const projectPath = result.projectPath ?? fallbackProjectPath;
+    const firstMessage = result.firstMessage || "(empty session)";
+    const cacheEntry = {
+      mtimeMs: fileStat.mtimeMs,
+      size: fileStat.size,
+      firstMessage,
+      messageCount: result.messageCount,
+    };
+    sessionCache.set({ filePath, entry: cacheEntry });
+    opts.newIndexEntries[filePath] = {
+      sessionId,
+      source: opts.source,
+      projectPath,
+      firstMessage,
+      messageCount: result.messageCount,
+      created: fileStat.birthtime.toISOString(),
+      lastModified: fileStat.mtime.toISOString(),
+      sizeBytes: fileStat.size,
+      mtimeMs: fileStat.mtimeMs,
+    };
+    pushSession({
+      sessions: opts.sessions,
+      filePath,
+      fileStat,
+      sessionId,
+      source: opts.source,
+      projectPath,
+      firstMessage,
+      messageCount: result.messageCount,
+    });
+  }
+
+  return indexDirty;
+};
+
+const discoverSessions = async (): Promise<SessionSummary[]> => {
+  const sessions: SessionSummary[] = [];
+  const persistedIndex = await loadIndex();
+  const newIndexEntries: Record<string, IndexEntry> = {};
+  let indexDirty = false;
+
+  const projectDirs = await readdir(CLAUDE_PROJECTS_DIR).catch(() => []);
   for (const projectDir of projectDirs) {
     const projectPath = join(CLAUDE_PROJECTS_DIR, projectDir);
     const dirStat = await stat(projectPath).catch(() => null);
@@ -86,115 +329,31 @@ const discoverSessions = async (): Promise<SessionSummary[]> => {
       continue;
     }
 
-    for (const file of files) {
-      if (!file.endsWith(".jsonl")) continue;
-      const filePath = join(projectPath, file);
-      const fileStat = await stat(filePath).catch(() => null);
-      if (!fileStat) continue;
-
-      const decodedProjectPath = projectDir.replace(/-/g, "/");
-      const sessionId = basename(file, ".jsonl");
-
-      const memCached = sessionCache.get(filePath);
-      if (
-        memCached &&
-        memCached.mtimeMs === fileStat.mtimeMs &&
-        memCached.size === fileStat.size
-      ) {
-        if (memCached.messageCount === 0) continue;
-
-        newCache.set({
-          filePath,
-          entry: memCached,
-        });
-        newIndexEntries[filePath] = {
-          sessionId,
-          projectPath: decodedProjectPath,
-          firstMessage: memCached.firstMessage,
-          messageCount: memCached.messageCount,
-          created: fileStat.birthtime.toISOString(),
-          lastModified: fileStat.mtime.toISOString(),
-          sizeBytes: fileStat.size,
-          mtimeMs: fileStat.mtimeMs,
-        };
-        sessions.push({
-          sessionId,
-          path: filePath,
-          projectPath: decodedProjectPath,
-          firstMessage: memCached.firstMessage,
-          messageCount: memCached.messageCount,
-          created: fileStat.birthtime.toISOString(),
-          lastModified: fileStat.mtime.toISOString(),
-          sizeBytes: fileStat.size,
-        });
-        continue;
-      }
-
-      const indexed = persistedIndex.entries[filePath];
-      if (indexed && indexed.mtimeMs === fileStat.mtimeMs && indexed.sizeBytes === fileStat.size) {
-        if (indexed.messageCount === 0) continue;
-
-        const cacheEntry = {
-          mtimeMs: fileStat.mtimeMs,
-          size: fileStat.size,
-          firstMessage: indexed.firstMessage,
-          messageCount: indexed.messageCount,
-        };
-        newCache.set({ filePath, entry: cacheEntry });
-        newIndexEntries[filePath] = indexed;
-        sessions.push({
-          sessionId,
-          path: filePath,
-          projectPath: decodedProjectPath,
-          firstMessage: indexed.firstMessage,
-          messageCount: indexed.messageCount,
-          created: indexed.created,
-          lastModified: indexed.lastModified,
-          sizeBytes: indexed.sizeBytes,
-        });
-        continue;
-      }
-
-      indexDirty = true;
-      const result = await scanSessionFile(filePath);
-      const firstMessage = result.firstMessage || "(empty session)";
-
-      if (result.messageCount === 0) continue;
-
-      const cacheEntry = {
-        mtimeMs: fileStat.mtimeMs,
-        size: fileStat.size,
-        firstMessage,
-        messageCount: result.messageCount,
-      };
-      newCache.set({ filePath, entry: cacheEntry });
-      newIndexEntries[filePath] = {
-        sessionId,
-        projectPath: decodedProjectPath,
-        firstMessage,
-        messageCount: result.messageCount,
-        created: fileStat.birthtime.toISOString(),
-        lastModified: fileStat.mtime.toISOString(),
-        sizeBytes: fileStat.size,
-        mtimeMs: fileStat.mtimeMs,
-      };
-      sessions.push({
-        sessionId,
-        path: filePath,
-        projectPath: decodedProjectPath,
-        firstMessage,
-        messageCount: result.messageCount,
-        created: fileStat.birthtime.toISOString(),
-        lastModified: fileStat.mtime.toISOString(),
-        sizeBytes: fileStat.size,
-      });
-    }
+    const sourceDirty = await discoverSessionsForSource({
+      source: "claude-code",
+      files: files.filter((file) => file.endsWith(".jsonl")).map((file) => join(projectPath, file)),
+      projectPathForFile: () => projectDir.replace(/-/g, "/"),
+      sessionIdForFile: (filePath) => basename(filePath, ".jsonl"),
+      scanFile: scanClaudeSessionFile,
+      persistedEntries: persistedIndex.entries,
+      newIndexEntries,
+      sessions,
+    });
+    indexDirty = indexDirty || sourceDirty;
   }
 
-  sessionCache.clear();
-  for (const [path, entry] of newCache.entries()) {
-    sessionCache.set({ filePath: path, entry });
-  }
+  const codexFiles = await listJsonlFiles(CODEX_SESSIONS_DIR);
+  const codexDirty = await discoverSessionsForSource({
+    source: "codex",
+    files: codexFiles,
+    projectPathForFile: () => "",
+    sessionIdForFile: (filePath) => basename(filePath, ".jsonl"),
+    scanFile: scanCodexSessionFile,
+    persistedEntries: persistedIndex.entries,
+    newIndexEntries,
+    sessions,
+  });
+  indexDirty = indexDirty || codexDirty;
 
   const keysChanged =
     indexDirty ||
@@ -215,28 +374,12 @@ const discoverSessions = async (): Promise<SessionSummary[]> => {
 };
 
 const findSession = async (
-  sessionId: string
+  opts: { sessionId: string; source?: SessionSource } | string
 ): Promise<SessionSummary | null> => {
-  for (const [filePath, entry] of sessionCache.entries()) {
-    if (basename(filePath, ".jsonl") === sessionId) {
-      const fileStat = await stat(filePath).catch(() => null);
-      if (!fileStat) continue;
-      const projectDir = basename(join(filePath, ".."));
-      return {
-        sessionId,
-        path: filePath,
-        projectPath: projectDir.replace(/-/g, "/"),
-        firstMessage: entry.firstMessage,
-        messageCount: entry.messageCount,
-        created: fileStat.birthtime.toISOString(),
-        lastModified: fileStat.mtime.toISOString(),
-        sizeBytes: fileStat.size,
-      };
-    }
-  }
-
+  const sessionId = typeof opts === "string" ? opts : opts.sessionId;
+  const source = typeof opts === "string" ? undefined : opts.source;
   const sessions = await discoverSessions();
-  return sessions.find((s) => s.sessionId === sessionId) || null;
+  return sessions.find((s) => s.sessionId === sessionId && (!source || s.source === source)) || null;
 };
 
-export { discoverSessions, findSession, scanSessionFile };
+export { discoverSessions, findSession, scanClaudeSessionFile, scanCodexSessionFile };

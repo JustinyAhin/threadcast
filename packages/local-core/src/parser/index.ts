@@ -2,11 +2,13 @@ import { readSessionMessages } from "./jsonl-reader.js";
 import { buildMessageChain } from "./message-chain.js";
 import { processMessages } from "./tool-matcher.js";
 import { sanitizeTurns } from "./sanitizer.js";
+import { parseCodexSession } from "./codex.js";
 import type {
   ThreadData,
   ThreadMetadata,
   ProcessedTurn,
   Uploader,
+  SessionSource,
 } from "@threadcast/shared";
 import { homedir } from "node:os";
 import { basename } from "node:path";
@@ -84,11 +86,17 @@ const computeMetadata = (opts: ComputeMetadataOpts): ThreadMetadata => {
 
 const parseSession = async ({
   filePath,
+  source = "claude-code",
   uploader,
 }: {
   filePath: string;
+  source?: SessionSource;
   uploader: Uploader;
 }): Promise<ThreadData> => {
+  if (source === "codex") {
+    return parseCodexSession({ filePath, uploader });
+  }
+
   const rawMessages = await readSessionMessages(filePath);
   if (rawMessages.length === 0) {
     throw new Error("Session contains no messages");
