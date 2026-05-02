@@ -6,6 +6,7 @@ import { createInterface } from "node:readline";
 import type { SessionSource, SessionSummary } from "@threadcast/shared";
 import { createSessionCache } from "./session-cache.js";
 import { loadIndex, saveIndex } from "./session-index.js";
+import { normalizeClaudeCommandText } from "../parser/claude-command.js";
 import type { IndexEntry } from "../types.js";
 
 const CLAUDE_PROJECTS_DIR = join(homedir(), ".claude", "projects");
@@ -49,12 +50,14 @@ const scanClaudeSessionFile = async (
         ) {
           const content = data.message.content;
           if (typeof content === "string") {
-            firstMessage = content.slice(0, 100);
+            firstMessage = normalizeClaudeCommandText(content).slice(0, 100);
           } else if (Array.isArray(content)) {
             const textBlock = content.find(
               (b: any) => b.type === "text" && b.text
             );
-            if (textBlock) firstMessage = textBlock.text.slice(0, 100);
+            if (textBlock) {
+              firstMessage = normalizeClaudeCommandText(textBlock.text).slice(0, 100);
+            }
           }
         }
       } catch {

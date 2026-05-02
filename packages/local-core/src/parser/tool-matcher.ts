@@ -5,6 +5,7 @@ import type {
   ToolCall,
   ProcessedTurn,
 } from "@threadcast/shared";
+import { normalizeClaudeCommandText } from "./claude-command.js";
 
 type MakeAssistantTurnOpts = {
   content: ContentBlock[];
@@ -36,15 +37,16 @@ const makeAssistantTurn = (opts: MakeAssistantTurnOpts): ProcessedTurn => {
 const extractUserText = (msg: RawJsonlLine): string => {
   if (!msg.message) return "";
   const content = msg.message.content;
-  if (typeof content === "string") return content;
+  if (typeof content === "string") return normalizeClaudeCommandText(content);
   if (Array.isArray(content)) {
-    return content
+    const text = content
       .filter(
         (b): b is { type: "text"; text: string } =>
           typeof b === "object" && b.type === "text"
       )
       .map((b) => b.text)
       .join("\n");
+    return normalizeClaudeCommandText(text);
   }
   return "";
 };
@@ -63,17 +65,6 @@ const extractToolResultContent = (
       .join("\n");
   }
   return String(content);
-};
-
-const INTERNAL_MESSAGE_PREFIXES = [
-  "<command-name>",
-  "<local-command-",
-  "[Request interrupted by user",
-];
-
-const isInternalMessage = (text: string): boolean => {
-  const trimmed = text.trim();
-  return INTERNAL_MESSAGE_PREFIXES.some((prefix) => trimmed.startsWith(prefix));
 };
 
 const processMessages = (messages: RawJsonlLine[]): ProcessedTurn[] => {
@@ -115,7 +106,7 @@ const processMessages = (messages: RawJsonlLine[]): ProcessedTurn[] => {
     if (msg.type === "user" && !msg.toolUseResult && !msg.sourceToolAssistantUUID) {
       const text = extractUserText(msg);
 
-      if (!text || isInternalMessage(text)) continue;
+      if (!text) continue;
 
       if (currentAssistantBlocks.length > 0) {
         turns.push(makeAssistantTurn({
