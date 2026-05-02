@@ -53,10 +53,11 @@ bun run --filter @threadcast/web db:migrate:local
 # Start the web dev server
 bun dev:web
 
-# Build and test the Claude Code plugin
+# Build and test the plugins
 bun build:plugin
-claude --plugin-dir ./packages/plugin-threadcast
 ```
+
+For full local Claude Code and Codex e2e testing, see [Local Development](kb/local-dev.md).
 
 ### Environment Variables
 
@@ -99,7 +100,9 @@ ThreadCast can also be used from inside Claude Code via the bundled plugin.
 bun build:plugin
 
 # Start Claude Code with the plugin directory
-claude --plugin-dir ./packages/plugin-threadcast
+THREADCAST_API_URL=http://localhost:5173 \
+THREADCAST_CONFIG_DIR=$HOME/.threadcast-dev \
+claude --plugin-dir ./packages/plugin-threadcast/claude
 ```
 
 This adds the following commands inside Claude Code:
@@ -109,6 +112,8 @@ This adds the following commands inside Claude Code:
 - `/threadcast:status`
 - `/threadcast:share`
 - `/threadcast:share-recent`
+
+For Codex plugin testing, see [Local Development](kb/local-dev.md).
 
 ## Thread Rendering
 

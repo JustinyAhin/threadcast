@@ -9,6 +9,8 @@
         "build:plugin": "bun run --filter @threadcast/plugin-threadcast build",
         "build:web": "bun run --filter @threadcast/web build",
         "dev:web": "bun run --filter @threadcast/web dev",
+        "plugin:codex:local": "cp packages/plugin-threadcast/codex/.mcp.local.json packages/plugin-threadcast/codex/.mcp.json",
+        "plugin:codex:prod": "cp packages/plugin-threadcast/codex/.mcp.prod.json packages/plugin-threadcast/codex/.mcp.json",
         "typecheck": "bun run --filter '*' typecheck"
     },
     "devDependencies": {
