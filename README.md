@@ -1,14 +1,14 @@
 # ThreadCast
 
-Share your [Claude Code](https://docs.anthropic.com/en/docs/claude-code) sessions as beautiful, interactive web pages.
+Share your [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and Codex sessions as beautiful, interactive web pages.
 
-ThreadCast transforms recorded Claude Code conversations into shareable threads — complete with syntax highlighting, tool call rendering, diff views, and cost tracking.
+ThreadCast transforms recorded coding-agent conversations into shareable threads — complete with syntax highlighting, tool call rendering, diff views, and cost tracking.
 
 ## How It Works
 
-1. **Install** — Add the Claude Code plugin locally
-2. **Discover** — The local MCP server scans your Claude Code sessions
-3. **Share** — Run a slash command and get a shareable link
+1. **Install** — Add the Claude Code or Codex plugin locally
+2. **Discover** — The local MCP server scans Claude Code and Codex sessions
+3. **Share** — Run a slash command or Codex skill and get a shareable link
 
 ## Packages
 
@@ -16,15 +16,16 @@ ThreadCast transforms recorded Claude Code conversations into shareable threads 
 |---------|-------------|
 | `packages/web` | SvelteKit app hosted on Cloudflare Workers — displays threads |
 | `packages/local-core` | Shared local discovery, parsing, auth, and upload logic for native clients |
-| `packages/mcp` | Local stdio MCP server that exposes ThreadCast tools to Claude Code |
-| `packages/plugin-threadcast` | Claude Code plugin with slash commands backed by the local MCP server |
+| `packages/mcp` | Local stdio MCP server that exposes ThreadCast tools to agent plugins |
+| `packages/plugin-threadcast` | Claude Code and Codex plugins backed by the local MCP server |
 | `packages/shared` | Shared Zod schemas, types, and utilities |
+| `kb` | Project knowledge base and local development guides |
 
 ## Tech Stack
 
 - **Runtime**: [Bun](https://bun.sh)
 - **Web**: SvelteKit 2, Tailwind CSS 4, Cloudflare Workers/D1/R2
-- **Claude Code**: local stdio MCP server packaged as a plugin
+- **Agent integrations**: local stdio MCP server packaged for Claude Code and Codex
 - **Database**: Cloudflare D1 (SQLite) with [Drizzle ORM](https://orm.drizzle.team)
 - **Auth**: GitHub OAuth ([Better Auth](https://www.better-auth.com))
 - **Validation**: [Zod](https://zod.dev)
@@ -78,7 +79,11 @@ bun dev:web              # Start web dev server
 
 # Build
 bun build                # Build all packages
-bun build:plugin         # Bundle the Claude Code plugin server
+bun build:plugin         # Bundle plugin MCP servers
+
+# Codex local plugin config
+bun plugin:codex:local   # Point Codex plugin MCP at localhost
+bun plugin:codex:prod    # Restore production Codex plugin MCP config
 
 # Quality
 bun run --filter '*' typecheck   # Typecheck all packages
@@ -91,9 +96,11 @@ bun run --filter @threadcast/web db:migrate:local   # Apply migrations locally
 bun run --filter @threadcast/web db:migrate:remote  # Apply migrations to production
 ```
 
-## Claude Code Plugin
+## Agent Plugins
 
-ThreadCast can also be used from inside Claude Code via the bundled plugin.
+ThreadCast can be used from Claude Code and Codex via the bundled plugins.
+
+### Claude Code
 
 ```bash
 # Build the plugin's bundled MCP server
@@ -113,11 +120,23 @@ This adds the following commands inside Claude Code:
 - `/threadcast:share`
 - `/threadcast:share-recent`
 
-For Codex plugin testing, see [Local Development](kb/local-dev.md).
+### Codex
+
+Codex installs from the repo marketplace entry in `.agents/plugins/marketplace.json`.
+
+Command-like skills:
+
+- `$threadcast:threadcast-login`
+- `$threadcast:threadcast-logout`
+- `$threadcast:threadcast-status`
+- `$threadcast:threadcast-share`
+- `$threadcast:threadcast-share-recent`
+
+For Codex local plugin setup and localhost auth, see [Local Development](kb/local-dev.md).
 
 ## Thread Rendering
 
-ThreadCast renders each Claude Code tool with a dedicated visual component:
+ThreadCast renders each agent tool with a dedicated visual component:
 
 - **Bash** — Command + output in a code block
 - **Read** — File contents with syntax highlighting
@@ -149,9 +168,10 @@ threadcast/
 │   │   └── drizzle/             # Database migrations
 │   ├── local-core/              # Local discovery, parsing, auth, upload logic
 │   ├── mcp/                     # Local MCP server
-│   ├── plugin-threadcast/       # Claude Code plugin package
+│   ├── plugin-threadcast/       # Claude Code and Codex plugin package
 │   └── shared/
 │       └── src/                 # Zod schemas, types, pricing
+├── kb/                          # Knowledge base docs
 ```
 
 ## License
