@@ -1,7 +1,7 @@
 import { loadConfig } from "../auth/config.js";
 import { getSessionShareKey } from "../lib/session-source.js";
 import { getCachedThread } from "../lib/thread-cache.js";
-import { loadSharedSessions, saveSharedSession } from "../lib/shared-sessions.js";
+import { saveSharedSession } from "../lib/shared-sessions.js";
 import { selectSession } from "../lib/session-selector.js";
 import type { ShareSessionOptions, ShareSessionResult } from "../types.js";
 import { uploadThread } from "../uploader/api-client.js";
@@ -25,22 +25,10 @@ const shareSession = async (
     throw new Error("No matching Claude Code or Codex session found");
   }
 
-  const shared = await loadSharedSessions();
   const shareKey = getSessionShareKey({
     source: selection.session.source,
     sessionId: selection.session.sessionId,
   });
-  const existing = shared[shareKey] ?? shared[selection.session.sessionId];
-  if (existing && !opts.force) {
-    return {
-      id: selection.session.sessionId,
-      url: existing.url,
-      sessionId: selection.session.sessionId,
-      source: selection.session.source,
-      title: selection.session.firstMessage,
-      previouslyShared: true,
-    };
-  }
 
   const data = await getCachedThread({
     filePath: selection.session.path,
@@ -67,7 +55,6 @@ const shareSession = async (
     sessionId: selection.session.sessionId,
     source: selection.session.source,
     title: data.metadata.title,
-    previouslyShared: false,
   };
 };
 

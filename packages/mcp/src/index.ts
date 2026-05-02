@@ -96,7 +96,6 @@ const tools: Tool[] = [
         source: { type: "string", enum: ["claude-code", "codex"] },
         projectPath: { type: "string" },
         latest: { type: "boolean" },
-        force: { type: "boolean" },
       },
       additionalProperties: false,
     },
@@ -279,7 +278,6 @@ const handleToolCall = async ({
       const rawSource = args?.source;
       const source = isSessionSource(rawSource) ? rawSource : undefined;
       const projectPath = typeof args?.projectPath === "string" ? args.projectPath : undefined;
-      const force = args?.force === true;
 
       try {
         const result = await shareSession({
@@ -287,13 +285,10 @@ const handleToolCall = async ({
           source,
           projectPath,
           cwdProjectPath: !sessionId && !projectPath ? resolveDefaultProjectPath() : undefined,
-          force,
         });
 
         return textResult({
-          text: result.previouslyShared
-            ? `Already shared: ${result.url}`
-            : `Shared "${result.title}": ${result.url}`,
+          text: `Shared "${result.title}": ${result.url}`,
           structuredContent: result,
         });
       } catch (error) {

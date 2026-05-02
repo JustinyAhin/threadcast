@@ -97,7 +97,6 @@ type ShareSessionOptions = {
   source?: SessionSource;
   projectPath?: string;
   cwdProjectPath?: string;
-  force?: boolean;
 };
 
 type ShareSessionResult = {
@@ -106,7 +105,6 @@ type ShareSessionResult = {
   sessionId: string;
   source: SessionSource;
   title: string;
-  previouslyShared: boolean;
 };
 
 export type {
