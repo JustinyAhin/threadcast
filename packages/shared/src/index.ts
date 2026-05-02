@@ -44,6 +44,8 @@ const ProcessedTurnSchema = z.object({
         .object({
           input_tokens: z.number(),
           output_tokens: z.number(),
+          cached_input_tokens: z.number().optional(),
+          reasoning_output_tokens: z.number().optional(),
         })
         .optional(),
     })

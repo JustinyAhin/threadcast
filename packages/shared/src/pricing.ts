@@ -1,6 +1,15 @@
 import type { ModelPricing, ProcessedTurn } from "./types";
 
 const MODEL_PRICING: Record<string, ModelPricing> = {
+  // OpenAI GPT-5.5
+  "gpt-5.5": { input: 5, cachedInput: 0.5, output: 30 },
+  // OpenAI GPT-5.4
+  "gpt-5.4-mini": { input: 0.75, cachedInput: 0.075, output: 4.5 },
+  "gpt-5.4": { input: 2.5, cachedInput: 0.25, output: 15 },
+  // OpenAI GPT-5
+  "gpt-5-mini": { input: 0.25, cachedInput: 0.025, output: 2 },
+  "gpt-5-nano": { input: 0.05, cachedInput: 0.005, output: 0.4 },
+  "gpt-5": { input: 1.25, cachedInput: 0.125, output: 10 },
   // Claude 4.6
   "claude-opus-4-6": { input: 5, output: 25 },
   "claude-sonnet-4-6": { input: 3, output: 15 },
@@ -27,7 +36,9 @@ const getPricing = (model: string): ModelPricing => {
   if (MODEL_PRICING[model]) return MODEL_PRICING[model];
 
   // Try prefix match (e.g. "claude-opus-4-6-20250601" → "claude-opus-4-6")
-  for (const key of Object.keys(MODEL_PRICING)) {
+  for (const key of Object.keys(MODEL_PRICING).sort(
+    (a, b) => b.length - a.length,
+  )) {
     if (model.startsWith(key)) return MODEL_PRICING[key];
   }
 
@@ -48,9 +59,16 @@ const calculateThreadCost = (turns: ProcessedTurn[]): number => {
 
     const pricing = getPricing(turn.metadata.model ?? "");
     const { input_tokens, output_tokens } = turn.metadata.usage;
+    const cachedInputTokens = Math.min(
+      turn.metadata.usage.cached_input_tokens ?? 0,
+      input_tokens,
+    );
+    const uncachedInputTokens = input_tokens - cachedInputTokens;
 
     totalCost +=
-      (input_tokens * pricing.input + output_tokens * pricing.output) /
+      (uncachedInputTokens * pricing.input +
+        cachedInputTokens * (pricing.cachedInput ?? pricing.input) +
+        output_tokens * pricing.output) /
       1_000_000;
   }
 

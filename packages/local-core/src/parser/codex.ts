@@ -28,6 +28,14 @@ type CodexMetadata = {
   lastTimestamp?: string;
 };
 
+type CodexTokenUsage = {
+  input_tokens?: number;
+  cached_input_tokens?: number;
+  output_tokens?: number;
+  reasoning_output_tokens?: number;
+  total_tokens?: number;
+};
+
 const extractText = (content: unknown): string => {
   if (typeof content === "string") return content;
   if (!Array.isArray(content)) return "";
@@ -36,7 +44,9 @@ const extractText = (content: unknown): string => {
       if (!block || typeof block !== "object") return "";
       const item = block as { type?: unknown; text?: unknown };
       if (
-        (item.type === "input_text" || item.type === "output_text" || item.type === "text") &&
+        (item.type === "input_text" ||
+          item.type === "output_text" ||
+          item.type === "text") &&
         typeof item.text === "string"
       ) {
         return item.text;
@@ -47,7 +57,10 @@ const extractText = (content: unknown): string => {
     .join("\n");
 };
 
-const CODEX_INTERNAL_PREFIXES = ["# AGENTS.md instructions", "<environment_context>"];
+const CODEX_INTERNAL_PREFIXES = [
+  "# AGENTS.md instructions",
+  "<environment_context>",
+];
 
 const isInternalText = (text: string): boolean => {
   const trimmed = text.trim();
@@ -55,7 +68,8 @@ const isInternalText = (text: string): boolean => {
 };
 
 const parseToolInput = (value: unknown): Record<string, any> => {
-  if (value && typeof value === "object" && !Array.isArray(value)) return value as Record<string, any>;
+  if (value && typeof value === "object" && !Array.isArray(value))
+    return value as Record<string, any>;
   if (typeof value === "string") {
     try {
       const parsed = JSON.parse(value);
@@ -77,6 +91,56 @@ const formatDuration = (ms: number): string => {
   if (minutes < 60) return `${minutes}m ${seconds % 60}s`;
   const hours = Math.floor(minutes / 60);
   return `${hours}h ${minutes % 60}m`;
+};
+
+const normalizeTokenUsage = (
+  usage: CodexTokenUsage | undefined,
+): NonNullable<ProcessedTurn["metadata"]>["usage"] | null => {
+  if (!usage) return null;
+  const inputTokens = usage.input_tokens ?? 0;
+  const outputTokens = usage.output_tokens ?? 0;
+  if (inputTokens === 0 && outputTokens === 0) return null;
+  return {
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+    ...(usage.cached_input_tokens !== undefined
+      ? { cached_input_tokens: usage.cached_input_tokens }
+      : {}),
+    ...(usage.reasoning_output_tokens !== undefined
+      ? { reasoning_output_tokens: usage.reasoning_output_tokens }
+      : {}),
+  };
+};
+
+const makeAssistantTurn = (opts: {
+  timestamp: string;
+  content: ContentBlock[];
+  model?: string;
+}): ProcessedTurn => {
+  const turn: ProcessedTurn = {
+    role: "assistant",
+    timestamp: opts.timestamp,
+    content: opts.content,
+  };
+  if (opts.model) {
+    turn.metadata = { model: opts.model };
+  }
+  return turn;
+};
+
+const attachUsageToLastAssistantTurn = (opts: {
+  turns: ProcessedTurn[];
+  usage: NonNullable<ProcessedTurn["metadata"]>["usage"];
+  model?: string;
+}): void => {
+  for (let index = opts.turns.length - 1; index >= 0; index--) {
+    const turn = opts.turns[index];
+    if (turn.role !== "assistant") continue;
+    turn.metadata = turn.metadata ?? {};
+    if (opts.model && !turn.metadata.model) turn.metadata.model = opts.model;
+    turn.metadata.usage = opts.usage;
+    return;
+  }
 };
 
 const readCodexRecords = async (filePath: string): Promise<CodexRecord[]> => {
@@ -106,20 +170,63 @@ const buildCodexTurns = (records: CodexRecord[]): ProcessedTurn[] => {
 
   for (const record of records) {
     const payload = record.payload;
-    if (record.type !== "response_item" || payload?.type !== "function_call_output") continue;
+    if (
+      record.type !== "response_item" ||
+      payload?.type !== "function_call_output"
+    )
+      continue;
     if (typeof payload.call_id !== "string") continue;
-    const output = typeof payload.output === "string" ? payload.output : JSON.stringify(payload.output ?? "");
+    const output =
+      typeof payload.output === "string"
+        ? payload.output
+        : JSON.stringify(payload.output ?? "");
     toolResults.set(payload.call_id, { content: output, isError: false });
   }
 
   const turns: ProcessedTurn[] = [];
+  let currentModel: string | undefined;
+  let lastTotalTokens = 0;
 
   for (const record of records) {
     const payload = record.payload;
-    if (record.type !== "response_item" || !payload) continue;
     const timestamp = record.timestamp ?? new Date().toISOString();
 
-    if (payload.type === "message" && (payload.role === "user" || payload.role === "assistant")) {
+    if (
+      record.type === "turn_context" &&
+      payload &&
+      typeof payload.model === "string"
+    ) {
+      currentModel = payload.model;
+      continue;
+    }
+
+    if (record.type === "event_msg" && payload?.type === "token_count") {
+      const info = payload.info as
+        | {
+            total_token_usage?: CodexTokenUsage;
+            last_token_usage?: CodexTokenUsage;
+          }
+        | undefined;
+      const totalTokens =
+        info?.total_token_usage?.total_tokens ?? lastTotalTokens;
+      const usage = normalizeTokenUsage(info?.last_token_usage);
+      if (usage && totalTokens > lastTotalTokens) {
+        attachUsageToLastAssistantTurn({
+          turns,
+          usage,
+          model: currentModel,
+        });
+        lastTotalTokens = totalTokens;
+      }
+      continue;
+    }
+
+    if (record.type !== "response_item" || !payload) continue;
+
+    if (
+      payload.type === "message" &&
+      (payload.role === "user" || payload.role === "assistant")
+    ) {
       const text = extractText(payload.content).trim();
       if (!text) continue;
       if (payload.role === "user" && isInternalText(text)) continue;
@@ -128,10 +235,16 @@ const buildCodexTurns = (records: CodexRecord[]): ProcessedTurn[] => {
         timestamp,
         content: [{ type: "text", text }],
       });
+      if (payload.role === "assistant" && currentModel) {
+        turns[turns.length - 1].metadata = { model: currentModel };
+      }
       continue;
     }
 
-    if (payload.type === "function_call" && typeof payload.call_id === "string") {
+    if (
+      payload.type === "function_call" &&
+      typeof payload.call_id === "string"
+    ) {
       const tool: ToolCall = {
         id: payload.call_id,
         name: typeof payload.name === "string" ? payload.name : "tool",
@@ -139,7 +252,9 @@ const buildCodexTurns = (records: CodexRecord[]): ProcessedTurn[] => {
         result: toolResults.get(payload.call_id),
       };
       const content: ContentBlock[] = [{ type: "tool_call", tool }];
-      turns.push({ role: "assistant", timestamp, content });
+      turns.push(
+        makeAssistantTurn({ timestamp, content, model: currentModel }),
+      );
     }
   }
 
@@ -160,19 +275,26 @@ const getCodexMetadata = (opts: {
     if (record.type === "session_meta" && payload) {
       if (typeof payload.id === "string") metadata.sessionId = payload.id;
       if (typeof payload.cwd === "string") metadata.cwd = payload.cwd;
-      if (payload.git && typeof payload.git === "object" && typeof payload.git.branch === "string") {
+      if (
+        payload.git &&
+        typeof payload.git === "object" &&
+        typeof payload.git.branch === "string"
+      ) {
         metadata.gitBranch = payload.git.branch;
       }
     }
     if (record.type === "turn_context" && payload) {
-      if (!metadata.cwd && typeof payload.cwd === "string") metadata.cwd = payload.cwd;
+      if (!metadata.cwd && typeof payload.cwd === "string")
+        metadata.cwd = payload.cwd;
       if (typeof payload.model === "string") metadata.model = payload.model;
     }
   }
 
-  metadata.firstTimestamp = opts.turns[0]?.timestamp ?? opts.records[0]?.timestamp;
+  metadata.firstTimestamp =
+    opts.turns[0]?.timestamp ?? opts.records[0]?.timestamp;
   metadata.lastTimestamp =
-    opts.turns[opts.turns.length - 1]?.timestamp ?? opts.records[opts.records.length - 1]?.timestamp;
+    opts.turns[opts.turns.length - 1]?.timestamp ??
+    opts.records[opts.records.length - 1]?.timestamp;
   return metadata;
 };
 
@@ -181,16 +303,28 @@ const computeThreadMetadata = (opts: {
   turns: ProcessedTurn[];
 }): ThreadMetadata => {
   const firstUserTurn = opts.turns.find((turn) => turn.role === "user");
-  const firstText = firstUserTurn?.content.find((block) => block.type === "text");
+  const firstText = firstUserTurn?.content.find(
+    (block) => block.type === "text",
+  );
   const title =
     firstText && firstText.type === "text"
       ? `${firstText.text.slice(0, 100)}${firstText.text.length > 100 ? "..." : ""}`
       : "Untitled session";
-  const start = new Date(opts.metadata.firstTimestamp ?? new Date().toISOString());
+  const start = new Date(
+    opts.metadata.firstTimestamp ?? new Date().toISOString(),
+  );
   const end = new Date(opts.metadata.lastTimestamp ?? start.toISOString());
   const toolsUsed = new Set<string>();
+  const models = new Set<string>();
+  let totalInput = 0;
+  let totalOutput = 0;
 
   for (const turn of opts.turns) {
+    if (turn.metadata?.model) models.add(turn.metadata.model);
+    if (turn.metadata?.usage) {
+      totalInput += turn.metadata.usage.input_tokens;
+      totalOutput += turn.metadata.usage.output_tokens;
+    }
     for (const block of turn.content) {
       if (block.type === "tool_call") toolsUsed.add(block.tool.name);
     }
@@ -204,8 +338,13 @@ const computeThreadMetadata = (opts: {
     gitBranch: opts.metadata.gitBranch,
     created: start.toISOString(),
     duration: formatDuration(end.getTime() - start.getTime()),
-    totalTokens: { input: 0, output: 0 },
-    models: opts.metadata.model ? [opts.metadata.model] : [],
+    totalTokens: { input: totalInput, output: totalOutput },
+    models:
+      models.size > 0
+        ? [...models]
+        : opts.metadata.model
+          ? [opts.metadata.model]
+          : [],
     toolsUsed: [...toolsUsed],
     messageCount: opts.turns.length,
     visibility: "private",
