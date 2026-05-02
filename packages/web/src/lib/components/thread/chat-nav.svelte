@@ -1,5 +1,11 @@
 <script lang="ts">
 	import type { ProcessedTurn } from '@threadcast/shared';
+	import { parseMessageParts } from './skill-blocks';
+
+	type PromptPreview = {
+		text: string;
+		isSkill: boolean;
+	};
 
 	let {
 		turns,
@@ -11,18 +17,36 @@
 		onNavigate: (turnIndex: number) => void;
 	} = $props();
 
+	const getSkillCommandPreview = (text: string): string | null => {
+		const match = /^\$([a-z0-9-]+):([a-z0-9-]+)\s*$/i.exec(text);
+		if (!match) return null;
+		return `Skill · ${match[2]}`;
+	};
+
+	const getPromptPreview = (turn: ProcessedTurn): PromptPreview => {
+		const text = turn.content
+			.filter((b) => b.type === 'text')
+			.map((b) => (b as { type: 'text'; text: string }).text)
+			.join(' ')
+			.replace(/\n+/g, ' ')
+			.trim();
+		const commandPreview = getSkillCommandPreview(text);
+		if (commandPreview) return { text: commandPreview, isSkill: true };
+
+		const parts = parseMessageParts(text);
+		const skill = parts.find((part) => part.type === 'skill');
+		if (skill?.type === 'skill') return { text: `Skill · ${skill.skill.title}`, isSkill: true };
+
+		return { text: text || 'Empty prompt', isSkill: false };
+	};
+
 	const userTurns = $derived(
 		turns
 			.map((turn, index) => ({ turn, index }))
 			.filter(({ turn }) => turn.role === 'user')
 			.map(({ turn, index }, userIndex) => {
-				const text = turn.content
-					.filter((b) => b.type === 'text')
-					.map((b) => (b as { type: 'text'; text: string }).text)
-					.join(' ')
-					.replace(/\n+/g, ' ')
-					.trim();
-				return { turnIndex: index, userNumber: userIndex + 1, text };
+				const preview = getPromptPreview(turn);
+				return { turnIndex: index, userNumber: userIndex + 1, preview };
 			})
 	);
 </script>
@@ -30,7 +54,7 @@
 <nav class="sticky top-8 hidden w-56 shrink-0 xl:block">
 	<h3 class="mb-3 font-mono text-xs tracking-widest text-text-muted uppercase">Prompts</h3>
 	<ol class="max-h-[calc(100vh-6rem)] space-y-1 overflow-y-auto">
-		{#each userTurns as { turnIndex, userNumber, text } (turnIndex)}
+		{#each userTurns as { turnIndex, userNumber, preview } (turnIndex)}
 			<li>
 				<button
 					onclick={() => onNavigate(turnIndex)}
@@ -47,8 +71,10 @@
 					>
 						{userNumber}
 					</span>
-					<span class="min-w-0 flex-1 truncate text-xs leading-5">
-						{text || 'Empty prompt'}
+					<span
+						class="min-w-0 flex-1 truncate text-xs leading-5 {preview.isSkill ? 'font-mono' : ''}"
+					>
+						{preview.text}
 					</span>
 				</button>
 			</li>

@@ -1,8 +1,6 @@
 <script lang="ts">
 	import type { ProcessedTurn } from '@threadcast/shared';
-	import { renderMarkdown } from '$lib/markdown';
-	import { highlightProse } from '$lib/actions/highlight-prose';
-	import { highlightSearch } from '$lib/actions/highlight-search';
+	import MessageContent from './message-content.svelte';
 
 	let { turn, query = '' }: { turn: ProcessedTurn; query?: string } = $props();
 
@@ -29,10 +27,7 @@
 					<span class="font-mono">{new Date(turn.timestamp).toLocaleTimeString()}</span>
 				{/if}
 			</div>
-			<div class="prose text-sm text-text" use:highlightProse use:highlightSearch={query}>
-				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-				{@html renderMarkdown(textContent)}
-			</div>
+			<MessageContent text={textContent} {query} />
 		</div>
 	</div>
 </div>

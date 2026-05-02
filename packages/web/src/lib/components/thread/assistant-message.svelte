@@ -1,8 +1,6 @@
 <script lang="ts">
 	import type { ProcessedTurn } from '@threadcast/shared';
-	import { renderMarkdown } from '$lib/markdown';
-	import { highlightProse } from '$lib/actions/highlight-prose';
-	import { highlightSearch } from '$lib/actions/highlight-search';
+	import MessageContent from './message-content.svelte';
 	import ToolCallBlock from './tool-call-block.svelte';
 
 	let { turn, query = '' }: { turn: ProcessedTurn; query?: string } = $props();
@@ -38,10 +36,7 @@
 			<div class="space-y-4">
 				{#each turn.content as block, i (i)}
 					{#if block.type === 'text'}
-						<div class="prose text-sm text-text" use:highlightProse use:highlightSearch={query}>
-							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-							{@html renderMarkdown(block.text)}
-						</div>
+						<MessageContent text={block.text} {query} />
 					{:else if block.type === 'tool_call'}
 						<ToolCallBlock tool={block.tool} />
 					{/if}
