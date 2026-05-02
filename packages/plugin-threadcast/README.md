@@ -1,8 +1,10 @@
-# ThreadCast Claude Code Plugin
+# ThreadCast Agent Plugins
 
-This plugin adds Claude Code slash commands for sharing local sessions to ThreadCast.
+This package contains ThreadCast plugins for Claude Code and Codex. Both plugins use the same bundled MCP server.
 
-## Commands
+## Claude Code
+
+Claude Code commands:
 
 - `/threadcast:login`
 - `/threadcast:logout`
@@ -10,16 +12,36 @@ This plugin adds Claude Code slash commands for sharing local sessions to Thread
 - `/threadcast:share`
 - `/threadcast:share-recent`
 
+Run Claude Code with the Claude plugin root:
+
+```bash
+THREADCAST_API_URL=http://localhost:5173 \
+THREADCAST_CONFIG_DIR=$HOME/.threadcast-dev \
+claude --plugin-dir ./packages/plugin-threadcast/claude
+```
+
+## Codex
+
+Codex installs from the repo marketplace entry in `.agents/plugins/marketplace.json`, which points at:
+
+```bash
+./packages/plugin-threadcast/codex
+```
+
+The Codex plugin includes command-like skills and the local ThreadCast MCP server:
+
+- `$threadcast:threadcast-login`
+- `$threadcast:threadcast-logout`
+- `$threadcast:threadcast-status`
+- `$threadcast:threadcast-share`
+- `$threadcast:threadcast-share-recent`
+
 ## Development
 
-Build the bundled MCP server:
+Build the bundled MCP servers:
 
 ```bash
 bun run --filter @threadcast/plugin-threadcast build
 ```
 
-Then run Claude Code with the plugin directory:
-
-```bash
-claude --plugin-dir ./packages/plugin-threadcast
-```
+For full local e2e testing, see `../../kb/local-dev.md`.

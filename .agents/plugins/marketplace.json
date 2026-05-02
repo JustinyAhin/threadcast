@@ -1,0 +1,20 @@
+{
+  "name": "threadcast-local",
+  "interface": {
+    "displayName": "ThreadCast Local"
+  },
+  "plugins": [
+    {
+      "name": "threadcast",
+      "source": {
+        "source": "local",
+        "path": "./packages/plugin-threadcast/codex"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

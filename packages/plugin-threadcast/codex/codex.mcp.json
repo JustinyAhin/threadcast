@@ -1,0 +1,7 @@
+{
+  "threadcast-local": {
+    "command": "bun",
+    "args": ["run", "./server/threadcast-mcp.js"],
+    "cwd": "."
+  }
+}
