@@ -17,8 +17,6 @@
         "typecheck": "bun run --filter '*' typecheck"
     },
     "devDependencies": {
-        "@types/bun": "^1.3.13",
-        "runed": "^0.37.1",
-        "web": "^0.0.2"
+        "@types/bun": "^1.3.13"
     }
 }

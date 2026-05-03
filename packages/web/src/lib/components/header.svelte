@@ -28,15 +28,6 @@
 			>
 				Threads
 			</a>
-			<!-- <a
-				href="/changelogs"
-				class="transition-colors {page.url.pathname.startsWith('/changelogs')
-					? 'text-text'
-					: 'text-text-secondary hover:text-text'}"
-			>
-				Changelog
-			</a> -->
-
 			<span class="text-border">|</span>
 
 			{#if $session.data}

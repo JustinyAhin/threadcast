@@ -3,7 +3,7 @@ import { createInterface } from "node:readline";
 import type { RawJsonlLine } from "@threadcast/shared";
 
 const readJsonlFile = async function* (
-  filePath: string
+  filePath: string,
 ): AsyncGenerator<RawJsonlLine> {
   const stream = createReadStream(filePath, { encoding: "utf-8" });
   const rl = createInterface({ input: stream, crlfDelay: Infinity });
@@ -20,7 +20,7 @@ const readJsonlFile = async function* (
 };
 
 const readSessionMessages = async (
-  filePath: string
+  filePath: string,
 ): Promise<RawJsonlLine[]> => {
   const messages: RawJsonlLine[] = [];
   for await (const line of readJsonlFile(filePath)) {
@@ -32,4 +32,4 @@ const readSessionMessages = async (
   return messages;
 };
 
-export { readJsonlFile, readSessionMessages };
+export { readSessionMessages };

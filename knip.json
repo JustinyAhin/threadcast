@@ -1,0 +1,7 @@
+{
+  "ignore": [
+    "packages/plugin-threadcast/claude/server/threadcast-mcp.js",
+    "packages/plugin-threadcast/codex/server/threadcast-mcp.js"
+  ],
+  "ignoreBinaries": ["atlas"]
+}

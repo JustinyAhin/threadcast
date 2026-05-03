@@ -260,7 +260,5 @@ export {
 	ensureGithubUser,
 	exchangeLocalAuthCode,
 	issueLocalAuthToken,
-	validateLocalAuthToken,
-	type IssuedLocalAuthToken,
-	type LocalAuthUser
+	validateLocalAuthToken
 };
