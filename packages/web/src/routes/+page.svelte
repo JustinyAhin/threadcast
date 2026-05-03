@@ -242,6 +242,46 @@ claude plugin install threadcast@threadcast`;
 	</div>
 </section>
 
+<!-- Usage commands -->
+<section use:registerSection class="reveal-section border-t border-border px-6 py-16">
+	<div class="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+		<div class="max-w-lg">
+			<p class="mb-3 font-mono text-xs tracking-[0.2em] text-accent uppercase">Use it</p>
+			<h2 class="mb-4 text-2xl font-bold tracking-tight text-text md:text-3xl">
+				Share from inside your agent.
+			</h2>
+			<p class="text-text-secondary">
+				Log in once, check what ThreadCast can see locally, then share the latest session or pick
+				one from recent history.
+			</p>
+		</div>
+
+		<div class="grid gap-3 md:grid-cols-2">
+			<div class="rounded-lg border border-border bg-surface-1 px-5 py-4">
+				<p class="mb-3 text-xs font-semibold text-text-secondary">Claude Code</p>
+				<div class="space-y-1 font-mono text-sm text-text">
+					<p>/threadcast:login</p>
+					<p>/threadcast:status</p>
+					<p>/threadcast:share</p>
+					<p>/threadcast:share-recent</p>
+					<p>/threadcast:logout</p>
+				</div>
+			</div>
+
+			<div class="rounded-lg border border-border bg-surface-1 px-5 py-4">
+				<p class="mb-3 text-xs font-semibold text-text-secondary">Codex</p>
+				<div class="space-y-1 font-mono text-sm text-text">
+					<p>$threadcast:threadcast-login</p>
+					<p>$threadcast:threadcast-status</p>
+					<p>$threadcast:threadcast-share</p>
+					<p>$threadcast:threadcast-share-recent</p>
+					<p>$threadcast:threadcast-logout</p>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
 <!-- How it works -->
 <section use:registerSection class="reveal-section border-t border-border px-6 py-24 lg:py-32">
 	<div class="mx-auto max-w-6xl">
