@@ -1,0 +1,16 @@
+{
+  "name": "threadcast",
+  "description": "Share local Claude Code sessions to ThreadCast.",
+  "owner": {
+    "name": "ThreadCast"
+  },
+  "plugins": [
+    {
+      "name": "threadcast",
+      "description": "Share local Claude Code sessions to ThreadCast.",
+      "source": "./packages/plugin-threadcast/claude",
+      "category": "productivity",
+      "repository": "https://github.com/JustinyAhin/threadcast"
+    }
+  ]
+}
