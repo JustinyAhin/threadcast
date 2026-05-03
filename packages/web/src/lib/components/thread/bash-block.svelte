@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { ToolCall } from '@threadcast/shared';
+	import type { ThreadToolCall } from '$lib/types/thread-view';
 	import CodeBlock from '$lib/components/code-block.svelte';
 
-	let { tool }: { tool: ToolCall } = $props();
+	let { tool }: { tool: ThreadToolCall } = $props();
 
 	const command = $derived((tool.input.command as string) || '');
 	const description = $derived((tool.input.description as string) || '');

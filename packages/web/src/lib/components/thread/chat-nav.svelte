@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ProcessedTurn } from '@threadcast/shared';
+	import type { ThreadViewTurn } from '$lib/types/thread-view';
 	import { parseMessageParts } from './skill-blocks';
 
 	type PromptPreview = {
@@ -12,7 +12,7 @@
 		activeTurnIndex = -1,
 		onNavigate
 	}: {
-		turns: ProcessedTurn[];
+		turns: ThreadViewTurn[];
 		activeTurnIndex?: number;
 		onNavigate: (turnIndex: number) => void;
 	} = $props();
@@ -23,7 +23,7 @@
 		return `Skill · ${match[2]}`;
 	};
 
-	const getPromptPreview = (turn: ProcessedTurn): PromptPreview => {
+	const getPromptPreview = (turn: ThreadViewTurn): PromptPreview => {
 		const text = turn.content
 			.filter((b) => b.type === 'text')
 			.map((b) => (b as { type: 'text'; text: string }).text)

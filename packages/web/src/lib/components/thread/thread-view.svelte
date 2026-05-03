@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ThreadData } from '@threadcast/shared';
+	import type { ThreadViewData } from '$lib/types/thread-view';
 	import UserMessage from './user-message.svelte';
 	import AssistantMessage from './assistant-message.svelte';
 	import ThreadSidebar from './thread-sidebar.svelte';
@@ -11,7 +11,7 @@
 		thread,
 		threadId,
 		isOwner = false
-	}: { thread: ThreadData; threadId: string; isOwner?: boolean } = $props();
+	}: { thread: ThreadViewData; threadId: string; isOwner?: boolean } = $props();
 
 	let query = $state('');
 	let inputEl = $state<HTMLInputElement>();
@@ -276,7 +276,7 @@
 					{#if turn.role === 'user'}
 						<UserMessage {turn} {query} />
 					{:else}
-						<AssistantMessage {turn} {query} />
+						<AssistantMessage {turn} {threadId} {query} />
 					{/if}
 				</div>
 			{/each}

@@ -1,9 +1,13 @@
 <script lang="ts">
-	import type { ProcessedTurn } from '@threadcast/shared';
+	import type { ThreadViewTurn } from '$lib/types/thread-view';
 	import MessageContent from './message-content.svelte';
 	import ToolCallBlock from './tool-call-block.svelte';
 
-	let { turn, query = '' }: { turn: ProcessedTurn; query?: string } = $props();
+	let {
+		turn,
+		threadId,
+		query = ''
+	}: { turn: ThreadViewTurn; threadId: string; query?: string } = $props();
 </script>
 
 <div class="flex gap-3">
@@ -38,7 +42,7 @@
 					{#if block.type === 'text'}
 						<MessageContent text={block.text} {query} />
 					{:else if block.type === 'tool_call'}
-						<ToolCallBlock tool={block.tool} />
+						<ToolCallBlock tool={block.tool} {threadId} />
 					{/if}
 				{/each}
 			</div>

@@ -1,14 +1,13 @@
 <script lang="ts">
-	import { calculateThreadCost, formatCost, type ThreadData } from '@threadcast/shared';
+	import type { ThreadViewData } from '$lib/types/thread-view';
 	import { setThreadVisibility } from '$lib/remote-functions/threads.remote';
 	import { timeAgo } from '$lib/utils/date';
-	import { SvelteSet } from 'svelte/reactivity';
 
 	let {
 		thread,
 		threadId,
 		isOwner = false
-	}: { thread: ThreadData; threadId: string; isOwner?: boolean } = $props();
+	}: { thread: ThreadViewData; threadId: string; isOwner?: boolean } = $props();
 
 	const TOOL_COLORS: Record<string, string> = {
 		Bash: 'bg-emerald-500/15 text-emerald-400',
@@ -35,45 +34,13 @@
 		return model;
 	};
 
-	const stats = $derived.by(() => {
-		const files = new SvelteSet<string>();
-		let linesAdded = 0;
-		let linesRemoved = 0;
-		let promptCount = 0;
-
-		for (const turn of thread.turns) {
-			if (turn.role === 'user') promptCount++;
-
-			for (const block of turn.content) {
-				if (block.type !== 'tool_call') continue;
-				const { name, input } = block.tool;
-
-				if ((name === 'Edit' || name === 'Write' || name === 'Read') && input.file_path) {
-					files.add(input.file_path as string);
-				}
-
-				if (name === 'Edit') {
-					const oldLines = ((input.old_string as string) ?? '').split('\n').length;
-					const newLines = ((input.new_string as string) ?? '').split('\n').length;
-					linesAdded += newLines;
-					linesRemoved += oldLines;
-				}
-
-				if (name === 'Write') {
-					const content = (input.content as string) ?? '';
-					linesAdded += content.split('\n').length;
-				}
-			}
-		}
-
-		return { files: files.size, linesAdded, linesRemoved, promptCount };
-	});
+	const stats = $derived(thread.stats);
 
 	const totalTokens = $derived(
 		(thread.metadata.totalTokens.input + thread.metadata.totalTokens.output).toLocaleString()
 	);
 
-	const estimatedCost = $derived(formatCost(calculateThreadCost(thread.turns)));
+	const estimatedCost = $derived(thread.stats.estimatedCost);
 	const sourceLabel = $derived(thread.metadata.source === 'codex' ? 'Codex' : 'Claude Code');
 
 	const primaryModel = $derived(

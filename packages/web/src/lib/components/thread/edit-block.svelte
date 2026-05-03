@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { ToolCall } from '@threadcast/shared';
+	import type { ThreadToolCall } from '$lib/types/thread-view';
 	import DiffView from '$lib/components/diff-view.svelte';
 
-	let { tool }: { tool: ToolCall } = $props();
+	let { tool }: { tool: ThreadToolCall } = $props();
 
 	const filePath = $derived((tool.input.file_path as string) || 'unknown');
 	const oldString = $derived((tool.input.old_string as string) || '');

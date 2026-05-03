@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { ProcessedTurn } from '@threadcast/shared';
+	import type { ThreadViewTurn } from '$lib/types/thread-view';
 	import MessageContent from './message-content.svelte';
 
-	let { turn, query = '' }: { turn: ProcessedTurn; query?: string } = $props();
+	let { turn, query = '' }: { turn: ThreadViewTurn; query?: string } = $props();
 
 	const textContent = $derived(
 		turn.content

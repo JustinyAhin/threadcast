@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { ToolCall } from '@threadcast/shared';
+	import type { ThreadToolCall } from '$lib/types/thread-view';
 	import CodeBlock from '$lib/components/code-block.svelte';
 	import { guessLang } from '$lib/highlighter';
 
-	let { tool }: { tool: ToolCall } = $props();
+	let { tool }: { tool: ThreadToolCall } = $props();
 
 	const filePath = $derived((tool.input.file_path as string) || 'unknown');
 	const offset = $derived(tool.input.offset as number | undefined);
