@@ -13,6 +13,7 @@ import {
 	createFullThreadToolCall,
 	createThreadViewData,
 	findThreadTool,
+	normalizeThreadViewData,
 	sliceThreadViewData
 } from '$lib/server/thread-view-data';
 import { command, getRequestEvent, query } from '$app/server';
@@ -52,7 +53,7 @@ const getAuthorizedThreadView = async (threadId: string) => {
 
 	const cachedView = await getThreadView({ bucket, id: threadId });
 	if (cachedView) {
-		return mergeThreadViewMeta({ thread: cachedView, meta });
+		return normalizeThreadViewData(mergeThreadViewMeta({ thread: cachedView, meta }));
 	}
 
 	const storedThread = await getThread({ bucket, id: threadId });

@@ -202,6 +202,14 @@ const createThreadViewData = (thread: ThreadData): ThreadViewData => {
 	};
 };
 
+const normalizeThreadViewData = (thread: ThreadViewData): ThreadViewData => {
+	return {
+		...thread,
+		totalTurnCount: thread.totalTurnCount ?? thread.turns.length,
+		promptNav: thread.promptNav ?? createPromptNav(thread.turns)
+	};
+};
+
 const sliceThreadViewData = ({
 	thread,
 	offset,
@@ -246,4 +254,10 @@ const findThreadTool = ({
 	return null;
 };
 
-export { createFullThreadToolCall, createThreadViewData, findThreadTool, sliceThreadViewData };
+export {
+	createFullThreadToolCall,
+	createThreadViewData,
+	findThreadTool,
+	normalizeThreadViewData,
+	sliceThreadViewData
+};

@@ -9,7 +9,11 @@ import {
 import { isSameGithubUser } from '$lib/server/github-identity';
 import { signOgImagePath } from '$lib/server/og-signing';
 import { resolveUser } from '$lib/server/resolve-user';
-import { createThreadViewData, sliceThreadViewData } from '$lib/server/thread-view-data';
+import {
+	createThreadViewData,
+	normalizeThreadViewData,
+	sliceThreadViewData
+} from '$lib/server/thread-view-data';
 import { INITIAL_THREAD_TURN_COUNT } from '$lib/types/thread-view';
 import { error } from '@sveltejs/kit';
 
@@ -31,7 +35,7 @@ export const load = async (event) => {
 
 	let thread = await getThreadView({ bucket, id: params.id });
 	if (thread) {
-		thread = mergeThreadViewMeta({ thread, meta });
+		thread = normalizeThreadViewData(mergeThreadViewMeta({ thread, meta }));
 	} else {
 		const storedThread = await getThread({ bucket, id: params.id });
 		if (!storedThread) {
