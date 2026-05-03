@@ -204,7 +204,3 @@ threadcast/
 │       └── src/                 # Zod schemas, types, pricing
 ├── kb/                          # Knowledge base docs
 ```
-
-## License
-
-All rights reserved.
