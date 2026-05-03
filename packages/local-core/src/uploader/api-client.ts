@@ -44,40 +44,4 @@ const uploadThread = async (opts: UploadThreadOpts): Promise<UploadResponse> => 
   return (await res.json()) as UploadResponse;
 };
 
-const listRemoteThreads = async (
-  token: string
-): Promise<{ id: string; title: string; created: string }[]> => {
-  const res = await fetch(`${API_BASE_URL}/api/threads`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "X-ThreadCast-Client": "threadcast-local-core",
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error(`Failed to list threads: ${res.statusText}`);
-  }
-
-  return (await res.json()) as { id: string; title: string; created: string }[];
-};
-
-type DeleteRemoteThreadOpts = {
-  id: string;
-  token: string;
-};
-
-const deleteRemoteThread = async (opts: DeleteRemoteThreadOpts): Promise<void> => {
-  const res = await fetch(`${API_BASE_URL}/api/threads/${opts.id}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${opts.token}`,
-      "X-ThreadCast-Client": "threadcast-local-core",
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error(`Failed to delete thread: ${res.statusText}`);
-  }
-};
-
-export { uploadThread, listRemoteThreads, deleteRemoteThread };
+export { uploadThread };

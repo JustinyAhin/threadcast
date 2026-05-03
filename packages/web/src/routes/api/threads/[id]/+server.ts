@@ -1,4 +1,4 @@
-import { deleteThread, getThread, getThreadMeta, updateThreadVisibility } from '$lib/server/r2';
+import { deleteThread, getThread, getThreadMeta } from '$lib/server/r2';
 import { isSameGithubUser } from '$lib/server/github-identity';
 import { resolveUser } from '$lib/server/resolve-user';
 import { error, json } from '@sveltejs/kit';
@@ -22,31 +22,6 @@ export const GET = async (event) => {
 		error(404, { message: 'Thread not found' });
 	}
 	return json(thread);
-};
-
-export const PATCH = async (event) => {
-	const user = await resolveUser(event);
-	if (!user) {
-		error(401, { message: 'Authentication required' });
-	}
-
-	const bucket = event.platform!.env.THREADS_BUCKET;
-	const meta = await getThreadMeta({ bucket, id: event.params.id });
-	if (!meta) {
-		error(404, { message: 'Thread not found' });
-	}
-	if (!isSameGithubUser({ user, uploader: meta.uploader })) {
-		error(403, { message: 'You can only update your own threads' });
-	}
-
-	const body: { visibility?: string } = await event.request.json();
-	const visibility = body.visibility;
-	if (visibility !== 'public' && visibility !== 'private') {
-		error(400, { message: 'visibility must be "public" or "private"' });
-	}
-
-	await updateThreadVisibility({ bucket, id: event.params.id, visibility });
-	return json({ visibility });
 };
 
 export const DELETE = async (event) => {

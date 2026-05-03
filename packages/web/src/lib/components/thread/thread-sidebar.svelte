@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { calculateThreadCost, formatCost, type ThreadData } from '@threadcast/shared';
+	import { setThreadVisibility } from '$lib/remote-functions/threads.remote';
 	import { timeAgo } from '$lib/utils/date';
 	import { SvelteSet } from 'svelte/reactivity';
 
@@ -88,14 +89,10 @@
 		toggling = true;
 		const newVisibility = visibility === 'public' ? 'private' : 'public';
 		try {
-			const res = await fetch(`/api/threads/${threadId}`, {
-				method: 'PATCH',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ visibility: newVisibility })
-			});
-			if (res.ok) {
-				visibilityOverride = newVisibility;
-			}
+			const result = await setThreadVisibility({ id: threadId, visibility: newVisibility });
+			visibilityOverride = result.visibility;
+		} catch {
+			// Keep the current UI state if the server rejects the visibility change.
 		} finally {
 			toggling = false;
 		}

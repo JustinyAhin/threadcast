@@ -148,7 +148,7 @@
 					{sourceLabel}
 				</span>
 			</div>
-			<h1 class="mb-3 text-xl font-bold break-words text-text sm:text-2xl">
+			<h1 class="mb-3 text-xl font-bold wrap-break-word text-text sm:text-2xl">
 				{thread.metadata.title}
 			</h1>
 			<div class="mb-4 flex items-center gap-3">

@@ -34,7 +34,7 @@ export { processMessages } from "./parser/tool-matcher.js";
 export { sanitizeTurns } from "./parser/sanitizer.js";
 export { parseClaudeCodeSession } from "./parser/claude-code.js";
 export { parseSession } from "./parser/index.js";
-export { uploadThread, listRemoteThreads, deleteRemoteThread } from "./uploader/api-client.js";
+export { uploadThread } from "./uploader/api-client.js";
 export { shareSession } from "./share/session-share.js";
 export type {
   CacheEntry,
