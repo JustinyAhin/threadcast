@@ -2,5 +2,8 @@
   "name": "threadcast",
   "version": "0.0.1",
   "description": "Share local Claude Code sessions to ThreadCast.",
+  "author": {
+    "name": "ThreadCast"
+  },
   "repository": "https://github.com/JustinyAhin/threadcast"
 }

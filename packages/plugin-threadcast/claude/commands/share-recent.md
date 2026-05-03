@@ -1,4 +1,10 @@
+---
+description: Pick a recent Claude Code session and share it to ThreadCast.
+---
+
 Help the user share a recent Claude Code session with ThreadCast.
+
+Use ThreadCast MCP tools only. Do not run shell commands. Do not use any `threadcast` CLI from `$PATH`. If the `threadcast.*` MCP tools are unavailable, tell the user the ThreadCast plugin MCP server is not loaded and ask them to check `/mcp` and restart Claude Code.
 
 1. Call `threadcast.status`.
 2. If the user is not authenticated or has a pending login, call `threadcast.login`.
