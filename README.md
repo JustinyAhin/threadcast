@@ -71,6 +71,7 @@ Local dev uses a `.env` file. Production variables are set in the Cloudflare das
 - `GITHUB_CLIENT_ID` — GitHub OAuth app ID
 - `GITHUB_CLIENT_SECRET` — GitHub OAuth app secret
 - `PUBLIC_OG_URL` — OG image service URL
+- `OG_SIGNING_SECRET` — Shared secret for signed OG image URLs; must match the OG service
 
 ## Commands
 

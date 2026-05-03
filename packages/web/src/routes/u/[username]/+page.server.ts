@@ -1,4 +1,5 @@
 import { listUserThreads } from '$lib/server/r2';
+import { signOgImagePath } from '$lib/server/og-signing';
 import * as schema from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/d1';
@@ -27,6 +28,10 @@ export const load = async ({ params, platform, locals }) => {
 	return {
 		threads,
 		username: params.username,
-		profile: userRow ?? null
+		profile: userRow ?? null,
+		ogImage: await signOgImagePath({
+			path: `/og/threadcast/u/${params.username}.png`,
+			secret: platform?.env.OG_SIGNING_SECRET
+		})
 	};
 };

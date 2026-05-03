@@ -4,9 +4,6 @@
 
 	let { data } = $props();
 
-	const ogImage = $derived(
-		data.thread.metadata.visibility === 'public' ? `/og/threads/${data.id}.png` : undefined
-	);
 	const sourceLabel = $derived(data.thread.metadata.source === 'codex' ? 'Codex' : 'Claude Code');
 </script>
 
@@ -15,7 +12,7 @@
 	description="{sourceLabel} session by {data.thread.uploader.githubUsername} — {data.thread
 		.metadata.messageCount} messages, {data.thread.metadata.duration}"
 	ogType="article"
-	{ogImage}
+	ogImage={data.ogImage}
 />
 
 <div class="px-4 py-6 sm:px-6 sm:py-10">

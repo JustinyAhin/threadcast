@@ -10,7 +10,7 @@
 	description="{data.username} has shared {data.threads.length} {data.threads.length === 1
 		? 'thread'
 		: 'threads'} on ThreadCast."
-	ogImage="/og/u/{data.username}.png"
+	ogImage={data.ogImage}
 />
 
 <div class="px-6 py-10">

@@ -1,5 +1,6 @@
 import { getThread, getThreadMeta } from '$lib/server/r2';
 import { isSameGithubUser } from '$lib/server/github-identity';
+import { signOgImagePath } from '$lib/server/og-signing';
 import { resolveUser } from '$lib/server/resolve-user';
 import { error } from '@sveltejs/kit';
 
@@ -25,6 +26,13 @@ export const load = async (event) => {
 	}
 
 	const isOwner = user ? isSameGithubUser({ user, uploader: meta.uploader }) : false;
+	const ogImage =
+		thread.metadata.visibility === 'public'
+			? await signOgImagePath({
+					path: `/og/threadcast/threads/${params.id}.png`,
+					secret: platform?.env.OG_SIGNING_SECRET
+				})
+			: undefined;
 
-	return { thread, id: params.id, isOwner };
+	return { thread, id: params.id, isOwner, ogImage };
 };

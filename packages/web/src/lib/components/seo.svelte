@@ -14,8 +14,9 @@
 
 	const canonicalUrl = $derived(`${page.url.origin}${page.url.pathname}`);
 	const ogImageUrl = $derived.by(() => {
-		if (!ogImage) return `${PUBLIC_OG_URL}/og/home.png`;
-		return `${PUBLIC_OG_URL}${ogImage}`;
+		const path =
+			ogImage ?? (page.data.defaultOgImage as string | undefined) ?? '/og/threadcast/home.png';
+		return `${PUBLIC_OG_URL}${path}`;
 	});
 	const isProduction = $derived(page.url.hostname === 'threadcast.dev');
 	const isLocalhost = $derived(page.url.hostname === 'localhost');
