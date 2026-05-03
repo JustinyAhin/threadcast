@@ -1,4 +1,4 @@
-import { createHighlighter, type Highlighter } from 'shiki';
+import type { Highlighter } from 'shiki';
 
 let highlighterPromise: Promise<Highlighter> | null = null;
 
@@ -37,7 +37,9 @@ const EXT_TO_LANG: Record<string, string> = {
 
 const getHighlighter = () => {
 	if (!highlighterPromise) {
-		highlighterPromise = createHighlighter({ themes: [THEME], langs: [...LANGS] });
+		highlighterPromise = import('shiki').then(({ createHighlighter }) =>
+			createHighlighter({ themes: [THEME], langs: [...LANGS] })
+		);
 	}
 	return highlighterPromise;
 };
