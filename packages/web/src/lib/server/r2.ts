@@ -101,6 +101,7 @@ const listOwnedThreads = async ({
 	const byId = new Map<string, ThreadMeta>();
 
 	for (const meta of indexes.flat()) {
+		if (!isGithubIdCompatible({ githubId, meta })) continue;
 		byId.set(meta.id, meta);
 	}
 
@@ -187,6 +188,16 @@ const deleteThread = async ({ bucket, id }: { bucket: R2Bucket; id: string }): P
 
 const MAX_INDEX_SIZE = 1000;
 
+const isGithubIdCompatible = ({
+	githubId,
+	meta
+}: {
+	githubId?: string;
+	meta: ThreadMeta;
+}): boolean => {
+	return !githubId || !meta.uploader.githubId || meta.uploader.githubId === githubId;
+};
+
 const readIndex = async ({
 	bucket,
 	key
@@ -259,7 +270,10 @@ const findThreadBySessionId = async ({
 
 	const legacyIndex = await readIndex({ bucket, key: `indexes/by-user/${username}.json` });
 	const legacyEntry = legacyIndex.find(
-		(m) => m.metadata.sessionId === sessionId && (m.metadata.source ?? 'claude-code') === source
+		(m) =>
+			isGithubIdCompatible({ githubId, meta: m }) &&
+			m.metadata.sessionId === sessionId &&
+			(m.metadata.source ?? 'claude-code') === source
 	);
 	return legacyEntry?.id ?? null;
 };
