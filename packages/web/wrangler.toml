@@ -31,3 +31,6 @@ simple = { limit = 10, period = 60 }
 
 [observability]
 enabled = true
+
+[observability.traces]
+enabled = true
