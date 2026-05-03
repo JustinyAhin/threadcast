@@ -14,6 +14,18 @@ const versionTargets: VersionTarget[] = [
     path: "packages/plugin-threadcast/package.json",
   },
   {
+    label: "MCP package",
+    path: "packages/mcp/package.json",
+  },
+  {
+    label: "Local core package",
+    path: "packages/local-core/package.json",
+  },
+  {
+    label: "Shared package",
+    path: "packages/shared/package.json",
+  },
+  {
     label: "Claude plugin",
     path: "packages/plugin-threadcast/claude/.claude-plugin/plugin.json",
   },
