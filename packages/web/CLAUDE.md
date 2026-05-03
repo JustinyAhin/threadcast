@@ -75,11 +75,3 @@ bun atlas:hash       # Re-hash migrations after manual edits
 bun db:migrate:local  # Apply migrations to local D1
 bun db:migrate:remote # Apply migrations to production D1
 ```
-
-## Fetching Pages
-
-When you need to fetch a page's content, use this order:
-
-1. `curl https://defuddle.md/[url]` — preferred, returns clean markdown
-2. `bunx playbooks get [url]` — fallback if defuddle fails or result is poor
-3. WebFetch tool — last resort
