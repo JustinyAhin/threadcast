@@ -154,7 +154,7 @@ Claude Code users update with:
 
 ```bash
 claude plugin marketplace update threadcast
-claude plugin update threadcast
+claude plugin update threadcast@threadcast
 ```
 
 Codex users update with:

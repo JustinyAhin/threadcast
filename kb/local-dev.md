@@ -211,7 +211,7 @@ Users update Claude Code with:
 
 ```bash
 claude plugin marketplace update threadcast
-claude plugin update threadcast
+claude plugin update threadcast@threadcast
 ```
 
 Users update Codex with:
