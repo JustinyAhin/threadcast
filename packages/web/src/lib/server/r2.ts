@@ -1,4 +1,5 @@
 import type { ThreadData, ThreadMetadata, Uploader } from '@threadcast/shared';
+import type { ThreadViewData } from '$lib/types/thread-view';
 
 type ThreadMeta = {
 	id: string;
@@ -9,11 +10,13 @@ type ThreadMeta = {
 const storeThread = async ({
 	bucket,
 	id,
-	data
+	data,
+	view
 }: {
 	bucket: R2Bucket;
 	id: string;
 	data: ThreadData;
+	view: ThreadViewData;
 }): Promise<void> => {
 	const meta: ThreadMeta = {
 		id,
@@ -23,6 +26,9 @@ const storeThread = async ({
 
 	await Promise.all([
 		bucket.put(`threads/${id}/data.json`, JSON.stringify(data), {
+			httpMetadata: { contentType: 'application/json' }
+		}),
+		bucket.put(`threads/${id}/view.json`, JSON.stringify(view), {
 			httpMetadata: { contentType: 'application/json' }
 		}),
 		bucket.put(`threads/${id}/meta.json`, JSON.stringify(meta), {
@@ -59,6 +65,32 @@ const getThread = async ({
 	return obj.json<ThreadData>();
 };
 
+const getThreadView = async ({
+	bucket,
+	id
+}: {
+	bucket: R2Bucket;
+	id: string;
+}): Promise<ThreadViewData | null> => {
+	const obj = await bucket.get(`threads/${id}/view.json`);
+	if (!obj) return null;
+	return obj.json<ThreadViewData>();
+};
+
+const storeThreadView = async ({
+	bucket,
+	id,
+	thread
+}: {
+	bucket: R2Bucket;
+	id: string;
+	thread: ThreadViewData;
+}): Promise<void> => {
+	await bucket.put(`threads/${id}/view.json`, JSON.stringify(thread), {
+		httpMetadata: { contentType: 'application/json' }
+	});
+};
+
 const getThreadMeta = async ({
 	bucket,
 	id
@@ -78,6 +110,20 @@ const mergeThreadMeta = ({
 	thread: ThreadData;
 	meta: ThreadMeta;
 }): ThreadData => {
+	return {
+		...thread,
+		metadata: meta.metadata,
+		uploader: meta.uploader
+	};
+};
+
+const mergeThreadViewMeta = ({
+	thread,
+	meta
+}: {
+	thread: ThreadViewData;
+	meta: ThreadMeta;
+}): ThreadViewData => {
 	return {
 		...thread,
 		metadata: meta.metadata,
@@ -267,8 +313,11 @@ const findThreadBySessionId = async ({
 export {
 	storeThread,
 	getThread,
+	getThreadView,
+	storeThreadView,
 	getThreadMeta,
 	mergeThreadMeta,
+	mergeThreadViewMeta,
 	listRecentThreads,
 	listOwnedThreads,
 	listUserThreads,

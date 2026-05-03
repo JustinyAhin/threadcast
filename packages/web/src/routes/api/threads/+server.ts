@@ -1,6 +1,7 @@
 import { findThreadBySessionId, listRecentThreads, storeThread } from '$lib/server/r2';
 import { isSameGithubUser } from '$lib/server/github-identity';
 import { resolveUser } from '$lib/server/resolve-user';
+import { createThreadViewData } from '$lib/server/thread-view-data';
 import { createId } from '@paralleldrive/cuid2';
 import { error, json } from '@sveltejs/kit';
 import { MAX_THREAD_SIZE_BYTES, ThreadDataSchema } from '@threadcast/shared';
@@ -63,7 +64,7 @@ export const POST = async (event) => {
 	});
 	const id = existingId ?? createId();
 
-	await storeThread({ bucket, id, data: threadData });
+	await storeThread({ bucket, id, data: threadData, view: createThreadViewData(threadData) });
 
 	const origin = new URL(event.request.url).origin;
 	return json({ id, url: `${origin}/threads/${id}` }, { status: existingId ? 200 : 201 });
