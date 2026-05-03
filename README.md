@@ -82,6 +82,8 @@ bun dev:web              # Start web dev server
 bun build                # Build all packages
 bun build:plugin         # Bundle plugin MCP servers
 bun plugin:prepare:dist  # Build plugin bundles, restore prod Codex config, validate Claude marketplace
+bun plugin:version 0.0.2 # Bump Claude, Codex, and plugin package versions
+bun plugin:release 0.0.2 # Bump plugin versions and prepare distribution files
 
 # Codex local plugin config
 bun plugin:codex:local   # Point Codex plugin MCP at localhost
@@ -134,6 +136,32 @@ Command-like skills:
 - `$threadcast:threadcast-share-recent`
 
 For local plugin setup, localhost auth, and production release prep, see [Local Development](kb/local-dev.md).
+
+## Plugin Releases
+
+Plugin installs are cached by version. Use one command to keep the Claude, Codex, and plugin package versions in sync:
+
+```bash
+bun plugin:release 0.0.2
+git add .
+git commit -m "[infra] release plugin v0.0.2"
+git tag v0.0.2
+git push
+git push --tags
+```
+
+Claude Code users update with:
+
+```bash
+claude plugin marketplace update threadcast
+claude plugin update threadcast
+```
+
+Codex users update with:
+
+```bash
+codex plugin marketplace upgrade threadcast
+```
 
 ## Thread Rendering
 

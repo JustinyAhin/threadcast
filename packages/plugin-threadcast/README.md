@@ -51,4 +51,10 @@ Prepare the plugin files for distribution:
 bun plugin:prepare:dist
 ```
 
+Bump all plugin versions and prepare distribution files:
+
+```bash
+bun plugin:release 0.0.2
+```
+
 For full local e2e testing, see `../../kb/local-dev.md`.

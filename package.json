@@ -12,6 +12,8 @@
         "plugin:codex:local": "cp packages/plugin-threadcast/codex/.mcp.local.json packages/plugin-threadcast/codex/.mcp.json",
         "plugin:codex:prod": "cp packages/plugin-threadcast/codex/.mcp.prod.json packages/plugin-threadcast/codex/.mcp.json",
         "plugin:prepare:dist": "bun run scripts/prepare-plugin-distribution.ts",
+        "plugin:release": "bun run scripts/release-plugin.ts",
+        "plugin:version": "bun run scripts/release-plugin.ts --version-only",
         "typecheck": "bun run --filter '*' typecheck"
     },
     "devDependencies": {

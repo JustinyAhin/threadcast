@@ -185,3 +185,37 @@ codex plugin marketplace add JustinyAhin/threadcast
 ```
 
 Then open Codex, run `/plugins`, and install ThreadCast from the marketplace.
+
+## Release Flow
+
+Use this when publishing a new plugin version:
+
+```bash
+bun plugin:release 0.0.2
+git add .
+git commit -m "[infra] release plugin v0.0.2"
+git tag v0.0.2
+git push
+git push --tags
+```
+
+`bun plugin:release` updates these version fields together:
+
+- `packages/plugin-threadcast/package.json`
+- `packages/plugin-threadcast/claude/.claude-plugin/plugin.json`
+- `packages/plugin-threadcast/codex/.codex-plugin/plugin.json`
+
+It then builds the bundled MCP servers, restores the production Codex MCP config, and validates the Claude marketplace manifest.
+
+Users update Claude Code with:
+
+```bash
+claude plugin marketplace update threadcast
+claude plugin update threadcast
+```
+
+Users update Codex with:
+
+```bash
+codex plugin marketplace upgrade threadcast
+```
