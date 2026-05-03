@@ -5,7 +5,9 @@ import {
 	type ToolCall
 } from '@threadcast/shared';
 import type {
+	ThreadPromptNavItem,
 	ThreadStats,
+	ThreadTurnSlice,
 	ThreadToolCall,
 	ThreadViewData,
 	ThreadViewTurn
@@ -115,22 +117,110 @@ const createThreadStats = (thread: ThreadData): ThreadStats => {
 	};
 };
 
+const extractTag = ({ source, tag }: { source: string; tag: string }): string => {
+	const match = new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, 'i').exec(source);
+	return match?.[1]?.trim() ?? '';
+};
+
+const extractFrontmatterName = (source: string): string => {
+	const match = /---\s*\n([\s\S]*?)\n---\s*/.exec(source);
+	if (!match) return '';
+
+	for (const line of match[1].split('\n')) {
+		const [key, ...valueParts] = line.split(':');
+		if (key?.trim() !== 'name' || valueParts.length === 0) continue;
+		return valueParts
+			.join(':')
+			.trim()
+			.replace(/^['"]|['"]$/g, '');
+	}
+
+	return '';
+};
+
+const getSkillCommandPreview = (text: string): string | null => {
+	const match = /^\$([a-z0-9-]+):([a-z0-9-]+)\s*$/i.exec(text);
+	if (!match) return null;
+	return `Skill · ${match[2]}`;
+};
+
+const getSkillBlockPreview = (text: string): string | null => {
+	const match = /<skill>([\s\S]*?)<\/skill>/i.exec(text);
+	if (!match) return null;
+
+	const raw = match[1];
+	const name = extractTag({ source: raw, tag: 'name' });
+	const title = extractFrontmatterName(raw) || name.split(':').at(-1) || name || 'skill';
+	return `Skill · ${title}`;
+};
+
+const getPromptPreview = (turn: ThreadViewTurn): ThreadPromptNavItem['preview'] => {
+	const text = turn.content
+		.filter((block) => block.type === 'text')
+		.map((block) => block.text)
+		.join(' ')
+		.replace(/\n+/g, ' ')
+		.trim();
+	const skillPreview = getSkillCommandPreview(text) ?? getSkillBlockPreview(text);
+
+	return {
+		text: skillPreview ?? (text || 'Empty prompt'),
+		isSkill: Boolean(skillPreview)
+	};
+};
+
+const createPromptNav = (turns: ThreadViewTurn[]): ThreadPromptNavItem[] => {
+	let userNumber = 0;
+
+	return turns.flatMap((turn, turnIndex) => {
+		if (turn.role !== 'user') return [];
+		userNumber += 1;
+		return [{ turnIndex, userNumber, preview: getPromptPreview(turn) }];
+	});
+};
+
 const createThreadViewData = (thread: ThreadData): ThreadViewData => {
+	const turns = thread.turns.map((turn): ThreadViewTurn => {
+		return {
+			...turn,
+			content: turn.content.map((block) => {
+				if (block.type === 'text') return block;
+				return {
+					type: 'tool_call',
+					tool: createThreadToolCall({ tool: block.tool, deferPayload: true })
+				};
+			})
+		};
+	});
+
 	return {
 		...thread,
-		turns: thread.turns.map((turn): ThreadViewTurn => {
-			return {
-				...turn,
-				content: turn.content.map((block) => {
-					if (block.type === 'text') return block;
-					return {
-						type: 'tool_call',
-						tool: createThreadToolCall({ tool: block.tool, deferPayload: true })
-					};
-				})
-			};
-		}),
-		stats: createThreadStats(thread)
+		turns,
+		stats: createThreadStats(thread),
+		totalTurnCount: thread.turns.length,
+		promptNav: createPromptNav(turns)
+	};
+};
+
+const sliceThreadViewData = ({
+	thread,
+	offset,
+	limit
+}: {
+	thread: ThreadViewData;
+	offset: number;
+	limit: number;
+}): ThreadTurnSlice => {
+	const safeOffset = Math.max(0, Math.min(offset, thread.turns.length));
+	const safeLimit = Math.max(1, limit);
+	const turns = thread.turns.slice(safeOffset, safeOffset + safeLimit);
+	const nextOffset = safeOffset + turns.length;
+
+	return {
+		turns,
+		nextOffset,
+		hasMore: nextOffset < thread.turns.length,
+		totalTurnCount: thread.turns.length
 	};
 };
 
@@ -156,4 +246,4 @@ const findThreadTool = ({
 	return null;
 };
 
-export { createFullThreadToolCall, createThreadViewData, findThreadTool };
+export { createFullThreadToolCall, createThreadViewData, findThreadTool, sliceThreadViewData };

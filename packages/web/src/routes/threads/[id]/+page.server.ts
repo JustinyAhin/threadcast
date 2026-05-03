@@ -9,7 +9,8 @@ import {
 import { isSameGithubUser } from '$lib/server/github-identity';
 import { signOgImagePath } from '$lib/server/og-signing';
 import { resolveUser } from '$lib/server/resolve-user';
-import { createThreadViewData } from '$lib/server/thread-view-data';
+import { createThreadViewData, sliceThreadViewData } from '$lib/server/thread-view-data';
+import { INITIAL_THREAD_TURN_COUNT } from '$lib/types/thread-view';
 import { error } from '@sveltejs/kit';
 
 export const load = async (event) => {
@@ -49,5 +50,20 @@ export const load = async (event) => {
 				})
 			: undefined;
 
-	return { thread, id: params.id, isOwner, ogImage };
+	const initialTurns = sliceThreadViewData({
+		thread,
+		offset: 0,
+		limit: INITIAL_THREAD_TURN_COUNT
+	});
+
+	return {
+		thread: {
+			...thread,
+			turns: initialTurns.turns,
+			totalTurnCount: initialTurns.totalTurnCount
+		},
+		id: params.id,
+		isOwner,
+		ogImage
+	};
 };

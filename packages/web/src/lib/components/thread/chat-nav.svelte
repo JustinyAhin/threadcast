@@ -1,60 +1,21 @@
 <script lang="ts">
-	import type { ThreadViewTurn } from '$lib/types/thread-view';
-	import { parseMessageParts } from './skill-blocks';
-
-	type PromptPreview = {
-		text: string;
-		isSkill: boolean;
-	};
+	import type { ThreadPromptNavItem } from '$lib/types/thread-view';
 
 	let {
-		turns,
+		navItems,
 		activeTurnIndex = -1,
 		onNavigate
 	}: {
-		turns: ThreadViewTurn[];
+		navItems: ThreadPromptNavItem[];
 		activeTurnIndex?: number;
 		onNavigate: (turnIndex: number) => void;
 	} = $props();
-
-	const getSkillCommandPreview = (text: string): string | null => {
-		const match = /^\$([a-z0-9-]+):([a-z0-9-]+)\s*$/i.exec(text);
-		if (!match) return null;
-		return `Skill · ${match[2]}`;
-	};
-
-	const getPromptPreview = (turn: ThreadViewTurn): PromptPreview => {
-		const text = turn.content
-			.filter((b) => b.type === 'text')
-			.map((b) => (b as { type: 'text'; text: string }).text)
-			.join(' ')
-			.replace(/\n+/g, ' ')
-			.trim();
-		const commandPreview = getSkillCommandPreview(text);
-		if (commandPreview) return { text: commandPreview, isSkill: true };
-
-		const parts = parseMessageParts(text);
-		const skill = parts.find((part) => part.type === 'skill');
-		if (skill?.type === 'skill') return { text: `Skill · ${skill.skill.title}`, isSkill: true };
-
-		return { text: text || 'Empty prompt', isSkill: false };
-	};
-
-	const userTurns = $derived(
-		turns
-			.map((turn, index) => ({ turn, index }))
-			.filter(({ turn }) => turn.role === 'user')
-			.map(({ turn, index }, userIndex) => {
-				const preview = getPromptPreview(turn);
-				return { turnIndex: index, userNumber: userIndex + 1, preview };
-			})
-	);
 </script>
 
 <nav class="sticky top-8 hidden w-56 shrink-0 xl:block">
 	<h3 class="mb-3 font-mono text-xs tracking-widest text-text-muted uppercase">Prompts</h3>
 	<ol class="max-h-[calc(100vh-6rem)] space-y-1 overflow-y-auto">
-		{#each userTurns as { turnIndex, userNumber, preview } (turnIndex)}
+		{#each navItems as { turnIndex, userNumber, preview } (turnIndex)}
 			<li>
 				<button
 					onclick={() => onNavigate(turnIndex)}

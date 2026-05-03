@@ -1,11 +1,14 @@
 <script lang="ts">
-	import type { ThreadViewData } from '$lib/types/thread-view';
+	import type { ThreadViewData, ThreadViewTurn } from '$lib/types/thread-view';
 	import UserMessage from './user-message.svelte';
 	import AssistantMessage from './assistant-message.svelte';
 	import ThreadSidebar from './thread-sidebar.svelte';
 	import ChatNav from './chat-nav.svelte';
-	import { activeElement } from 'runed';
+	import { getThreadTurns } from '$lib/remote-functions/threads.remote';
+	import { THREAD_TURN_PAGE_SIZE } from '$lib/types/thread-view';
+	import { activeElement, watch } from 'runed';
 	import { browser } from '$app/environment';
+	import { tick } from 'svelte';
 
 	let {
 		thread,
@@ -18,9 +21,29 @@
 	let activeTurnIndex = $state(-1);
 	let turnEls = $state<(HTMLDivElement | null)[]>([]);
 	let activeUserTurnIndex = $state(-1);
+	let loadingTurns = $state(false);
+	let turnLoadError = $state(false);
+	let loadedThreadId = $state<string | null>(null);
+	let loadedTurns = $state<ThreadViewTurn[]>([]);
+	const turns = $derived(loadedThreadId === threadId ? loadedTurns : thread.turns);
 
 	const userTurnEls = $derived(
-		turnEls.filter((_, i) => thread.turns[i]?.role === 'user').filter(Boolean) as HTMLElement[]
+		turnEls.filter((_, i) => turns[i]?.role === 'user').filter(Boolean) as HTMLElement[]
+	);
+	const hasMoreTurns = $derived(turns.length < thread.totalTurnCount);
+
+	watch(
+		() => threadId,
+		() => {
+			loadedThreadId = null;
+			loadedTurns = [];
+			loadingTurns = false;
+			turnLoadError = false;
+			turnEls = [];
+			activeTurnIndex = -1;
+			activeUserTurnIndex = -1;
+		},
+		{ lazy: true }
 	);
 
 	$effect(() => {
@@ -42,7 +65,51 @@
 		return () => observer.disconnect();
 	});
 
-	const navigateToTurn = (turnIndex: number) => {
+	const loadMoreTurns = async ({
+		minimumTurnIndex
+	}: { minimumTurnIndex?: number } = {}): Promise<number> => {
+		if (loadingTurns || !hasMoreTurns) return turns.length;
+		const requestThreadId = threadId;
+		const currentTurns = turns;
+		const neededTurns =
+			minimumTurnIndex === undefined
+				? THREAD_TURN_PAGE_SIZE
+				: minimumTurnIndex + 1 - currentTurns.length;
+		const limit = Math.min(100, Math.max(THREAD_TURN_PAGE_SIZE, neededTurns));
+		loadingTurns = true;
+		turnLoadError = false;
+
+		try {
+			const result = await getThreadTurns({
+				threadId: requestThreadId,
+				offset: currentTurns.length,
+				limit
+			});
+			if (requestThreadId !== threadId) return turns.length;
+			loadedThreadId = requestThreadId;
+			loadedTurns = [...currentTurns, ...result.turns];
+			return currentTurns.length + result.turns.length;
+		} catch {
+			if (requestThreadId === threadId) {
+				turnLoadError = true;
+			}
+			return currentTurns.length;
+		} finally {
+			if (requestThreadId === threadId) {
+				loadingTurns = false;
+			}
+		}
+	};
+
+	const navigateToTurn = async (turnIndex: number) => {
+		let loadedCount = turns.length;
+		while (turnIndex >= loadedCount && loadedCount < thread.totalTurnCount) {
+			const nextLoadedCount = await loadMoreTurns({ minimumTurnIndex: turnIndex });
+			if (nextLoadedCount <= loadedCount) break;
+			loadedCount = nextLoadedCount;
+			await tick();
+		}
+
 		const el = turnEls[turnIndex];
 		if (el) {
 			el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -50,7 +117,7 @@
 		}
 	};
 
-	const getTurnText = (turn: (typeof thread.turns)[number]): string => {
+	const getTurnText = (turn: (typeof turns)[number]): string => {
 		return turn.content
 			.map((block) => {
 				if (block.type === 'text') return block.text;
@@ -68,9 +135,7 @@
 	const matchingIndices = $derived.by(() => {
 		const q = query.toLowerCase().trim();
 		if (!q) return [];
-		return thread.turns
-			.map((turn, i) => (getTurnText(turn).includes(q) ? i : -1))
-			.filter((i) => i !== -1);
+		return turns.map((turn, i) => (getTurnText(turn).includes(q) ? i : -1)).filter((i) => i !== -1);
 	});
 
 	const isSearching = $derived(query.trim().length > 0);
@@ -133,7 +198,11 @@
 <svelte:window onkeydown={onKeydown} />
 
 <div class="mx-auto flex max-w-7xl items-start gap-8">
-	<ChatNav turns={thread.turns} activeTurnIndex={activeUserTurnIndex} onNavigate={navigateToTurn} />
+	<ChatNav
+		navItems={thread.promptNav}
+		activeTurnIndex={activeUserTurnIndex}
+		onNavigate={navigateToTurn}
+	/>
 
 	<div class="min-w-0 max-w-4xl flex-1">
 		<!-- Thread header -->
@@ -265,7 +334,7 @@
 
 		<!-- Conversation turns -->
 		<div class="space-y-8">
-			{#each thread.turns as turn, i (i)}
+			{#each turns as turn, i (i)}
 				<div
 					bind:this={turnEls[i]}
 					class="animate-slide-up {isSearching && !matchingIndices.includes(i)
@@ -280,6 +349,18 @@
 					{/if}
 				</div>
 			{/each}
+
+			{#if hasMoreTurns}
+				<div class="flex justify-center pt-2">
+					<button
+						class="cursor-pointer rounded-md border border-border bg-surface-1 px-4 py-2 font-mono text-xs text-text-secondary transition-colors hover:bg-surface-2 hover:text-text disabled:cursor-wait disabled:opacity-60"
+						disabled={loadingTurns}
+						onclick={() => loadMoreTurns()}
+					>
+						{loadingTurns ? 'Loading...' : turnLoadError ? 'Retry' : 'Load more'}
+					</button>
+				</div>
+			{/if}
 		</div>
 	</div>
 
