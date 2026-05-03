@@ -48,6 +48,77 @@ claude plugin install threadcast@threadcast`;
 	description="Share your Claude Code and Codex sessions as readable web pages."
 />
 
+{#snippet installCard(opts: {
+	kind: 'claude' | 'codex';
+	label: string;
+	command: string;
+	note?: string;
+})}
+	<button
+		onclick={() => copyCommand(opts.kind, opts.command)}
+		class="group block w-full cursor-pointer overflow-hidden rounded-lg border border-border bg-surface-1 text-left transition-colors hover:border-border-light"
+	>
+		<!-- Terminal header -->
+		<div class="flex items-center justify-between border-b border-border px-4 py-2.5">
+			<div class="flex items-center gap-3">
+				<div class="flex items-center gap-1.5">
+					<div class="h-2 w-2 rounded-full bg-text-muted/30"></div>
+					<div class="h-2 w-2 rounded-full bg-text-muted/30"></div>
+					<div class="h-2 w-2 rounded-full bg-text-muted/30"></div>
+				</div>
+				<p class="text-xs font-semibold text-text-secondary">{opts.label}</p>
+			</div>
+			<span
+				class="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 font-mono text-[11px] text-text-muted transition-colors group-hover:border-border-light group-hover:text-accent"
+			>
+				{#if copied === opts.kind}
+					<svg
+						class="h-3 w-3"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						stroke-width="2.5"
+					>
+						<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+					</svg>
+					copied
+				{:else}
+					<svg
+						class="h-3 w-3"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M8 5a2 2 0 002 2h4a2 2 0 002-2M8 5a2 2 0 012-2h4a2 2 0 012 2"
+						/>
+					</svg>
+					copy
+				{/if}
+			</span>
+		</div>
+		<!-- Body -->
+		<div class="px-4 py-3.5 font-mono text-sm leading-6">
+			<div class="space-y-2">
+				{#each opts.command.split('\n') as line, i (i)}
+					<div class="flex gap-2">
+						<span class="shrink-0 select-none text-accent/70">$</span>
+						<span class="break-all whitespace-pre-wrap text-text">{line}</span>
+					</div>
+				{/each}
+			</div>
+			{#if opts.note}
+				<p class="mt-4 border-t border-border pt-3 font-sans text-xs text-text-muted">
+					{opts.note}
+				</p>
+			{/if}
+		</div>
+	</button>
+{/snippet}
+
 <!-- Hero -->
 <section class="relative overflow-hidden px-6 pt-20 pb-24 lg:pt-32 lg:pb-36">
 	<!-- Ambient glow -->
@@ -196,49 +267,17 @@ claude plugin install threadcast@threadcast`;
 		</div>
 
 		<div class="grid gap-3">
-			<button
-				onclick={() => copyCommand('claude', claudeInstallCommand)}
-				class="group flex w-full cursor-pointer items-start justify-between gap-4 rounded-lg border border-border bg-surface-1 px-5 py-3.5 text-left transition-colors hover:border-border-light"
-			>
-				<div class="min-w-0">
-					<p class="mb-2 text-xs font-semibold text-text-secondary">Claude Code</p>
-					<code class="block whitespace-pre-wrap font-mono text-sm break-words text-text"
-						>{claudeInstallCommand}</code
-					>
-				</div>
-				<span
-					class="shrink-0 font-mono text-xs text-text-muted transition-colors group-hover:text-accent"
-				>
-					{#if copied === 'claude'}
-						copied!
-					{:else}
-						copy
-					{/if}
-				</span>
-			</button>
-			<button
-				onclick={() => copyCommand('codex', codexInstallCommand)}
-				class="group flex w-full cursor-pointer items-start justify-between gap-4 rounded-lg border border-border bg-surface-1 px-5 py-3.5 text-left transition-colors hover:border-border-light"
-			>
-				<div class="min-w-0">
-					<p class="mb-2 text-xs font-semibold text-text-secondary">Codex</p>
-					<code class="block whitespace-pre-wrap font-mono text-sm break-words text-text"
-						>{codexInstallCommand}</code
-					>
-					<p class="mt-2 text-xs text-text-muted">
-						Then open Codex and install ThreadCast from /plugins.
-					</p>
-				</div>
-				<span
-					class="shrink-0 font-mono text-xs text-text-muted transition-colors group-hover:text-accent"
-				>
-					{#if copied === 'codex'}
-						copied!
-					{:else}
-						copy
-					{/if}
-				</span>
-			</button>
+			{@render installCard({
+				kind: 'claude',
+				label: 'Claude Code',
+				command: claudeInstallCommand
+			})}
+			{@render installCard({
+				kind: 'codex',
+				label: 'Codex',
+				command: codexInstallCommand,
+				note: 'Then open Codex and install ThreadCast from /plugins.'
+			})}
 		</div>
 	</div>
 </section>
@@ -341,8 +380,8 @@ claude plugin install threadcast@threadcast`;
 					<h3 class="text-lg font-semibold text-text">Share</h3>
 				</div>
 				<p class="mb-5 text-sm leading-relaxed text-text-secondary">
-					Share the latest session or pick one from this project folder. ThreadCast uploads it
-					and returns a public link.
+					Share the latest session or pick one from this project folder. ThreadCast uploads it and
+					returns a public link.
 				</p>
 				<!-- Terminal mockup -->
 				<div class="overflow-hidden rounded-lg border border-border bg-surface-1">
@@ -542,49 +581,17 @@ claude plugin install threadcast@threadcast`;
 
 		<!-- Install command block -->
 		<div class="mx-auto mb-10 grid max-w-2xl gap-3 text-left">
-			<button
-				onclick={() => copyCommand('claude', claudeInstallCommand)}
-				class="group flex w-full cursor-pointer items-start justify-between gap-4 rounded-lg border border-border bg-surface-1 px-5 py-3.5 text-left transition-colors hover:border-border-light"
-			>
-				<div class="min-w-0">
-					<p class="mb-2 text-xs font-semibold text-text-secondary">Claude Code</p>
-					<code class="block whitespace-pre-wrap font-mono text-sm break-words text-text"
-						>{claudeInstallCommand}</code
-					>
-				</div>
-				<span
-					class="shrink-0 font-mono text-xs text-text-muted transition-colors group-hover:text-accent"
-				>
-					{#if copied === 'claude'}
-						copied!
-					{:else}
-						copy
-					{/if}
-				</span>
-			</button>
-			<button
-				onclick={() => copyCommand('codex', codexInstallCommand)}
-				class="group flex w-full cursor-pointer items-start justify-between gap-4 rounded-lg border border-border bg-surface-1 px-5 py-3.5 text-left transition-colors hover:border-border-light"
-			>
-				<div class="min-w-0">
-					<p class="mb-2 text-xs font-semibold text-text-secondary">Codex</p>
-					<code class="block whitespace-pre-wrap font-mono text-sm break-words text-text"
-						>{codexInstallCommand}</code
-					>
-					<p class="mt-2 text-xs text-text-muted">
-						Then open Codex and install ThreadCast from /plugins.
-					</p>
-				</div>
-				<span
-					class="shrink-0 font-mono text-xs text-text-muted transition-colors group-hover:text-accent"
-				>
-					{#if copied === 'codex'}
-						copied!
-					{:else}
-						copy
-					{/if}
-				</span>
-			</button>
+			{@render installCard({
+				kind: 'claude',
+				label: 'Claude Code',
+				command: claudeInstallCommand
+			})}
+			{@render installCard({
+				kind: 'codex',
+				label: 'Codex',
+				command: codexInstallCommand,
+				note: 'Then open Codex and install ThreadCast from /plugins.'
+			})}
 		</div>
 
 		<div class="flex flex-wrap justify-center gap-3">
