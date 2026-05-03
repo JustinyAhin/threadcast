@@ -5,9 +5,7 @@
 
 	let { size = 'md' }: Props = $props();
 
-	const sizeClass = $derived(
-		size === 'sm' ? 'h-5 w-5' : size === 'lg' ? 'h-10 w-10' : 'h-6 w-6'
-	);
+	const sizeClass = $derived(size === 'sm' ? 'h-5 w-5' : size === 'lg' ? 'h-10 w-10' : 'h-6 w-6');
 </script>
 
 <svg

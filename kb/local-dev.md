@@ -97,7 +97,7 @@ Install or enable the plugin from Codex:
 /plugins
 ```
 
-Use the `ThreadCast Local` marketplace entry and install/enable `ThreadCast`.
+Use the `ThreadCast` marketplace entry and install/enable `ThreadCast`.
 
 Check that the MCP server is attached:
 
@@ -131,9 +131,10 @@ After changing Codex plugin files, run `bun build:plugin`, fully restart Codex, 
 Before committing or testing production defaults, switch Codex back to the production MCP config:
 
 ```bash
-bun plugin:codex:prod
-bun build:plugin
+bun plugin:prepare:dist
 ```
+
+That command builds both bundled MCP servers, restores the production Codex MCP config, and validates the Claude marketplace manifest.
 
 ## 5. Direct MCP Smoke Test
 
@@ -167,3 +168,20 @@ https://threadcast.dev
 Use `THREADCAST_CONFIG_DIR=$HOME/.threadcast-dev` during local testing so local credentials do not overwrite your normal ThreadCast login.
 
 For Codex, local `THREADCAST_API_URL` and `THREADCAST_CONFIG_DIR` are set by `packages/plugin-threadcast/codex/.mcp.local.json`. The active file is `packages/plugin-threadcast/codex/.mcp.json`, selected with `bun plugin:codex:local` or `bun plugin:codex:prod`.
+
+## Public Plugin Install
+
+Claude Code:
+
+```bash
+claude plugin marketplace add JustinyAhin/threadcast
+claude plugin install threadcast@threadcast
+```
+
+Codex:
+
+```bash
+codex plugin marketplace add JustinyAhin/threadcast
+```
+
+Then open Codex, run `/plugins`, and install ThreadCast from the marketplace.

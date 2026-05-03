@@ -2,13 +2,17 @@
 	import { browser } from '$app/environment';
 	import Seo from '$lib/components/seo.svelte';
 
-	let copied = $state(false);
+	const claudeInstallCommand = `claude plugin marketplace add JustinyAhin/threadcast
+claude plugin install threadcast@threadcast`;
+	const codexInstallCommand = 'codex plugin marketplace add JustinyAhin/threadcast';
+
+	let copied = $state<'claude' | 'codex' | null>(null);
 	let sections = $state<HTMLElement[]>([]);
 
-	const copyCommand = async () => {
-		await navigator.clipboard.writeText('claude --plugin-dir ./packages/plugin-threadcast');
-		copied = true;
-		setTimeout(() => (copied = false), 2000);
+	const copyCommand = async (kind: 'claude' | 'codex', command: string) => {
+		await navigator.clipboard.writeText(command);
+		copied = kind;
+		setTimeout(() => (copied = null), 2000);
 	};
 
 	const registerSection = (el: HTMLElement) => {
@@ -39,7 +43,7 @@
 </script>
 
 <Seo
-	title="ThreadCast — Share Claude Code Sessions"
+	title="ThreadCast — Share Claude Code and Codex Sessions"
 	description="Share your Claude Code and Codex sessions as readable web pages."
 />
 
@@ -63,11 +67,11 @@
 				Share your sessions
 			</p>
 			<h1 class="mb-6 text-4xl leading-[1.1] font-bold tracking-tight text-text md:text-5xl">
-				Your best Claude sessions deserve an audience.
+				Turn agent sessions into shareable threads.
 			</h1>
 			<p class="mb-10 max-w-md text-lg leading-relaxed text-text-secondary">
-				ThreadCast turns Claude Code conversations into beautiful, shareable web pages. One command
-				to share. Zero setup.
+				ThreadCast publishes local Claude Code and Codex conversations as readable web pages with
+				tool calls, diffs, metadata, and cost estimates preserved.
 			</p>
 			<div class="flex flex-wrap gap-3">
 				<a
@@ -176,6 +180,68 @@
 	</div>
 </section>
 
+<!-- Install commands -->
+<section id="install" use:registerSection class="reveal-section border-t border-border px-6 py-16">
+	<div class="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+		<div class="max-w-lg">
+			<p class="mb-3 font-mono text-xs tracking-[0.2em] text-accent uppercase">Install</p>
+			<h2 class="mb-4 text-2xl font-bold tracking-tight text-text md:text-3xl">
+				Add ThreadCast to your agent.
+			</h2>
+			<p class="text-text-secondary">
+				Install the Claude Code plugin directly from this repo, or add the Codex marketplace and
+				install ThreadCast from `/plugins`.
+			</p>
+		</div>
+
+		<div class="grid gap-3">
+			<button
+				onclick={() => copyCommand('claude', claudeInstallCommand)}
+				class="group flex w-full cursor-pointer items-start justify-between gap-4 rounded-lg border border-border bg-surface-1 px-5 py-3.5 text-left transition-colors hover:border-border-light"
+			>
+				<div class="min-w-0">
+					<p class="mb-2 text-xs font-semibold text-text-secondary">Claude Code</p>
+					<code class="block whitespace-pre-wrap font-mono text-sm break-words text-text"
+						>{claudeInstallCommand}</code
+					>
+				</div>
+				<span
+					class="shrink-0 font-mono text-xs text-text-muted transition-colors group-hover:text-accent"
+				>
+					{#if copied === 'claude'}
+						copied!
+					{:else}
+						copy
+					{/if}
+				</span>
+			</button>
+			<button
+				onclick={() => copyCommand('codex', codexInstallCommand)}
+				class="group flex w-full cursor-pointer items-start justify-between gap-4 rounded-lg border border-border bg-surface-1 px-5 py-3.5 text-left transition-colors hover:border-border-light"
+			>
+				<div class="min-w-0">
+					<p class="mb-2 text-xs font-semibold text-text-secondary">Codex</p>
+					<code class="block whitespace-pre-wrap font-mono text-sm break-words text-text"
+						>{codexInstallCommand}</code
+					>
+					<p class="mt-2 text-xs text-text-muted">
+						Then open Codex and install ThreadCast from /plugins.
+					</p>
+				</div>
+				<span
+					class="shrink-0 font-mono text-xs text-text-muted transition-colors group-hover:text-accent"
+				>
+					{#if copied === 'codex'}
+						copied!
+					{:else}
+						copy
+					{/if}
+				</span>
+			</button>
+		</div>
+	</div>
+</section>
+
 <!-- How it works -->
 <section use:registerSection class="reveal-section border-t border-border px-6 py-24 lg:py-32">
 	<div class="mx-auto max-w-6xl">
@@ -192,10 +258,10 @@
 						class="flex h-7 w-7 items-center justify-center rounded-md bg-accent/15 font-mono text-xs font-bold text-accent"
 						>1</span
 					>
-					<h3 class="text-lg font-semibold text-text">Browse</h3>
+					<h3 class="text-lg font-semibold text-text">Find</h3>
 				</div>
 				<p class="mb-5 text-sm leading-relaxed text-text-secondary">
-					Every Claude Code session is already saved locally. Launch ThreadCast to see them all.
+					ThreadCast scans the sessions Claude Code and Codex already save on your machine.
 				</p>
 				<!-- Terminal mockup -->
 				<div class="overflow-hidden rounded-lg border border-border bg-surface-1">
@@ -205,7 +271,7 @@
 						<div class="h-2 w-2 rounded-full bg-text-muted/30"></div>
 					</div>
 					<div class="p-4 font-mono text-[11px] leading-5">
-						<p class="text-text-muted">$ /threadcast:share</p>
+						<p class="text-text-muted">$ /threadcast:share-recent</p>
 						<p class="mt-2 text-text-secondary">Your sessions:</p>
 						<p class="text-text">
 							<span class="text-accent">&#9656;</span> Add dark mode toggle
@@ -219,7 +285,7 @@
 							&nbsp; Refactor API routes
 							<span class="text-text-muted">1d ago</span>
 						</p>
-						<p class="mt-2 text-text-muted">↑↓ navigate &middot; S share &middot; q quit</p>
+						<p class="mt-2 text-text-muted">Choose a session to share</p>
 					</div>
 				</div>
 			</div>
@@ -234,7 +300,8 @@
 					<h3 class="text-lg font-semibold text-text">Share</h3>
 				</div>
 				<p class="mb-5 text-sm leading-relaxed text-text-secondary">
-					Press S to share any session. Uploads instantly and gives you a permanent link.
+					Share the latest session or pick one from recent history. ThreadCast uploads it and
+					returns a public link.
 				</p>
 				<!-- Terminal mockup -->
 				<div class="overflow-hidden rounded-lg border border-border bg-surface-1">
@@ -263,7 +330,7 @@
 					<h3 class="text-lg font-semibold text-text">Read</h3>
 				</div>
 				<p class="mb-5 text-sm leading-relaxed text-text-secondary">
-					Beautiful thread pages with full context. Tool calls, diffs, and everything preserved.
+					Open a clean thread page with messages, tool calls, diffs, timing, and model usage intact.
 				</p>
 				<!-- Mini preview mockup -->
 				<div class="overflow-hidden rounded-lg border border-border bg-surface-1">
@@ -384,7 +451,7 @@
 				</div>
 				<h3 class="mb-2 text-base font-semibold text-text">Prompt navigation</h3>
 				<p class="text-sm leading-relaxed text-text-secondary">
-					Jump between prompts with keyboard shortcuts. J/K to navigate, / to search.
+					Move through long sessions by prompt, message, and tool output without losing context.
 				</p>
 			</div>
 
@@ -421,31 +488,56 @@
 
 <!-- Install CTA -->
 <section
-	id="install"
+	id="install-again"
 	use:registerSection
 	class="reveal-section border-t border-border px-6 py-24 lg:py-32"
 >
 	<div class="mx-auto max-w-xl text-center">
 		<p class="mb-3 font-mono text-xs tracking-[0.2em] text-accent uppercase">Get started</p>
-		<h2 class="mb-4 text-3xl font-bold tracking-tight text-text">Start sharing in 30 seconds.</h2>
+		<h2 class="mb-4 text-3xl font-bold tracking-tight text-text">Install the agent plugin.</h2>
 		<p class="mb-10 text-text-secondary">
-			Add the Claude Code plugin, run a slash command, and share.
+			Add the marketplace for your agent, install ThreadCast, then share from Claude Code or Codex.
 		</p>
 
 		<!-- Install command block -->
-		<div class="mx-auto mb-10 max-w-md">
+		<div class="mx-auto mb-10 grid max-w-2xl gap-3 text-left">
 			<button
-				onclick={copyCommand}
-				class="group flex w-full cursor-pointer items-center justify-between rounded-lg border border-border bg-surface-1 px-5 py-3.5 text-left transition-colors hover:border-border-light"
+				onclick={() => copyCommand('claude', claudeInstallCommand)}
+				class="group flex w-full cursor-pointer items-start justify-between gap-4 rounded-lg border border-border bg-surface-1 px-5 py-3.5 text-left transition-colors hover:border-border-light"
 			>
-				<div class="flex items-center gap-3">
-					<span class="font-mono text-sm text-text-muted">$</span>
-					<code class="font-mono text-sm text-text"
-						>claude --plugin-dir ./packages/plugin-threadcast</code
+				<div class="min-w-0">
+					<p class="mb-2 text-xs font-semibold text-text-secondary">Claude Code</p>
+					<code class="block whitespace-pre-wrap font-mono text-sm break-words text-text"
+						>{claudeInstallCommand}</code
 					>
 				</div>
-				<span class="font-mono text-xs text-text-muted transition-colors group-hover:text-accent">
-					{#if copied}
+				<span
+					class="shrink-0 font-mono text-xs text-text-muted transition-colors group-hover:text-accent"
+				>
+					{#if copied === 'claude'}
+						copied!
+					{:else}
+						copy
+					{/if}
+				</span>
+			</button>
+			<button
+				onclick={() => copyCommand('codex', codexInstallCommand)}
+				class="group flex w-full cursor-pointer items-start justify-between gap-4 rounded-lg border border-border bg-surface-1 px-5 py-3.5 text-left transition-colors hover:border-border-light"
+			>
+				<div class="min-w-0">
+					<p class="mb-2 text-xs font-semibold text-text-secondary">Codex</p>
+					<code class="block whitespace-pre-wrap font-mono text-sm break-words text-text"
+						>{codexInstallCommand}</code
+					>
+					<p class="mt-2 text-xs text-text-muted">
+						Then open Codex and install ThreadCast from /plugins.
+					</p>
+				</div>
+				<span
+					class="shrink-0 font-mono text-xs text-text-muted transition-colors group-hover:text-accent"
+				>
+					{#if copied === 'codex'}
 						copied!
 					{:else}
 						copy

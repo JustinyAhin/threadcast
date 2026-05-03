@@ -1,8 +1,15 @@
 # ThreadCast Agent Plugins
 
-This package contains ThreadCast plugins for Claude Code and Codex. Both plugins use the same bundled MCP server.
+This package contains the ThreadCast plugins for Claude Code and Codex. Both plugins use the same bundled local MCP server to find, parse, and upload saved sessions.
 
 ## Claude Code
+
+Install from the repo marketplace:
+
+```bash
+claude plugin marketplace add JustinyAhin/threadcast
+claude plugin install threadcast@threadcast
+```
 
 Claude Code commands:
 
@@ -12,21 +19,15 @@ Claude Code commands:
 - `/threadcast:share`
 - `/threadcast:share-recent`
 
-Run Claude Code with the Claude plugin root:
-
-```bash
-THREADCAST_API_URL=http://localhost:5173 \
-THREADCAST_CONFIG_DIR=$HOME/.threadcast-dev \
-claude --plugin-dir ./packages/plugin-threadcast/claude
-```
-
 ## Codex
 
-Codex installs from the repo marketplace entry in `.agents/plugins/marketplace.json`, which points at:
+Install from the repo marketplace:
 
 ```bash
-./packages/plugin-threadcast/codex
+codex plugin marketplace add JustinyAhin/threadcast
 ```
+
+Then open Codex, run `/plugins`, and install ThreadCast.
 
 The Codex plugin includes command-like skills and the local ThreadCast MCP server:
 
@@ -42,6 +43,12 @@ Build the bundled MCP servers:
 
 ```bash
 bun run --filter @threadcast/plugin-threadcast build
+```
+
+Prepare the plugin files for distribution:
+
+```bash
+bun plugin:prepare:dist
 ```
 
 For full local e2e testing, see `../../kb/local-dev.md`.

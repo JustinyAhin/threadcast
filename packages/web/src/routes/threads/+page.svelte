@@ -193,9 +193,7 @@
 			<div class="rounded-lg border border-border bg-surface-1 p-12 text-center">
 				<p class="mb-2 text-lg text-text-secondary">No threads yet</p>
 				<p class="text-sm text-text-muted">
-					Share your first session with <code
-						class="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-accent">/threadcast:share</code
-					>
+					Install the Claude Code or Codex plugin, then share your first local session.
 				</p>
 				{#if !$session.data}
 					<a

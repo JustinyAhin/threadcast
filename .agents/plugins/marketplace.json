@@ -1,7 +1,7 @@
 {
-  "name": "threadcast-local",
+  "name": "threadcast",
   "interface": {
-    "displayName": "ThreadCast Local"
+    "displayName": "ThreadCast"
   },
   "plugins": [
     {

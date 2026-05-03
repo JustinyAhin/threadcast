@@ -60,7 +60,10 @@ const createLocalAuthCode = async (opts: LocalAuthCodeUser & { db: Db }): Promis
 	return code;
 };
 
-const consumeLocalAuthCode = async (opts: { db: Db; code: string }): Promise<LocalAuthUser | null> => {
+const consumeLocalAuthCode = async (opts: {
+	db: Db;
+	code: string;
+}): Promise<LocalAuthUser | null> => {
 	const { db, code } = opts;
 	const now = new Date();
 	const rows = await db
@@ -89,7 +92,9 @@ const consumeLocalAuthCode = async (opts: { db: Db; code: string }): Promise<Loc
 	};
 };
 
-const issueLocalAuthToken = async (opts: LocalAuthUser & { db: Db }): Promise<IssuedLocalAuthToken> => {
+const issueLocalAuthToken = async (
+	opts: LocalAuthUser & { db: Db }
+): Promise<IssuedLocalAuthToken> => {
 	const { db, ...user } = opts;
 	const token = randomToken('tc_local');
 	const expiresAt = getExpiry({ days: LOCAL_TOKEN_TTL_DAYS });
@@ -122,7 +127,10 @@ const exchangeLocalAuthCode = async (opts: {
 	return issueLocalAuthToken({ db, ...user });
 };
 
-const validateLocalAuthToken = async (opts: { db: Db; token: string }): Promise<LocalAuthUser | null> => {
+const validateLocalAuthToken = async (opts: {
+	db: Db;
+	token: string;
+}): Promise<LocalAuthUser | null> => {
 	const { db, token } = opts;
 	const now = new Date();
 	const rows = await db

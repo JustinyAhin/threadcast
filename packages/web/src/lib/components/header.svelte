@@ -17,7 +17,7 @@
 			<span class="transition-transform duration-200 group-hover:scale-110">
 				<Logo size="sm" />
 			</span>
-			Thread<span class="text-accent">Cast</span>
+			<span>Thread<span class="text-accent">Cast</span></span>
 		</a>
 		<nav class="flex items-center gap-2 text-sm sm:gap-4">
 			<a
