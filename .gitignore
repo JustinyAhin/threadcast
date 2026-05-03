@@ -2,6 +2,8 @@ node_modules
 dist
 packages/cli/bin
 packages/plugin-threadcast/**/server/*.js
+!packages/plugin-threadcast/claude/server/threadcast-mcp.js
+!packages/plugin-threadcast/codex/server/threadcast-mcp.js
 .DS_Store
 *.bun-build
 .env
