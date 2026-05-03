@@ -2,10 +2,6 @@
   "threadcast-local": {
     "command": "bun",
     "args": ["run", "./server/threadcast-mcp.js"],
-    "cwd": ".",
-    "env": {
-      "THREADCAST_API_URL": "http://localhost:5173",
-      "THREADCAST_CONFIG_DIR": "/Users/iamsegbedji/.threadcast-dev"
-    }
+    "cwd": "."
   }
 }
