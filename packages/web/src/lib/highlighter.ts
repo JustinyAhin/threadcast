@@ -1,19 +1,7 @@
-import type { Highlighter } from 'shiki';
+import { createHighlighterCore, type HighlighterCore } from 'shiki/core';
+import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
 
-let highlighterPromise: Promise<Highlighter> | null = null;
-
-const LANGS = [
-	'bash',
-	'typescript',
-	'javascript',
-	'json',
-	'css',
-	'html',
-	'svelte',
-	'python',
-	'yaml',
-	'markdown'
-] as const;
+let highlighterPromise: Promise<HighlighterCore> | null = null;
 
 const THEME = 'vitesse-dark';
 
@@ -37,9 +25,22 @@ const EXT_TO_LANG: Record<string, string> = {
 
 const getHighlighter = () => {
 	if (!highlighterPromise) {
-		highlighterPromise = import('shiki').then(({ createHighlighter }) =>
-			createHighlighter({ themes: [THEME], langs: [...LANGS] })
-		);
+		highlighterPromise = createHighlighterCore({
+			themes: [import('shiki/dist/themes/vitesse-dark.mjs')],
+			langs: [
+				import('shiki/dist/langs/bash.mjs'),
+				import('shiki/dist/langs/typescript.mjs'),
+				import('shiki/dist/langs/javascript.mjs'),
+				import('shiki/dist/langs/json.mjs'),
+				import('shiki/dist/langs/css.mjs'),
+				import('shiki/dist/langs/html.mjs'),
+				import('shiki/dist/langs/svelte.mjs'),
+				import('shiki/dist/langs/python.mjs'),
+				import('shiki/dist/langs/yaml.mjs'),
+				import('shiki/dist/langs/markdown.mjs')
+			],
+			engine: createJavaScriptRegexEngine()
+		});
 	}
 	return highlighterPromise;
 };
