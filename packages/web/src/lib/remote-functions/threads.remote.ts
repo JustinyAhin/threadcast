@@ -26,7 +26,7 @@ const setThreadVisibility = command(SetThreadVisibilitySchema, async ({ id, visi
 		error(403, { message: 'You can only update your own threads' });
 	}
 
-	await updateThreadVisibility({ bucket, id, visibility });
+	await updateThreadVisibility({ bucket, id, visibility, meta });
 	return { visibility };
 });
 

@@ -1,4 +1,4 @@
-import { getThread, getThreadMeta } from '$lib/server/r2';
+import { getThread, getThreadMeta, mergeThreadMeta } from '$lib/server/r2';
 import { isSameGithubUser } from '$lib/server/github-identity';
 import { signOgImagePath } from '$lib/server/og-signing';
 import { resolveUser } from '$lib/server/resolve-user';
@@ -20,10 +20,11 @@ export const load = async (event) => {
 		}
 	}
 
-	const thread = await getThread({ bucket, id: params.id });
-	if (!thread) {
+	const storedThread = await getThread({ bucket, id: params.id });
+	if (!storedThread) {
 		error(404, { message: 'Thread not found' });
 	}
+	const thread = mergeThreadMeta({ thread: storedThread, meta });
 
 	const isOwner = user ? isSameGithubUser({ user, uploader: meta.uploader }) : false;
 	const ogImage =

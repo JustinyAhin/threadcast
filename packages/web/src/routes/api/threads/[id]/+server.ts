@@ -1,4 +1,4 @@
-import { deleteThread, getThread, getThreadMeta } from '$lib/server/r2';
+import { deleteThread, getThread, getThreadMeta, mergeThreadMeta } from '$lib/server/r2';
 import { isSameGithubUser } from '$lib/server/github-identity';
 import { resolveUser } from '$lib/server/resolve-user';
 import { error, json } from '@sveltejs/kit';
@@ -17,10 +17,11 @@ export const GET = async (event) => {
 		}
 	}
 
-	const thread = await getThread({ bucket, id: event.params.id });
-	if (!thread) {
+	const storedThread = await getThread({ bucket, id: event.params.id });
+	if (!storedThread) {
 		error(404, { message: 'Thread not found' });
 	}
+	const thread = mergeThreadMeta({ thread: storedThread, meta });
 	return json(thread);
 };
 

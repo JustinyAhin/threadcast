@@ -71,6 +71,20 @@ const getThreadMeta = async ({
 	return obj.json<ThreadMeta>();
 };
 
+const mergeThreadMeta = ({
+	thread,
+	meta
+}: {
+	thread: ThreadData;
+	meta: ThreadMeta;
+}): ThreadData => {
+	return {
+		...thread,
+		metadata: meta.metadata,
+		uploader: meta.uploader
+	};
+};
+
 const listRecentThreads = async (bucket: R2Bucket): Promise<ThreadMeta[]> => {
 	return readIndex({ bucket, key: 'indexes/recent.json' });
 };
@@ -113,49 +127,47 @@ const listOwnedThreads = async ({
 const updateThreadVisibility = async ({
 	bucket,
 	id,
-	visibility
+	visibility,
+	meta
 }: {
 	bucket: R2Bucket;
 	id: string;
 	visibility: 'public' | 'private';
+	meta: ThreadMeta;
 }): Promise<void> => {
-	const [data, meta] = await Promise.all([
-		getThread({ bucket, id }),
-		getThreadMeta({ bucket, id })
-	]);
-	if (!data || !meta) throw new Error('Thread not found');
+	const updatedMeta: ThreadMeta = {
+		...meta,
+		metadata: {
+			...meta.metadata,
+			visibility
+		}
+	};
 
-	data.metadata.visibility = visibility;
-	meta.metadata.visibility = visibility;
-
-	await Promise.all([
-		bucket.put(`threads/${id}/data.json`, JSON.stringify(data), {
-			httpMetadata: { contentType: 'application/json' }
-		}),
-		bucket.put(`threads/${id}/meta.json`, JSON.stringify(meta), {
-			httpMetadata: { contentType: 'application/json' }
-		})
-	]);
-
-	if (visibility === 'public') {
-		await updateIndex({ bucket, key: 'indexes/recent.json', meta });
-	} else {
-		await removeFromIndex({ bucket, key: 'indexes/recent.json', id });
-	}
-
-	// Always update user index to reflect new metadata
-	await updateIndex({
-		bucket,
-		key: `indexes/by-user/${meta.uploader.githubUsername}.json`,
-		meta
+	await bucket.put(`threads/${id}/meta.json`, JSON.stringify(updatedMeta), {
+		httpMetadata: { contentType: 'application/json' }
 	});
-	if (meta.uploader.githubId) {
-		await updateIndex({
+
+	const indexUpdates: Promise<void>[] = [
+		visibility === 'public'
+			? updateIndex({ bucket, key: 'indexes/recent.json', meta: updatedMeta })
+			: removeFromIndex({ bucket, key: 'indexes/recent.json', id }),
+		updateIndex({
 			bucket,
-			key: `indexes/by-github-id/${meta.uploader.githubId}.json`,
-			meta
-		});
+			key: `indexes/by-user/${updatedMeta.uploader.githubUsername}.json`,
+			meta: updatedMeta
+		})
+	];
+	if (meta.uploader.githubId) {
+		indexUpdates.push(
+			updateIndex({
+				bucket,
+				key: `indexes/by-github-id/${meta.uploader.githubId}.json`,
+				meta: updatedMeta
+			})
+		);
 	}
+
+	await Promise.all(indexUpdates);
 };
 
 const deleteThread = async ({ bucket, id }: { bucket: R2Bucket; id: string }): Promise<boolean> => {
@@ -282,6 +294,7 @@ export {
 	storeThread,
 	getThread,
 	getThreadMeta,
+	mergeThreadMeta,
 	listRecentThreads,
 	listOwnedThreads,
 	listUserThreads,

@@ -87,12 +87,14 @@
 	const toggleVisibility = async () => {
 		if (toggling) return;
 		toggling = true;
+		const previousVisibility = visibility;
 		const newVisibility = visibility === 'public' ? 'private' : 'public';
+		visibilityOverride = newVisibility;
 		try {
 			const result = await setThreadVisibility({ id: threadId, visibility: newVisibility });
 			visibilityOverride = result.visibility;
 		} catch {
-			// Keep the current UI state if the server rejects the visibility change.
+			visibilityOverride = previousVisibility;
 		} finally {
 			toggling = false;
 		}
