@@ -170,32 +170,6 @@ const updateThreadVisibility = async ({
 	await Promise.all(indexUpdates);
 };
 
-const deleteThread = async ({ bucket, id }: { bucket: R2Bucket; id: string }): Promise<boolean> => {
-	const meta = await getThreadMeta({ bucket, id });
-	if (!meta) return false;
-
-	await Promise.all([
-		bucket.delete(`threads/${id}/data.json`),
-		bucket.delete(`threads/${id}/meta.json`)
-	]);
-
-	await removeFromIndex({ bucket, key: 'indexes/recent.json', id });
-	await removeFromIndex({
-		bucket,
-		key: `indexes/by-user/${meta.uploader.githubUsername}.json`,
-		id
-	});
-	if (meta.uploader.githubId) {
-		await removeFromIndex({
-			bucket,
-			key: `indexes/by-github-id/${meta.uploader.githubId}.json`,
-			id
-		});
-	}
-
-	return true;
-};
-
 // ── Index helpers ───────────────────────────────────────────────────────────
 
 const MAX_INDEX_SIZE = 1000;
@@ -299,7 +273,6 @@ export {
 	listOwnedThreads,
 	listUserThreads,
 	updateThreadVisibility,
-	deleteThread,
 	findThreadBySessionId,
 	type ThreadMeta
 };
