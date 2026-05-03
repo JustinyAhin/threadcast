@@ -169,23 +169,6 @@ Use `THREADCAST_CONFIG_DIR=$HOME/.threadcast-dev` during local testing so local 
 
 For Codex, local `THREADCAST_API_URL` and `THREADCAST_CONFIG_DIR` are set by `packages/plugin-threadcast/codex/.mcp.local.json`. The active file is `packages/plugin-threadcast/codex/.mcp.json`, selected with `bun plugin:codex:local` or `bun plugin:codex:prod`.
 
-## Public Plugin Install
-
-Claude Code:
-
-```bash
-claude plugin marketplace add JustinyAhin/threadcast
-claude plugin install threadcast@threadcast
-```
-
-Codex:
-
-```bash
-codex plugin marketplace add JustinyAhin/threadcast
-```
-
-Then open Codex, run `/plugins`, and install ThreadCast from the marketplace.
-
 ## Release Flow
 
 Use this when publishing a new plugin version:
@@ -207,15 +190,4 @@ git push --tags
 
 It then builds the bundled MCP servers, restores the production Codex MCP config, and validates the Claude marketplace manifest.
 
-Users update Claude Code with:
-
-```bash
-claude plugin marketplace update threadcast
-claude plugin update threadcast@threadcast
-```
-
-Users update Codex with:
-
-```bash
-codex plugin marketplace upgrade threadcast
-```
+Public install and update commands live in the repo [README](../README.md#agent-plugins).

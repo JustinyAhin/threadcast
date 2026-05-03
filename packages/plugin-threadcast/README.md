@@ -4,12 +4,7 @@ This package contains the ThreadCast plugins for Claude Code and Codex. Both plu
 
 ## Claude Code
 
-Install from the repo marketplace:
-
-```bash
-claude plugin marketplace add JustinyAhin/threadcast
-claude plugin install threadcast@threadcast
-```
+Install from the repo marketplace using the commands in the root [README](../../README.md#agent-plugins).
 
 Claude Code commands:
 
@@ -21,13 +16,7 @@ Claude Code commands:
 
 ## Codex
 
-Install from the repo marketplace:
-
-```bash
-codex plugin marketplace add JustinyAhin/threadcast
-```
-
-Then open Codex, run `/plugins`, and install ThreadCast.
+Install from the repo marketplace using the commands in the root [README](../../README.md#agent-plugins).
 
 The Codex plugin includes command-like skills and the local ThreadCast MCP server:
 

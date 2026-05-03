@@ -74,7 +74,8 @@ const tools: Tool[] = [
   {
     name: "threadcast.list_recent_sessions",
     title: "List Recent Sessions",
-    description: "List recent local Claude Code and Codex sessions, optionally filtered to a source or project path.",
+    description:
+      "List recent local Claude Code and Codex sessions for the current project by default, optionally filtered to a source or project path.",
     inputSchema: {
       type: "object",
       properties: {
@@ -269,7 +270,7 @@ const handleToolCall = async ({
                     `${index + 1}. ${formatSource(session.source)} | ${session.sessionId} | ${session.firstMessage} | ${session.projectPath || "(unknown project)"}`
                 )
                 .join("\n")
-            : "No local Claude Code or Codex sessions found.",
+            : "No local Claude Code or Codex sessions found for this project folder.",
         structuredContent: { sessions },
       });
     }

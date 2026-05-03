@@ -107,7 +107,7 @@ ThreadCast can be used from Claude Code and Codex through plugin marketplaces. B
 ### Claude Code
 
 ```bash
-claude plugin marketplace add JustinyAhin/threadcast
+claude plugin marketplace add JustinyAhin/threadcast --sparse .claude-plugin packages/plugin-threadcast/claude
 claude plugin install threadcast@threadcast
 ```
 
@@ -122,7 +122,7 @@ This adds the following commands inside Claude Code:
 ### Codex
 
 ```bash
-codex plugin marketplace add JustinyAhin/threadcast
+codex plugin marketplace add JustinyAhin/threadcast --sparse .agents --sparse packages/plugin-threadcast/codex
 ```
 
 Then open Codex, run `/plugins`, and install ThreadCast from the marketplace.

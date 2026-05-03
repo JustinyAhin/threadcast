@@ -2,9 +2,10 @@
 	import { browser } from '$app/environment';
 	import Seo from '$lib/components/seo.svelte';
 
-	const claudeInstallCommand = `claude plugin marketplace add JustinyAhin/threadcast
+	const claudeInstallCommand = `claude plugin marketplace add JustinyAhin/threadcast --sparse .claude-plugin packages/plugin-threadcast/claude
 claude plugin install threadcast@threadcast`;
-	const codexInstallCommand = 'codex plugin marketplace add JustinyAhin/threadcast';
+	const codexInstallCommand =
+		'codex plugin marketplace add JustinyAhin/threadcast --sparse .agents --sparse packages/plugin-threadcast/codex';
 
 	let copied = $state<'claude' | 'codex' | null>(null);
 	let sections = $state<HTMLElement[]>([]);
@@ -252,7 +253,7 @@ claude plugin install threadcast@threadcast`;
 			</h2>
 			<p class="text-text-secondary">
 				Log in once, check what ThreadCast can see locally, then share the latest session or pick
-				one from recent history.
+				one from this project folder.
 			</p>
 		</div>
 
@@ -301,7 +302,7 @@ claude plugin install threadcast@threadcast`;
 					<h3 class="text-lg font-semibold text-text">Find</h3>
 				</div>
 				<p class="mb-5 text-sm leading-relaxed text-text-secondary">
-					ThreadCast scans the sessions Claude Code and Codex already save on your machine.
+					ThreadCast scans the sessions Claude Code and Codex already save for this project folder.
 				</p>
 				<!-- Terminal mockup -->
 				<div class="overflow-hidden rounded-lg border border-border bg-surface-1">
@@ -312,7 +313,7 @@ claude plugin install threadcast@threadcast`;
 					</div>
 					<div class="p-4 font-mono text-[11px] leading-5">
 						<p class="text-text-muted">$ /threadcast:share-recent</p>
-						<p class="mt-2 text-text-secondary">Your sessions:</p>
+						<p class="mt-2 text-text-secondary">This project's sessions:</p>
 						<p class="text-text">
 							<span class="text-accent">&#9656;</span> Add dark mode toggle
 							<span class="text-text-muted">8m ago</span>
@@ -340,8 +341,8 @@ claude plugin install threadcast@threadcast`;
 					<h3 class="text-lg font-semibold text-text">Share</h3>
 				</div>
 				<p class="mb-5 text-sm leading-relaxed text-text-secondary">
-					Share the latest session or pick one from recent history. ThreadCast uploads it and
-					returns a public link.
+					Share the latest session or pick one from this project folder. ThreadCast uploads it
+					and returns a public link.
 				</p>
 				<!-- Terminal mockup -->
 				<div class="overflow-hidden rounded-lg border border-border bg-surface-1">
