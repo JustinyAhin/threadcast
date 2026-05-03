@@ -7,7 +7,7 @@ import type { ShareSessionOptions, ShareSessionResult } from "../types.js";
 import { uploadThread } from "../uploader/api-client.js";
 
 const shareSession = async (
-  opts: ShareSessionOptions = {}
+  opts: ShareSessionOptions = {},
 ): Promise<ShareSessionResult> => {
   const config = await loadConfig();
   if (!config) {
@@ -34,6 +34,7 @@ const shareSession = async (
     filePath: selection.session.path,
     source: selection.session.source,
     uploader: {
+      githubId: config.githubId,
       githubUsername: config.githubUsername,
       githubAvatarUrl: config.githubAvatarUrl,
     },

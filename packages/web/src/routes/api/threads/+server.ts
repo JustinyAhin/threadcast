@@ -1,4 +1,5 @@
 import { findThreadBySessionId, listRecentThreads, storeThread } from '$lib/server/r2';
+import { isSameGithubUser } from '$lib/server/github-identity';
 import { resolveUser } from '$lib/server/resolve-user';
 import { createId } from '@paralleldrive/cuid2';
 import { error, json } from '@sveltejs/kit';
@@ -44,14 +45,18 @@ export const POST = async (event) => {
 	const threadData = result.data;
 
 	// Ensure uploader matches authenticated user
-	if (threadData.uploader.githubUsername !== user.login) {
+	if (!isSameGithubUser({ user, uploader: threadData.uploader })) {
 		error(403, { message: 'Uploader does not match authenticated user' });
+	}
+	if (user.githubId) {
+		threadData.uploader.githubId = user.githubId;
 	}
 
 	// Reuse existing ID on re-upload, otherwise generate new one
 	const bucket = event.platform!.env.THREADS_BUCKET;
 	const existingId = await findThreadBySessionId({
 		bucket,
+		githubId: user.githubId,
 		username: user.login,
 		sessionId: threadData.metadata.sessionId,
 		source: threadData.metadata.source

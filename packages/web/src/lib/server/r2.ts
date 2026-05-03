@@ -38,6 +38,13 @@ const storeThread = async ({
 		key: `indexes/by-user/${data.uploader.githubUsername}.json`,
 		meta
 	});
+	if (data.uploader.githubId) {
+		await updateIndex({
+			bucket,
+			key: `indexes/by-github-id/${data.uploader.githubId}.json`,
+			meta
+		});
+	}
 };
 
 const getThread = async ({
@@ -76,6 +83,30 @@ const listUserThreads = async ({
 	username: string;
 }): Promise<ThreadMeta[]> => {
 	return readIndex({ bucket, key: `indexes/by-user/${username}.json` });
+};
+
+const listOwnedThreads = async ({
+	bucket,
+	githubId,
+	username
+}: {
+	bucket: R2Bucket;
+	githubId?: string;
+	username: string;
+}): Promise<ThreadMeta[]> => {
+	const indexes = await Promise.all([
+		githubId ? readIndex({ bucket, key: `indexes/by-github-id/${githubId}.json` }) : [],
+		readIndex({ bucket, key: `indexes/by-user/${username}.json` })
+	]);
+	const byId = new Map<string, ThreadMeta>();
+
+	for (const meta of indexes.flat()) {
+		byId.set(meta.id, meta);
+	}
+
+	return [...byId.values()].sort(
+		(a, b) => new Date(b.metadata.created).getTime() - new Date(a.metadata.created).getTime()
+	);
 };
 
 const updateThreadVisibility = async ({
@@ -117,6 +148,13 @@ const updateThreadVisibility = async ({
 		key: `indexes/by-user/${meta.uploader.githubUsername}.json`,
 		meta
 	});
+	if (meta.uploader.githubId) {
+		await updateIndex({
+			bucket,
+			key: `indexes/by-github-id/${meta.uploader.githubId}.json`,
+			meta
+		});
+	}
 };
 
 const deleteThread = async ({ bucket, id }: { bucket: R2Bucket; id: string }): Promise<boolean> => {
@@ -134,6 +172,13 @@ const deleteThread = async ({ bucket, id }: { bucket: R2Bucket; id: string }): P
 		key: `indexes/by-user/${meta.uploader.githubUsername}.json`,
 		id
 	});
+	if (meta.uploader.githubId) {
+		await removeFromIndex({
+			bucket,
+			key: `indexes/by-github-id/${meta.uploader.githubId}.json`,
+			id
+		});
+	}
 
 	return true;
 };
@@ -193,20 +238,30 @@ const removeFromIndex = async ({
 
 const findThreadBySessionId = async ({
 	bucket,
+	githubId,
 	username,
 	sessionId,
 	source
 }: {
 	bucket: R2Bucket;
+	githubId?: string;
 	username: string;
 	sessionId: string;
 	source: ThreadMetadata['source'];
 }): Promise<string | null> => {
-	const index = await readIndex({ bucket, key: `indexes/by-user/${username}.json` });
+	const index = githubId
+		? await readIndex({ bucket, key: `indexes/by-github-id/${githubId}.json` })
+		: [];
 	const entry = index.find(
 		(m) => m.metadata.sessionId === sessionId && (m.metadata.source ?? 'claude-code') === source
 	);
-	return entry?.id ?? null;
+	if (entry) return entry.id;
+
+	const legacyIndex = await readIndex({ bucket, key: `indexes/by-user/${username}.json` });
+	const legacyEntry = legacyIndex.find(
+		(m) => m.metadata.sessionId === sessionId && (m.metadata.source ?? 'claude-code') === source
+	);
+	return legacyEntry?.id ?? null;
 };
 
 export {
@@ -214,6 +269,7 @@ export {
 	getThread,
 	getThreadMeta,
 	listRecentThreads,
+	listOwnedThreads,
 	listUserThreads,
 	updateThreadVisibility,
 	deleteThread,

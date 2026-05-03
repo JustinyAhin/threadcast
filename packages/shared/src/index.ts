@@ -75,6 +75,7 @@ const ThreadMetadataSchema = z.object({
 // ── Uploader ─────────────────────────────────────────────────────────────────
 
 const UploaderSchema = z.object({
+  githubId: z.string().optional(),
   githubUsername: z.string(),
   githubAvatarUrl: z.url(),
 });

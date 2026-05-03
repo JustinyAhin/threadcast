@@ -4,6 +4,7 @@ import { parseSession } from "../parser/index.js";
 import { createLruCache } from "./lru-cache.js";
 
 type Uploader = {
+  githubId?: string;
   githubUsername: string;
   githubAvatarUrl: string;
 };

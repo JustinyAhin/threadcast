@@ -37,7 +37,10 @@ type GitHubUser = {
   avatar_url: string;
 };
 
-const PENDING_DEVICE_LOGIN_FILE = join(getConfigDir(), "pending-device-login.json");
+const PENDING_DEVICE_LOGIN_FILE = join(
+  getConfigDir(),
+  "pending-device-login.json",
+);
 const API_BASE_URL = process.env.THREADCAST_API_URL || DEFAULT_API_BASE_URL;
 
 const sleep = (ms: number): Promise<void> =>
@@ -50,7 +53,7 @@ type PollForTokenOpts = {
 };
 
 const requestDeviceAccessToken = async (
-  deviceCode: string
+  deviceCode: string,
 ): Promise<TokenResponse | TokenErrorResponse> => {
   const res = await fetch("https://github.com/login/oauth/access_token", {
     method: "POST",
@@ -69,7 +72,7 @@ const requestDeviceAccessToken = async (
 };
 
 const exchangeGitHubTokenForLocalAuth = async (
-  githubToken: string
+  githubToken: string,
 ): Promise<AuthConfig> => {
   const res = await fetch(`${API_BASE_URL}/api/local-auth/device-exchange`, {
     method: "POST",
@@ -84,6 +87,7 @@ const exchangeGitHubTokenForLocalAuth = async (
   const auth = (await res.json()) as LocalAuthExchangeResponse;
   return {
     threadcastToken: auth.token,
+    githubId: auth.githubId,
     githubUsername: auth.githubUsername,
     githubAvatarUrl: auth.githubAvatarUrl,
     expiresAt: auth.expiresAt,
@@ -124,7 +128,7 @@ const pollForToken = async (opts: PollForTokenOpts): Promise<string> => {
         throw new Error("Authorization was denied.");
       }
       throw new Error(
-        `OAuth error: ${data.error} - ${data.error_description || ""}`
+        `OAuth error: ${data.error} - ${data.error_description || ""}`,
       );
     }
   }
@@ -132,7 +136,9 @@ const pollForToken = async (opts: PollForTokenOpts): Promise<string> => {
   throw new Error("Device code expired. Please try again.");
 };
 
-const savePendingDeviceLogin = async (pending: PendingDeviceLogin): Promise<void> => {
+const savePendingDeviceLogin = async (
+  pending: PendingDeviceLogin,
+): Promise<void> => {
   await mkdir(getConfigDir(), { recursive: true });
   await writeFile(PENDING_DEVICE_LOGIN_FILE, JSON.stringify(pending, null, 2), {
     mode: 0o600,
@@ -148,19 +154,20 @@ const readPendingDeviceLogin = async (): Promise<PendingDeviceLogin | null> => {
   }
 };
 
-const getValidPendingDeviceLogin = async (): Promise<PendingDeviceLogin | null> => {
-  const pending = await readPendingDeviceLogin();
-  if (!pending) return null;
+const getValidPendingDeviceLogin =
+  async (): Promise<PendingDeviceLogin | null> => {
+    const pending = await readPendingDeviceLogin();
+    if (!pending) return null;
 
-  const createdAt = new Date(pending.createdAt).getTime();
-  const deadline = createdAt + pending.expiresIn * 1000;
-  if (Number.isFinite(deadline) && Date.now() >= deadline) {
-    await clearPendingDeviceLogin();
-    return null;
-  }
+    const createdAt = new Date(pending.createdAt).getTime();
+    const deadline = createdAt + pending.expiresIn * 1000;
+    if (Number.isFinite(deadline) && Date.now() >= deadline) {
+      await clearPendingDeviceLogin();
+      return null;
+    }
 
-  return pending;
-};
+    return pending;
+  };
 
 const loadPendingDeviceLogin = async (): Promise<PendingDeviceLogin | null> =>
   getValidPendingDeviceLogin();
@@ -182,7 +189,7 @@ const startGitHubDeviceFlow = async (): Promise<PendingDeviceLogin> => {
     },
     body: JSON.stringify({
       client_id: GITHUB_CLIENT_ID,
-      scope: "read:user",
+      scope: "read:user user:email",
     }),
   });
 
@@ -212,7 +219,7 @@ const startGitHubDeviceFlow = async (): Promise<PendingDeviceLogin> => {
 };
 
 const finishGitHubDeviceFlow = async (
-  pending: PendingDeviceLogin
+  pending: PendingDeviceLogin,
 ): Promise<AuthConfig> => {
   const token = await pollForToken({
     deviceCode: pending.deviceCode,
@@ -226,19 +233,23 @@ const finishGitHubDeviceFlow = async (
 const completePendingGitHubDeviceFlow = async (): Promise<AuthConfig> => {
   const pending = await getValidPendingDeviceLogin();
   if (!pending) {
-    throw new Error("No pending ThreadCast login. Start with /threadcast:login first.");
+    throw new Error(
+      "No pending ThreadCast login. Start with /threadcast:login first.",
+    );
   }
 
   const createdAt = new Date(pending.createdAt).getTime();
   const deadline = createdAt + pending.expiresIn * 1000;
   if (Number.isFinite(deadline) && Date.now() >= deadline) {
     await clearPendingDeviceLogin();
-    throw new Error("The pending login expired. Start /threadcast:login again.");
+    throw new Error(
+      "The pending login expired. Start /threadcast:login again.",
+    );
   }
 
   const remainingSeconds = Math.max(
     1,
-    Math.floor((deadline - Date.now()) / 1000)
+    Math.floor((deadline - Date.now()) / 1000),
   );
 
   return finishGitHubDeviceFlow({
@@ -247,40 +258,47 @@ const completePendingGitHubDeviceFlow = async (): Promise<AuthConfig> => {
   });
 };
 
-const advancePendingGitHubDeviceFlow = async (): Promise<PendingLoginAdvanceResult> => {
-  const pending = await getValidPendingDeviceLogin();
-  if (!pending) {
-    throw new Error("No pending ThreadCast login. Start with /threadcast:login first.");
-  }
+const advancePendingGitHubDeviceFlow =
+  async (): Promise<PendingLoginAdvanceResult> => {
+    const pending = await getValidPendingDeviceLogin();
+    if (!pending) {
+      throw new Error(
+        "No pending ThreadCast login. Start with /threadcast:login first.",
+      );
+    }
 
-  const data = await requestDeviceAccessToken(pending.deviceCode);
+    const data = await requestDeviceAccessToken(pending.deviceCode);
 
-  if ("access_token" in data) {
-    const auth = await buildAndSaveAuthConfig(data.access_token);
-    return { status: "complete", auth };
-  }
+    if ("access_token" in data) {
+      const auth = await buildAndSaveAuthConfig(data.access_token);
+      return { status: "complete", auth };
+    }
 
-  if (data.error === "authorization_pending" || data.error === "slow_down") {
-    return { status: "pending", pending };
-  }
+    if (data.error === "authorization_pending" || data.error === "slow_down") {
+      return { status: "pending", pending };
+    }
 
-  if (data.error === "expired_token") {
-    await clearPendingDeviceLogin();
-    throw new Error("The pending login expired. Run /threadcast:login again.");
-  }
+    if (data.error === "expired_token") {
+      await clearPendingDeviceLogin();
+      throw new Error(
+        "The pending login expired. Run /threadcast:login again.",
+      );
+    }
 
-  if (data.error === "access_denied") {
-    await clearPendingDeviceLogin();
-    throw new Error("Authorization was denied. Run /threadcast:login to start again.");
-  }
+    if (data.error === "access_denied") {
+      await clearPendingDeviceLogin();
+      throw new Error(
+        "Authorization was denied. Run /threadcast:login to start again.",
+      );
+    }
 
-  throw new Error(
-    `OAuth error: ${data.error} - ${data.error_description || ""}`
-  );
-};
+    throw new Error(
+      `OAuth error: ${data.error} - ${data.error_description || ""}`,
+    );
+  };
 
 const githubDeviceFlow = async (
-  onUserCode: (code: string, verificationUri: string) => void
+  onUserCode: (code: string, verificationUri: string) => void,
 ): Promise<AuthConfig> => {
   const pending = await startGitHubDeviceFlow();
   onUserCode(pending.userCode, pending.verificationUri);

@@ -11,10 +11,16 @@ type CreateAuthOpts = {
 
 const createAuth = ({ env }: CreateAuthOpts) => {
 	const db = getDb(env.AUTH_DB);
+	const trustedOrigins = [
+		env.BETTER_AUTH_URL,
+		'http://localhost:5173',
+		'http://127.0.0.1:5173'
+	].filter(Boolean);
 
 	return betterAuth({
 		baseURL: env.BETTER_AUTH_URL,
 		secret: env.BETTER_AUTH_SECRET,
+		trustedOrigins,
 		database: drizzleAdapter(db, {
 			provider: 'sqlite',
 			schema: {
@@ -29,6 +35,7 @@ const createAuth = ({ env }: CreateAuthOpts) => {
 				clientId: env.GITHUB_CLIENT_ID,
 				clientSecret: env.GITHUB_CLIENT_SECRET,
 				mapProfileToUser: (profile) => ({
+					githubId: String(profile.id),
 					githubUsername: profile.login,
 					githubBio: profile.bio ?? null,
 					githubLocation: profile.location ?? null,
@@ -38,6 +45,12 @@ const createAuth = ({ env }: CreateAuthOpts) => {
 		},
 		user: {
 			additionalFields: {
+				githubId: {
+					type: 'string',
+					required: false,
+					input: false,
+					fieldName: 'githubId'
+				},
 				githubUsername: {
 					type: 'string',
 					required: false,

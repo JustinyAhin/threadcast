@@ -1,5 +1,6 @@
 import { getDb } from '$lib/server/db';
 import { createLocalAuthCode } from '$lib/server/local-auth';
+import { resolveUser } from '$lib/server/resolve-user';
 import { error, redirect } from '@sveltejs/kit';
 
 const isAllowedCallback = (value: string): boolean => {
@@ -15,7 +16,7 @@ export const GET = async (event) => {
 	const callback = event.url.searchParams.get('callback');
 	const state = event.url.searchParams.get('state');
 
-	if (!callback || !state || !isAllowedCallback(callback)) {
+	if (!callback || !state || state.length > 256 || !isAllowedCallback(callback)) {
 		error(400, { message: 'Invalid local login callback' });
 	}
 
@@ -24,15 +25,16 @@ export const GET = async (event) => {
 		redirect(302, `/login?callbackURL=${encodeURIComponent(next)}`);
 	}
 
-	const githubUsername = event.locals.user.githubUsername;
-	if (!githubUsername) {
+	const githubUser = await resolveUser(event);
+	if (!githubUser) {
 		error(400, { message: 'GitHub account is required' });
 	}
 
 	const code = await createLocalAuthCode({
 		db: getDb(event.platform!.env.AUTH_DB),
 		userId: event.locals.user.id,
-		githubUsername,
+		githubId: githubUser.githubId,
+		githubUsername: githubUser.login,
 		githubAvatarUrl: event.locals.user.image ?? ''
 	});
 

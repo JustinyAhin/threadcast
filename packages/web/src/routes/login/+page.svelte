@@ -7,10 +7,16 @@
 
 	const session = authClient.useSession();
 
+	const isSafeCallbackURL = (value: string | null): value is string => {
+		if (!value || value.length > 1024) return false;
+		return value.startsWith('/') && !value.startsWith('//') && !value.includes('\\');
+	};
+
 	const signIn = async () => {
+		const callbackURL = page.url.searchParams.get('callbackURL');
 		await authClient.signIn.social({
 			provider: 'github',
-			callbackURL: page.url.searchParams.get('callbackURL') ?? '/threads'
+			callbackURL: isSafeCallbackURL(callbackURL) ? callbackURL : '/threads'
 		});
 	};
 

@@ -94,6 +94,7 @@ type ApiError = {
 
 type AuthConfig = {
   threadcastToken: string;
+  githubId?: string;
   githubUsername: string;
   githubAvatarUrl: string;
   expiresAt?: string;

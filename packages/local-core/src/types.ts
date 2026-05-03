@@ -1,4 +1,8 @@
-import type { AuthConfig, SessionSource, SessionSummary } from "@threadcast/shared";
+import type {
+  AuthConfig,
+  SessionSource,
+  SessionSummary,
+} from "@threadcast/shared";
 
 type PendingDeviceLogin = {
   deviceCode: string;
@@ -15,6 +19,7 @@ type PendingLoginAdvanceResult =
 
 type LocalAuthExchangeResponse = {
   token: string;
+  githubId?: string;
   githubUsername: string;
   githubAvatarUrl: string;
   expiresAt: string;
