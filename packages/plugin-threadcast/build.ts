@@ -13,7 +13,7 @@ for (const outputDir of outputDirs) {
   const bundle = await Bun.build({
     entrypoints: [join(here, "../mcp/src/index.ts")],
     outdir: outputDir,
-    target: "bun",
+    target: "node",
     naming: "threadcast-mcp.js",
     format: "esm",
   });
