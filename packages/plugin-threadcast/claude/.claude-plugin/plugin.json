@@ -1,6 +1,6 @@
 {
   "name": "threadcast",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Share local Claude Code sessions to ThreadCast.",
   "author": {
     "name": "ThreadCast"

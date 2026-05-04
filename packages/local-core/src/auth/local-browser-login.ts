@@ -128,7 +128,16 @@ const exchangeLocalAuthCode = async (code: string): Promise<AuthConfig> => {
   };
 };
 
+const isHeadlessEnvironment = (): boolean => {
+  if (process.platform !== "linux") return false;
+  return !process.env.DISPLAY && !process.env.WAYLAND_DISPLAY;
+};
+
 const loginWithBrowser = async (): Promise<AuthConfig> => {
+  if (isHeadlessEnvironment()) {
+    throw new Error("Headless environment detected; falling back to device flow.");
+  }
+
   const state = randomState();
   const callback = await waitForCallback({ state });
   const timeout = new Promise<never>((_, reject) => {

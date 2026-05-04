@@ -14362,7 +14362,15 @@ var exchangeLocalAuthCode = async (code) => {
     expiresAt: auth.expiresAt
   };
 };
+var isHeadlessEnvironment = () => {
+  if (process.platform !== "linux")
+    return false;
+  return !process.env.DISPLAY && !process.env.WAYLAND_DISPLAY;
+};
 var loginWithBrowser = async () => {
+  if (isHeadlessEnvironment()) {
+    throw new Error("Headless environment detected; falling back to device flow.");
+  }
   const state = randomState();
   const callback = await waitForCallback({ state });
   const timeout = new Promise((_, reject) => {
