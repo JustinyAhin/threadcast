@@ -1,6 +1,6 @@
 {
   "name": "threadcast",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Share local Claude Code and Codex sessions to ThreadCast.",
   "repository": "https://github.com/JustinyAhin/threadcast",
   "skills": "./skills/",
@@ -12,7 +12,7 @@
     "developerName": "ThreadCast",
     "category": "Productivity",
     "capabilities": ["MCP", "Skills"],
-    "defaultPrompt": ["$threadcast-share", "$threadcast-share-recent", "$threadcast-status"],
+    "defaultPrompt": ["$threadcast-share", "$threadcast-share-recent", "$threadcast-status", "$threadcast-debug"],
     "brandColor": "#0F766E"
   }
 }

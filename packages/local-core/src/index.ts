@@ -9,6 +9,7 @@ export {
   advancePendingGitHubDeviceFlow,
 } from "./auth/github-device-flow.js";
 export { loginWithBrowser } from "./auth/local-browser-login.js";
+export { log, logSync, readRecentLogLines, getLogPath } from "./lib/logger.js";
 export { createLruCache } from "./lib/lru-cache.js";
 export { createSessionCache } from "./lib/session-cache.js";
 export { loadIndex, saveIndex } from "./lib/session-index.js";

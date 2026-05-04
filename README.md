@@ -119,6 +119,7 @@ This adds the following commands inside Claude Code:
 - `/threadcast:status`
 - `/threadcast:share`
 - `/threadcast:share-recent`
+- `/threadcast:debug`
 
 ### Codex
 
@@ -135,6 +136,7 @@ Command-like skills:
 - `$threadcast:threadcast-status`
 - `$threadcast:threadcast-share`
 - `$threadcast:threadcast-share-recent`
+- `$threadcast:threadcast-debug`
 
 For local plugin setup, localhost auth, and production release prep, see [Local Development](kb/local-dev.md).
 

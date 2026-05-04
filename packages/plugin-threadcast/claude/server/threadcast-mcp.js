@@ -14391,6 +14391,50 @@ var loginWithBrowser = async () => {
     });
   }
 };
+// ../local-core/src/lib/logger.ts
+import { appendFile, mkdir as mkdir3, readFile as readFile3, rename, stat } from "node:fs/promises";
+import { dirname, join as join3 } from "node:path";
+var MAX_LOG_BYTES = 1e6;
+var getLogPath = () => join3(getConfigDir(), "logs", "mcp.log");
+var rotateIfNeeded = async (path2) => {
+  try {
+    const info = await stat(path2);
+    if (info.size < MAX_LOG_BYTES)
+      return;
+    await rename(path2, `${path2}.1`).catch(() => {
+      return;
+    });
+  } catch {}
+};
+var log = async (fields) => {
+  const path2 = getLogPath();
+  const payload = {
+    ts: new Date().toISOString(),
+    level: fields.level ?? "info",
+    ...fields
+  };
+  const line = `${JSON.stringify(payload)}
+`;
+  try {
+    await mkdir3(dirname(path2), { recursive: true });
+    await rotateIfNeeded(path2);
+    await appendFile(path2, line, "utf-8");
+  } catch {}
+};
+var logSync = (fields) => {
+  log(fields);
+};
+var readRecentLogLines = async (opts) => {
+  const path2 = getLogPath();
+  try {
+    const text = await readFile3(path2, "utf-8");
+    const lines = text.split(`
+`).filter((line) => line.length > 0);
+    return lines.slice(-opts.count);
+  } catch {
+    return [];
+  }
+};
 // ../local-core/src/lib/lru-cache.ts
 var createLruCache = (opts) => {
   const { maxSize } = opts;
@@ -14428,13 +14472,13 @@ var createSessionCache = () => {
   };
 };
 // ../local-core/src/lib/session-index.ts
-import { readFile as readFile3, writeFile as writeFile3, mkdir as mkdir3 } from "node:fs/promises";
-import { join as join3 } from "node:path";
+import { readFile as readFile4, writeFile as writeFile3, mkdir as mkdir4 } from "node:fs/promises";
+import { join as join4 } from "node:path";
 var INDEX_DIR = getConfigDir();
-var INDEX_PATH = join3(INDEX_DIR, "session-index.json");
+var INDEX_PATH = join4(INDEX_DIR, "session-index.json");
 var loadIndex = async () => {
   try {
-    const raw = await readFile3(INDEX_PATH, "utf-8");
+    const raw = await readFile4(INDEX_PATH, "utf-8");
     const parsed = JSON.parse(raw);
     if (parsed.version === 1 && parsed.entries)
       return parsed;
@@ -14442,12 +14486,12 @@ var loadIndex = async () => {
   return { version: 1, entries: {} };
 };
 var saveIndex = async (opts) => {
-  await mkdir3(INDEX_DIR, { recursive: true });
+  await mkdir4(INDEX_DIR, { recursive: true });
   await writeFile3(INDEX_PATH, JSON.stringify(opts.index), "utf-8");
 };
 // ../local-core/src/lib/session-discovery.ts
-import { readdir, stat } from "node:fs/promises";
-import { join as join4, basename } from "node:path";
+import { readdir, stat as stat2 } from "node:fs/promises";
+import { join as join5, basename } from "node:path";
 import { homedir as homedir2 } from "node:os";
 import { createReadStream } from "node:fs";
 import { createInterface } from "node:readline";
@@ -14475,8 +14519,8 @@ var normalizeClaudeCommandText = (text) => {
 };
 
 // ../local-core/src/lib/session-discovery.ts
-var CLAUDE_PROJECTS_DIR = join4(homedir2(), ".claude", "projects");
-var CODEX_SESSIONS_DIR = join4(homedir2(), ".codex", "sessions");
+var CLAUDE_PROJECTS_DIR = join5(homedir2(), ".claude", "projects");
+var CODEX_SESSIONS_DIR = join5(homedir2(), ".codex", "sessions");
 var sessionCache = createSessionCache();
 var scanClaudeSessionFile = async (filePath) => {
   const stream = createReadStream(filePath, { encoding: "utf-8" });
@@ -14592,7 +14636,7 @@ var listJsonlFiles = async (dir) => {
   const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
   const files = [];
   for (const entry of entries) {
-    const path2 = join4(dir, entry.name);
+    const path2 = join5(dir, entry.name);
     if (entry.isDirectory()) {
       files.push(...await listJsonlFiles(path2));
     } else if (entry.isFile() && entry.name.endsWith(".jsonl")) {
@@ -14617,7 +14661,7 @@ var pushSession = (opts) => {
 var discoverSessionsForSource = async (opts) => {
   let indexDirty = false;
   for (const filePath of opts.files) {
-    const fileStat = await stat(filePath).catch(() => null);
+    const fileStat = await stat2(filePath).catch(() => null);
     if (!fileStat)
       continue;
     const fallbackProjectPath = opts.projectPathForFile(filePath);
@@ -14721,8 +14765,8 @@ var discoverSessions = async () => {
   let indexDirty = false;
   const projectDirs = await readdir(CLAUDE_PROJECTS_DIR).catch(() => []);
   for (const projectDir of projectDirs) {
-    const projectPath = join4(CLAUDE_PROJECTS_DIR, projectDir);
-    const dirStat = await stat(projectPath).catch(() => null);
+    const projectPath = join5(CLAUDE_PROJECTS_DIR, projectDir);
+    const dirStat = await stat2(projectPath).catch(() => null);
     if (!dirStat?.isDirectory())
       continue;
     let files;
@@ -14733,7 +14777,7 @@ var discoverSessions = async () => {
     }
     const sourceDirty = await discoverSessionsForSource({
       source: "claude-code",
-      files: files.filter((file2) => file2.endsWith(".jsonl")).map((file2) => join4(projectPath, file2)),
+      files: files.filter((file2) => file2.endsWith(".jsonl")).map((file2) => join5(projectPath, file2)),
       projectPathForFile: () => projectDir.replace(/-/g, "/"),
       sessionIdForFile: (filePath) => basename(filePath, ".jsonl"),
       scanFile: scanClaudeSessionFile,
@@ -14772,12 +14816,12 @@ var findSession = async (opts) => {
 var getSessionShareKey = (opts) => `${opts.source}:${opts.sessionId}`;
 var isSessionSource = (value) => value === "claude-code" || value === "codex";
 // ../local-core/src/lib/shared-sessions.ts
-import { readFile as readFile4, writeFile as writeFile4, mkdir as mkdir4 } from "node:fs/promises";
-import { join as join5 } from "node:path";
-var SHARED_FILE = join5(getConfigDir(), "shared.json");
+import { readFile as readFile5, writeFile as writeFile4, mkdir as mkdir5 } from "node:fs/promises";
+import { join as join6 } from "node:path";
+var SHARED_FILE = join6(getConfigDir(), "shared.json");
 var loadSharedSessions = async () => {
   try {
-    const raw = await readFile4(SHARED_FILE, "utf-8");
+    const raw = await readFile5(SHARED_FILE, "utf-8");
     return JSON.parse(raw);
   } catch {
     return {};
@@ -14789,11 +14833,11 @@ var saveSharedSession = async (opts) => {
     url: opts.url,
     sharedAt: new Date().toISOString()
   };
-  await mkdir4(getConfigDir(), { recursive: true });
+  await mkdir5(getConfigDir(), { recursive: true });
   await writeFile4(SHARED_FILE, JSON.stringify(existing, null, 2));
 };
 // ../local-core/src/lib/thread-cache.ts
-import { stat as stat2 } from "node:fs/promises";
+import { stat as stat3 } from "node:fs/promises";
 
 // ../local-core/src/parser/jsonl-reader.ts
 import { createReadStream as createReadStream2 } from "node:fs";
@@ -15473,7 +15517,7 @@ var parseSession = async ({
 var threadLru = createLruCache({ maxSize: 3 });
 var getCachedThread = async (opts) => {
   const { filePath, source = "claude-code", uploader } = opts;
-  const fileStat = await stat2(filePath);
+  const fileStat = await stat3(filePath);
   const key = `${source}:${filePath}:${fileStat.mtimeMs}`;
   const cached2 = threadLru.get(key);
   if (cached2) {
@@ -15580,10 +15624,13 @@ var shareSession = async (opts = {}) => {
   };
 };
 // ../mcp/src/index.ts
+import { readdir as readdir2, stat as stat4 } from "node:fs/promises";
+import { join as join7 } from "node:path";
 var PROTOCOL_VERSION = "2025-03-26";
+var MCP_VERSION = "0.0.7";
 var SERVER_INFO = {
   name: "threadcast-local",
-  version: "0.0.1"
+  version: MCP_VERSION
 };
 var tools = [
   {
@@ -15641,6 +15688,18 @@ var tools = [
         source: { type: "string", enum: ["claude-code", "codex"] },
         projectPath: { type: "string" },
         latest: { type: "boolean" }
+      },
+      additionalProperties: false
+    }
+  },
+  {
+    name: "threadcast.debug",
+    title: "ThreadCast Debug",
+    description: "Print a diagnostic dump (plugin version, runtime info, env summary, config dir contents, recent MCP server log lines) for support and bug reports.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        logLines: { type: "number", minimum: 1, maximum: 1000 }
       },
       additionalProperties: false
     }
@@ -15805,9 +15864,106 @@ var handleToolCall = async ({
         });
       }
     }
+    case "threadcast.debug": {
+      const requested = typeof args?.logLines === "number" ? args.logLines : 200;
+      const logLines = Math.min(Math.max(Math.floor(requested), 1), 1000);
+      const dump = await buildDebugDump({ logLines });
+      return textResult({
+        text: dump.text,
+        structuredContent: dump.structured
+      });
+    }
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
+};
+var summarizeEnv = () => {
+  const present = (value) => value === undefined || value === "" ? null : "set";
+  return {
+    DISPLAY: present(process.env.DISPLAY),
+    WAYLAND_DISPLAY: present(process.env.WAYLAND_DISPLAY),
+    SSH_TTY: present(process.env.SSH_TTY),
+    SSH_CONNECTION: present(process.env.SSH_CONNECTION),
+    THREADCAST_API_URL: present(process.env.THREADCAST_API_URL),
+    THREADCAST_CONFIG_DIR: present(process.env.THREADCAST_CONFIG_DIR)
+  };
+};
+var listConfigFiles = async () => {
+  const configDir = getConfigDir();
+  try {
+    const entries = await readdir2(configDir, { withFileTypes: true });
+    const out = [];
+    for (const entry of entries) {
+      let size = null;
+      try {
+        const info = await stat4(join7(configDir, entry.name));
+        size = info.size;
+      } catch {}
+      out.push({
+        name: entry.name,
+        size,
+        type: entry.isDirectory() ? "dir" : entry.isFile() ? "file" : "other"
+      });
+    }
+    return out;
+  } catch {
+    return [];
+  }
+};
+var buildDebugDump = async ({ logLines }) => {
+  const env = summarizeEnv();
+  const configDir = getConfigDir();
+  const files = await listConfigFiles();
+  const recent = await readRecentLogLines({ count: logLines });
+  const structured = {
+    pluginVersion: MCP_VERSION,
+    nodeVersion: process.version,
+    platform: process.platform,
+    arch: process.arch,
+    pid: process.pid,
+    cwd: process.cwd(),
+    configDir,
+    logPath: getLogPath(),
+    env,
+    configDirContents: files,
+    recentLogLines: recent
+  };
+  const lines = [];
+  lines.push("ThreadCast MCP server diagnostic dump");
+  lines.push("");
+  lines.push(`Plugin version: ${MCP_VERSION}`);
+  lines.push(`Node:           ${process.version}`);
+  lines.push(`Platform:       ${process.platform} (${process.arch})`);
+  lines.push(`PID:            ${process.pid}`);
+  lines.push(`CWD:            ${process.cwd()}`);
+  lines.push(`Config dir:     ${configDir}`);
+  lines.push(`Log path:       ${getLogPath()}`);
+  lines.push("");
+  lines.push("Environment (presence only — no values logged):");
+  for (const [key, state] of Object.entries(env)) {
+    lines.push(`  ${key}: ${state ?? "unset"}`);
+  }
+  lines.push("");
+  lines.push(`Config dir contents (${files.length}):`);
+  if (files.length === 0) {
+    lines.push("  (empty or missing)");
+  } else {
+    for (const file2 of files) {
+      const sizeStr = file2.size === null ? "?" : `${file2.size}`;
+      lines.push(`  ${file2.name} (${file2.type}, ${sizeStr} bytes)`);
+    }
+  }
+  lines.push("");
+  lines.push(`Recent log lines (${recent.length}):`);
+  if (recent.length === 0) {
+    lines.push("  (no log file yet)");
+  } else {
+    for (const line of recent) {
+      lines.push(`  ${line}`);
+    }
+  }
+  return { text: lines.join(`
+`), structured };
 };
 var handleRequest = async (request) => {
   switch (request.method) {
@@ -15836,14 +15992,31 @@ var handleRequest = async (request) => {
         sendError({ id: request.id, code: -32602, message: "Tool name is required" });
         return;
       }
+      const startedAt = Date.now();
+      await log({ event: "tool_call_start", tool: name });
       try {
         const result = await handleToolCall({
           name,
           args: typeof params.arguments === "object" && params.arguments !== null ? params.arguments : undefined
         });
         sendResponse({ id: request.id, result });
+        const isError = result.isError === true;
+        await log({
+          event: "tool_call_end",
+          tool: name,
+          durationMs: Date.now() - startedAt,
+          outcome: isError ? "error" : "ok"
+        });
       } catch (error48) {
         const message = error48 instanceof Error ? error48.message : "Tool call failed";
+        await log({
+          level: "error",
+          event: "tool_call_end",
+          tool: name,
+          durationMs: Date.now() - startedAt,
+          outcome: "error",
+          error: message
+        });
         sendResponse({
           id: request.id,
           result: textResult({
@@ -15864,14 +16037,55 @@ var handleRequest = async (request) => {
   }
 };
 var handleNotification = (_notification) => {};
+process.on("uncaughtException", (error48) => {
+  logSync({
+    level: "error",
+    event: "uncaught_exception",
+    error: error48.message,
+    stack: error48.stack
+  });
+  console.error("ThreadCast MCP uncaughtException:", error48);
+  setTimeout(() => process.exit(1), 50).unref();
+});
+process.on("unhandledRejection", (reason) => {
+  const error48 = reason instanceof Error ? reason : new Error(String(reason));
+  logSync({
+    level: "error",
+    event: "unhandled_rejection",
+    error: error48.message,
+    stack: error48.stack
+  });
+  console.error("ThreadCast MCP unhandledRejection:", error48);
+  setTimeout(() => process.exit(1), 50).unref();
+});
 var start = () => {
+  log({
+    event: "server_start",
+    pluginVersion: MCP_VERSION,
+    nodeVersion: process.version,
+    platform: process.platform,
+    arch: process.arch,
+    pid: process.pid,
+    cwd: process.cwd(),
+    env: {
+      DISPLAY: process.env.DISPLAY ? "set" : null,
+      WAYLAND_DISPLAY: process.env.WAYLAND_DISPLAY ? "set" : null,
+      SSH_TTY: process.env.SSH_TTY ? "set" : null,
+      SSH_CONNECTION: process.env.SSH_CONNECTION ? "set" : null,
+      THREADCAST_API_URL: process.env.THREADCAST_API_URL ? "set" : null,
+      THREADCAST_CONFIG_DIR: process.env.THREADCAST_CONFIG_DIR ? "set" : null
+    }
+  });
   process.stdin.setEncoding("utf8");
   let buffer = "";
   let pending = Promise.resolve();
   let stdinEnded = false;
   const finishIfDone = () => {
     if (stdinEnded) {
-      pending.finally(() => process.exit(0));
+      pending.finally(() => {
+        logSync({ event: "server_exit", reason: "stdin_closed" });
+        process.exit(0);
+      });
     }
   };
   process.stdin.on("data", async (chunk) => {
@@ -15892,6 +16106,8 @@ var start = () => {
             handleNotification(message);
           }
         } catch (error48) {
+          const errorMessage = error48 instanceof Error ? error48.message : String(error48);
+          await log({ level: "warn", event: "invalid_message", error: errorMessage });
           console.error("Invalid MCP message", error48);
         }
       });
@@ -15899,8 +16115,12 @@ var start = () => {
     finishIfDone();
   });
   process.stdin.on("end", () => {
+    log({ event: "stdin_end" });
     stdinEnded = true;
     finishIfDone();
+  });
+  process.stdin.on("error", (error48) => {
+    logSync({ level: "error", event: "stdin_error", error: error48.message });
   });
 };
 start();

@@ -13,6 +13,7 @@ Claude Code commands:
 - `/threadcast:status`
 - `/threadcast:share`
 - `/threadcast:share-recent`
+- `/threadcast:debug`
 
 ## Codex
 
@@ -25,6 +26,7 @@ The Codex plugin includes command-like skills and the local ThreadCast MCP serve
 - `$threadcast:threadcast-status`
 - `$threadcast:threadcast-share`
 - `$threadcast:threadcast-share-recent`
+- `$threadcast:threadcast-debug`
 
 ## Development
 

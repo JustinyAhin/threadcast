@@ -9,8 +9,14 @@ import {
   shareSession,
   startGitHubDeviceFlow,
   isSessionSource,
+  log,
+  logSync,
+  readRecentLogLines,
+  getLogPath,
 } from "@threadcast/local-core";
 import { getConfigDir } from "@threadcast/local-core";
+import { readdir, stat } from "node:fs/promises";
+import { join } from "node:path";
 
 type JsonRpcId = string | number;
 
@@ -35,9 +41,10 @@ type Tool = {
 };
 
 const PROTOCOL_VERSION = "2025-03-26";
+const MCP_VERSION = process.env.THREADCAST_MCP_VERSION || "0.0.0-dev";
 const SERVER_INFO = {
   name: "threadcast-local",
-  version: "0.0.1",
+  version: MCP_VERSION,
 };
 
 const tools: Tool[] = [
@@ -97,6 +104,19 @@ const tools: Tool[] = [
         source: { type: "string", enum: ["claude-code", "codex"] },
         projectPath: { type: "string" },
         latest: { type: "boolean" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "threadcast.debug",
+    title: "ThreadCast Debug",
+    description:
+      "Print a diagnostic dump (plugin version, runtime info, env summary, config dir contents, recent MCP server log lines) for support and bug reports.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        logLines: { type: "number", minimum: 1, maximum: 1000 },
       },
       additionalProperties: false,
     },
@@ -301,9 +321,114 @@ const handleToolCall = async ({
         });
       }
     }
+    case "threadcast.debug": {
+      const requested = typeof args?.logLines === "number" ? args.logLines : 200;
+      const logLines = Math.min(Math.max(Math.floor(requested), 1), 1000);
+      const dump = await buildDebugDump({ logLines });
+      return textResult({
+        text: dump.text,
+        structuredContent: dump.structured,
+      });
+    }
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
+};
+
+const summarizeEnv = () => {
+  const present = (value: string | undefined) =>
+    value === undefined || value === "" ? null : "set";
+  return {
+    DISPLAY: present(process.env.DISPLAY),
+    WAYLAND_DISPLAY: present(process.env.WAYLAND_DISPLAY),
+    SSH_TTY: present(process.env.SSH_TTY),
+    SSH_CONNECTION: present(process.env.SSH_CONNECTION),
+    THREADCAST_API_URL: present(process.env.THREADCAST_API_URL),
+    THREADCAST_CONFIG_DIR: present(process.env.THREADCAST_CONFIG_DIR),
+  };
+};
+
+const listConfigFiles = async () => {
+  const configDir = getConfigDir();
+  try {
+    const entries = await readdir(configDir, { withFileTypes: true });
+    const out: { name: string; size: number | null; type: string }[] = [];
+    for (const entry of entries) {
+      let size: number | null = null;
+      try {
+        const info = await stat(join(configDir, entry.name));
+        size = info.size;
+      } catch {
+        // ignore stat failures
+      }
+      out.push({
+        name: entry.name,
+        size,
+        type: entry.isDirectory() ? "dir" : entry.isFile() ? "file" : "other",
+      });
+    }
+    return out;
+  } catch {
+    return [];
+  }
+};
+
+const buildDebugDump = async ({ logLines }: { logLines: number }) => {
+  const env = summarizeEnv();
+  const configDir = getConfigDir();
+  const files = await listConfigFiles();
+  const recent = await readRecentLogLines({ count: logLines });
+
+  const structured = {
+    pluginVersion: MCP_VERSION,
+    nodeVersion: process.version,
+    platform: process.platform,
+    arch: process.arch,
+    pid: process.pid,
+    cwd: process.cwd(),
+    configDir,
+    logPath: getLogPath(),
+    env,
+    configDirContents: files,
+    recentLogLines: recent,
+  };
+
+  const lines: string[] = [];
+  lines.push("ThreadCast MCP server diagnostic dump");
+  lines.push("");
+  lines.push(`Plugin version: ${MCP_VERSION}`);
+  lines.push(`Node:           ${process.version}`);
+  lines.push(`Platform:       ${process.platform} (${process.arch})`);
+  lines.push(`PID:            ${process.pid}`);
+  lines.push(`CWD:            ${process.cwd()}`);
+  lines.push(`Config dir:     ${configDir}`);
+  lines.push(`Log path:       ${getLogPath()}`);
+  lines.push("");
+  lines.push("Environment (presence only — no values logged):");
+  for (const [key, state] of Object.entries(env)) {
+    lines.push(`  ${key}: ${state ?? "unset"}`);
+  }
+  lines.push("");
+  lines.push(`Config dir contents (${files.length}):`);
+  if (files.length === 0) {
+    lines.push("  (empty or missing)");
+  } else {
+    for (const file of files) {
+      const sizeStr = file.size === null ? "?" : `${file.size}`;
+      lines.push(`  ${file.name} (${file.type}, ${sizeStr} bytes)`);
+    }
+  }
+  lines.push("");
+  lines.push(`Recent log lines (${recent.length}):`);
+  if (recent.length === 0) {
+    lines.push("  (no log file yet)");
+  } else {
+    for (const line of recent) {
+      lines.push(`  ${line}`);
+    }
+  }
+
+  return { text: lines.join("\n"), structured };
 };
 
 const handleRequest = async (request: JsonRpcRequest) => {
@@ -333,6 +458,8 @@ const handleRequest = async (request: JsonRpcRequest) => {
         sendError({ id: request.id, code: -32602, message: "Tool name is required" });
         return;
       }
+      const startedAt = Date.now();
+      await log({ event: "tool_call_start", tool: name });
       try {
         const result = await handleToolCall({
           name,
@@ -342,8 +469,23 @@ const handleRequest = async (request: JsonRpcRequest) => {
               : undefined,
         });
         sendResponse({ id: request.id, result });
+        const isError = (result as { isError?: boolean }).isError === true;
+        await log({
+          event: "tool_call_end",
+          tool: name,
+          durationMs: Date.now() - startedAt,
+          outcome: isError ? "error" : "ok",
+        });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Tool call failed";
+        await log({
+          level: "error",
+          event: "tool_call_end",
+          tool: name,
+          durationMs: Date.now() - startedAt,
+          outcome: "error",
+          error: message,
+        });
         sendResponse({
           id: request.id,
           result: textResult({
@@ -368,7 +510,48 @@ const handleNotification = (_notification: JsonRpcNotification) => {
   // No-op for notifications/initialized and other client notifications.
 };
 
+process.on("uncaughtException", (error: Error) => {
+  logSync({
+    level: "error",
+    event: "uncaught_exception",
+    error: error.message,
+    stack: error.stack,
+  });
+  console.error("ThreadCast MCP uncaughtException:", error);
+  setTimeout(() => process.exit(1), 50).unref();
+});
+
+process.on("unhandledRejection", (reason: unknown) => {
+  const error = reason instanceof Error ? reason : new Error(String(reason));
+  logSync({
+    level: "error",
+    event: "unhandled_rejection",
+    error: error.message,
+    stack: error.stack,
+  });
+  console.error("ThreadCast MCP unhandledRejection:", error);
+  setTimeout(() => process.exit(1), 50).unref();
+});
+
 const start = () => {
+  void log({
+    event: "server_start",
+    pluginVersion: MCP_VERSION,
+    nodeVersion: process.version,
+    platform: process.platform,
+    arch: process.arch,
+    pid: process.pid,
+    cwd: process.cwd(),
+    env: {
+      DISPLAY: process.env.DISPLAY ? "set" : null,
+      WAYLAND_DISPLAY: process.env.WAYLAND_DISPLAY ? "set" : null,
+      SSH_TTY: process.env.SSH_TTY ? "set" : null,
+      SSH_CONNECTION: process.env.SSH_CONNECTION ? "set" : null,
+      THREADCAST_API_URL: process.env.THREADCAST_API_URL ? "set" : null,
+      THREADCAST_CONFIG_DIR: process.env.THREADCAST_CONFIG_DIR ? "set" : null,
+    },
+  });
+
   process.stdin.setEncoding("utf8");
   let buffer = "";
   let pending = Promise.resolve();
@@ -376,7 +559,10 @@ const start = () => {
 
   const finishIfDone = () => {
     if (stdinEnded) {
-      pending.finally(() => process.exit(0));
+      pending.finally(() => {
+        logSync({ event: "server_exit", reason: "stdin_closed" });
+        process.exit(0);
+      });
     }
   };
 
@@ -398,6 +584,8 @@ const start = () => {
             handleNotification(message);
           }
         } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          await log({ level: "warn", event: "invalid_message", error: errorMessage });
           console.error("Invalid MCP message", error);
         }
       });
@@ -407,8 +595,13 @@ const start = () => {
   });
 
   process.stdin.on("end", () => {
+    void log({ event: "stdin_end" });
     stdinEnded = true;
     finishIfDone();
+  });
+
+  process.stdin.on("error", (error: Error) => {
+    logSync({ level: "error", event: "stdin_error", error: error.message });
   });
 };
 
