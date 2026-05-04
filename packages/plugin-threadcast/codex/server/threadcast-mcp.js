@@ -14146,6 +14146,15 @@ var open_default = open;
 // ../local-core/src/auth/github-device-flow.ts
 import { mkdir as mkdir2, readFile as readFile2, unlink, writeFile as writeFile2 } from "node:fs/promises";
 import { join as join2 } from "node:path";
+
+// ../local-core/src/lib/headless.ts
+var isHeadlessEnvironment = () => {
+  if (process.platform !== "linux")
+    return false;
+  return !process.env.DISPLAY && !process.env.WAYLAND_DISPLAY;
+};
+
+// ../local-core/src/auth/github-device-flow.ts
 var PENDING_DEVICE_LOGIN_FILE = join2(getConfigDir(), "pending-device-login.json");
 var API_BASE_URL2 = process.env.THREADCAST_API_URL || API_BASE_URL;
 var requestDeviceAccessToken = async (deviceCode) => {
@@ -14244,9 +14253,11 @@ var startGitHubDeviceFlow = async () => {
     createdAt: new Date().toISOString()
   };
   await savePendingDeviceLogin(pending);
-  try {
-    await open_default(deviceData.verification_uri);
-  } catch {}
+  if (!isHeadlessEnvironment()) {
+    try {
+      await open_default(deviceData.verification_uri);
+    } catch {}
+  }
   return pending;
 };
 var advancePendingGitHubDeviceFlow = async () => {
@@ -14361,11 +14372,6 @@ var exchangeLocalAuthCode = async (code) => {
     githubAvatarUrl: auth.githubAvatarUrl,
     expiresAt: auth.expiresAt
   };
-};
-var isHeadlessEnvironment = () => {
-  if (process.platform !== "linux")
-    return false;
-  return !process.env.DISPLAY && !process.env.WAYLAND_DISPLAY;
 };
 var loginWithBrowser = async () => {
   if (isHeadlessEnvironment()) {
@@ -15627,7 +15633,7 @@ var shareSession = async (opts = {}) => {
 import { readdir as readdir2, stat as stat4 } from "node:fs/promises";
 import { join as join7 } from "node:path";
 var PROTOCOL_VERSION = "2025-03-26";
-var MCP_VERSION = "0.0.7";
+var MCP_VERSION = "0.0.8";
 var SERVER_INFO = {
   name: "threadcast-local",
   version: MCP_VERSION

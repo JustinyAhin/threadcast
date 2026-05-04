@@ -7,6 +7,7 @@ import open from "open";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { getConfigDir, saveConfig } from "./config.js";
+import { isHeadlessEnvironment } from "../lib/headless.js";
 import type {
   LocalAuthExchangeResponse,
   PendingDeviceLogin,
@@ -209,10 +210,12 @@ const startGitHubDeviceFlow = async (): Promise<PendingDeviceLogin> => {
 
   await savePendingDeviceLogin(pending);
 
-  try {
-    await open(deviceData.verification_uri);
-  } catch {
-    // User will need to open manually
+  if (!isHeadlessEnvironment()) {
+    try {
+      await open(deviceData.verification_uri);
+    } catch {
+      // User will need to open manually
+    }
   }
 
   return pending;

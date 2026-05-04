@@ -10,6 +10,7 @@ import {
 } from "node:http";
 import type { AddressInfo } from "node:net";
 import { saveConfig } from "./config.js";
+import { isHeadlessEnvironment } from "../lib/headless.js";
 import type { LocalAuthExchangeResponse } from "../types.js";
 
 const API_BASE_URL = process.env.THREADCAST_API_URL || DEFAULT_API_BASE_URL;
@@ -126,11 +127,6 @@ const exchangeLocalAuthCode = async (code: string): Promise<AuthConfig> => {
     githubAvatarUrl: auth.githubAvatarUrl,
     expiresAt: auth.expiresAt,
   };
-};
-
-const isHeadlessEnvironment = (): boolean => {
-  if (process.platform !== "linux") return false;
-  return !process.env.DISPLAY && !process.env.WAYLAND_DISPLAY;
 };
 
 const loginWithBrowser = async (): Promise<AuthConfig> => {
