@@ -106,6 +106,10 @@ bun run --filter '*' typecheck  # Typecheck all packages
 - Keep commit descriptions short. Add a longer body only when it provides real value/context (non-obvious why, tricky tradeoff, follow-up notes).
 
 
+## Plugin Releases
+
+For releasing the Claude Code / Codex plugin, follow the [Plugin Releases](README.md#plugin-releases) section in the README. Use `bun plugin:release <version>` — don't bump versions manually.
+
 ## Fetching Pages
 
 When you need to fetch a page's content, use this order:
